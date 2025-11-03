@@ -2,33 +2,125 @@ const db = require("../db");
 
 const getPlayers = async (req, res) => {
   try {
-    const result = await db.query("SELECT * FROM players");
-    res.status(200).send(result.rows);
-  } catch (error) {
-    console.error("Error fetching players:", error);
-    res.status(500).send({ message: "Internal Server Error" });
+    const [rows] = await db.query("SELECT * FROM Players");
+    res.status(200).json(rows);
+  } catch (err) {
+    console.error("Error fetching players:", err);
+    res.status(500).json({ message : "Internal Server Error" });
   }
 };
 
 const getPlayerById = async (req, res) => {
   const { id } = req.params;
+    const idNum = Number(id);
+
+  if (isNaN(idNum)) {
+    return res.status(400).json({ message: "Invalid player ID" });
+  }
+
   try {
-    const result = await db.query("SELECT * FROM players WHERE id = $1", [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).send({ message: "Player not found" });
+    const [rows] = await db.query("SELECT * FROM Players WHERE id = ?", [idNum]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Player not found" });
     }
-    res.status(200).send(result.rows[0]);
-  } catch (error) {
-    console.error(`Error fetching player with ID ${id}:`, error);
-    res.status(500).send({ message: "Internal Server Error" });
+    res.status(200).json(rows[0]);
+  } catch (err) {
+    console.error("Error fetching player by ID:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
-const addPlayer = async (req, res) => {};
+const addPlayer = async (req, res) => {
+  const {
+    first_name,
+    last_name,
+    date_of_birth,
+    height,
+    weight,
+    position,
+    strong_foot,
+    image_url,
+    team_id
+  } = req.body;
 
-const updatePlayer = async (req, res) => {};
+  if (!first_name || !last_name || !height || !weight || !image_url) {
+    return res.status(400).json({
+      message: "Missing required fields: first_name, last_name, height, weight, and image_url are required."
+    });
+  }
 
-const deletePlayer = async (req, res) => {};
+  try {
+      const query = `INSERT INTO Players (first_name, last_name, date_of_birth, height, weight, position, strong_foot, image_url, team_id) VALUES (?,?,?,?,?,?,?,?,?)`;
+      const values = [first_name, last_name, date_of_birth, height, weight, position, strong_foot, image_url, team_id];
+
+      const [ result ] = await db.query(query, values);
+      res.status(201).json({ 
+        message: "Player added successfully",
+        id: result.insertId 
+      });
+    } catch (err) {
+      console.error("Error adding player: ", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+const updatePlayer = async (req, res) => {
+  const { id } = req.params;
+  const {
+    first_name,
+    last_name,
+    date_of_birth,
+    height,
+    weight,
+    position,
+    strong_foot,
+    image_url,
+    team_id
+  } = req.body;
+  
+  const idNum = Number(id);
+  if (isNaN(idNum)) {
+    return res.status(400).json({ message: "Invalid player ID" });
+  }
+
+  if (!first_name || !last_name || !height || !weight || !image_url) {
+    return res.status(400).json({
+      message: "Missing required fields: first_name, last_name, height, weight, and image_url are required."
+    });
+  }
+
+  try {
+    const values = [first_name, last_name, date_of_birth, height, weight, position, strong_foot, image_url, team_id, idNum];
+    const [ result ] = await db.query("UPDATE Players SET first_name = ?, last_name = ?, date_of_birth = ?, height = ?, weight = ?, position = ?, strong_foot = ?, image_url = ?, team_id = ? WHERE id = ?", values);
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Player not found" });
+    }
+    res.status(200).json({ message: "Player updated successfully" });
+  } catch (err) {
+    console.error("Error updating player: ", err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const deletePlayer = async (req, res) => {
+  const { id } = req.params;
+  const idNum = Number(id);
+  if (isNaN(idNum)) {
+    return res.status(400).json({ message: "Invalid player ID" });
+  }
+
+  try {
+    const [ result ] = await db.query("DELETE FROM Players WHERE id = ?", [idNum]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Player not found" });
+    }
+    res.status(200).json({ message: "Player deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting player: ", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 module.exports = {
     getPlayers,
