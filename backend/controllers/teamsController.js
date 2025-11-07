@@ -6,7 +6,7 @@ const getTeams = async (req, res) => {
     res.status(200).json(rows);
   } catch (err) {
     console.error("Error in fetching teams: ", err);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -26,7 +26,7 @@ const getTeamById = async (req, res) => {
     res.status(200).json(result[0]);
   } catch (err) {
     console.error("Error fetching team by id : ", err);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -36,10 +36,16 @@ const addTeam = async (req, res) => {
     age_limit
   } = req.body;
 
-  if (!name || !age_limit) {
-    return res.status(400).json({ 
-      message: "Missing required fields: name and age_limit are required."
-    });
+  if (!name || name.trim().length === 0) {
+    return res.status(400).json({ message: "Name must be provided and not empty" });
+  }
+
+  if (isNaN(Number(age_limit))) {
+    return res.status(400).json({ message: "age_limit should be a number" });
+  }
+
+  if (age_limit < 9 || age_limit > 17) {
+    return res.status(400).json({ message: "age_limit must be between 5 and 17" });
   }
 
   try {
@@ -53,7 +59,7 @@ const addTeam = async (req, res) => {
     });
   } catch (err) {
     console.error("Error adding team: ", err);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -70,10 +76,16 @@ const updateTeam = async (req, res) => {
     age_limit
   } = req.body;
 
-  if (!name || !age_limit) {
-    return res.status(400).json({ 
-      message: "Missing required fields: name and age_limit are required."
-    });
+  if (!name || name.trim().length === 0) {
+    return res.status(400).json({ message: "Name must be provided and not empty" });
+  }
+
+  if (isNaN(Number(age_limit))) {
+    return res.status(400).json({ message: "age_limit should be a number" });
+  }
+
+  if (age_limit < 9 || age_limit > 17) {
+    return res.status(400).json({ message: "age_limit must be between 5 and 17" });
   }
 
   try {
@@ -86,7 +98,7 @@ const updateTeam = async (req, res) => {
     res.status(200).json({ message: "Team updated successfully" });
   } catch (err) {
     console.error("Error updating team: ", err);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -106,7 +118,7 @@ const deleteTeam = async (req, res) => {
     res.status(200).json({ message: "Team deleted successfully" });
   } catch (err) {
     console.error("Error deleting team: ", err);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
