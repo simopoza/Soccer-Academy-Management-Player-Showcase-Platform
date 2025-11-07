@@ -1,6 +1,12 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { getMatches, getMatchById, addMatch, updateMatch, deleteMatch } = require('../controllers/matchesController');
+const {
+  getMatches,
+  getMatchById,
+  addMatch,
+  updateMatch,
+  deleteMatch,
+} = require("../controllers/matchesController");
 
 /**
  * @swagger
@@ -11,7 +17,7 @@ const { getMatches, getMatchById, addMatch, updateMatch, deleteMatch } = require
  *       200:
  *         description: List of all matches
  */
-router.get('/', getMatches);
+router.get("/", getMatches);
 
 /**
  * @swagger
@@ -28,7 +34,7 @@ router.get('/', getMatches);
  *       200:
  *         description: Match data
  */
-router.get('/:id', getMatchById);
+router.get("/:id", getMatchById);
 
 /**
  * @swagger
@@ -44,19 +50,28 @@ router.get('/:id', getMatchById);
  *             properties:
  *               date:
  *                 type: string
- *               home_team_id:
+ *                 format: date-time
+ *               opponent:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *                 enum: [Home, Away]
+ *               match_type:
+ *                 type: string
+ *                 enum: [Friendly, Officially]
+ *               team_goals:
  *                 type: integer
- *               away_team_id:
+ *                 default: 0
+ *               opponent_goals:
  *                 type: integer
- *               score_home:
- *                 type: integer
- *               score_away:
+ *                 default: 0
+ *               team_id:
  *                 type: integer
  *     responses:
  *       201:
  *         description: Match added successfully
  */
-router.post('/', addMatch);
+router.post("/", addMatch);
 
 /**
  * @swagger
@@ -78,19 +93,26 @@ router.post('/', addMatch);
  *             properties:
  *               date:
  *                 type: string
- *               home_team_id:
+ *                 format: date-time
+ *               opponent:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *                 enum: [Home, Away]
+ *               match_type:
+ *                 type: string
+ *                 enum: [Friendly, Officially]
+ *               team_goals:
  *                 type: integer
- *               away_team_id:
+ *               opponent_goals:
  *                 type: integer
- *               score_home:
- *                 type: integer
- *               score_away:
+ *               team_id:
  *                 type: integer
  *     responses:
  *       200:
  *         description: Match updated successfully
  */
-router.put('/:id', updateMatch);
+router.put("/:id", updateMatch);
 
 /**
  * @swagger
@@ -107,6 +129,6 @@ router.put('/:id', updateMatch);
  *       200:
  *         description: Match deleted successfully
  */
-router.delete('/:id', deleteMatch);
+router.delete("/:id", deleteMatch);
 
 module.exports = router;

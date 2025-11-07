@@ -41,6 +41,7 @@ CREATE TABLE Matches (
     date DATETIME NOT NULL,
     opponent VARCHAR(100) NOT NULL,
     location ENUM('Home', 'Away') NOT NULL,
+    match_type ENUM('Friendly', 'Officially') NOT NULL,
     team_goals INT DEFAULT 0,
     opponent_goals INT DEFAULT 0,
     team_id INT,

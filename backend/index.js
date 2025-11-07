@@ -14,8 +14,6 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 
 app.use(cors());
-
-
 // Swagger configuration
 const swaggerOptions = {
   swaggerDefinition: {
@@ -34,8 +32,6 @@ const swaggerOptions = {
   },
   apis: ["./routes/*.js"], // files where Swagger comments are written
 };
-
-
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
