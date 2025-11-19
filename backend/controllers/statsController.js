@@ -52,8 +52,7 @@ const addStat = async (req, res) => {
     return res.status(400).json({ message: "Invalid player_id" });
   }
 
-  const { rating, goals: finalGoals, assists: finalAssists } = calculateRating(minutes_played, goals, assists);
-
+  const { rating, finalGoals, finalAssists } = calculateRating(minutes_played, goals, assists);
 
   try {
     const query = `INSERT INTO Stats (player_id, match_id, goals, assists, minutes_played, rating) VALUES (?,?,?,?,?,?)`;
@@ -88,8 +87,7 @@ const updateStat = async (req, res) => {
     return res.status(400).json({ message: "Invalid player_id" });
   }
 
-  const { rating, goals: finalGoals, assists: finalAssists } = calculateRating(minutes_played, goals, assists);
-
+  const { rating, finalGoals, finalAssists } = calculateRating(minutes_played, goals, assists);
 
   try {
     const value = [player_id, match_id, finalGoals, finalAssists, minutes_played, rating, id];

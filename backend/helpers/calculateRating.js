@@ -2,7 +2,8 @@
 const calculateRating = (minutes, goalsScored, assistsProvided) => {
   // If player didn't play (0 minutes), return minimum rating
   if (minutes === 0) {
-    return { rating: 0.0, goals: 0, assists: 0 };
+    console.log("minutes == 0");
+    return { rating: 0.0, finalGoals: 0, finalAssists: 0 };
   }
     
   // Base rating starts at 5.0 (out of 10)
@@ -27,7 +28,8 @@ const calculateRating = (minutes, goalsScored, assistsProvided) => {
   rating = Math.max(0.0, Math.min(10.0, rating));
   
   // Round to 1 decimal place
-  return Math.round(rating * 10) / 10;
+  rating = Math.round(rating * 10) / 10;
+  return { rating, finalGoals: goalsScored, finalAssists: assistsProvided };
 }
 
 module.exports = calculateRating;

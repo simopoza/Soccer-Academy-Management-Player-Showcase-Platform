@@ -13,6 +13,14 @@ const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 
+// Catch invalid JSON before routes
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({ message: "Invalid JSON format" });
+  }
+  next();
+});
+
 app.use(cors());
 // Swagger configuration
 const swaggerOptions = {

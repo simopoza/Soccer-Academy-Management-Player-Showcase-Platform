@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const db = require("../db");
 
 async function validateMatch(match_id) {
   const [rows] = await db.query("SELECT id FROM Matches WHERE id = ?", [match_id]);
