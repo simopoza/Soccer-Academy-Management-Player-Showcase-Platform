@@ -28,23 +28,23 @@ const statsUpdateValidationRules = [
     .isInt({ min: 1 }).withMessage('id must be a positive integer'),
 
   check('player_id')
-    .exists().withMessage('player_id is required')
+    .optional()
     .isInt({ min: 1 }).withMessage('player_id must be a positive integer'),
 
   check('match_id')
-    .exists().withMessage('match_id is required')
+    .optional()
     .isInt({ min: 1 }).withMessage('match_id must be a positive integer'),
 
   check('goals')
-    .exists().withMessage('goals is required')
+    .optional()
     .isInt({ min: 0 }).withMessage('goals must be a non-negative integer'),
 
   check('assists')
-    .exists().withMessage('assists is required')
+    .optional()
     .isInt({ min: 0 }).withMessage('assists must be a non-negative integer'),
 
   check('minutes_played')
-    .exists().withMessage('minutes_played is required')
+    .optional()
     .isInt({ min: 0, max: 120 }).withMessage('minutes_played must be between 0 and 120'),
 ];
 

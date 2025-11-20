@@ -53,7 +53,7 @@ const addStat = async (req, res) => {
   }
 
   const { rating, finalGoals, finalAssists } = calculateRating(minutes_played, goals, assists);
-
+  
   try {
     const query = `INSERT INTO Stats (player_id, match_id, goals, assists, minutes_played, rating) VALUES (?,?,?,?,?,?)`;
     const value = [player_id, match_id, finalGoals, finalAssists, minutes_played, rating];
@@ -73,29 +73,65 @@ const updateStat = async (req, res) => {
   const { id } = req.params;
   const {
     player_id,
-    match_id,
-    goals,
-    assists,
-    minutes_played
+    match_id
   } = req.body;
-
+  
   if (!(await validateMatch(match_id))) {
     return res.status(400).json({ message: "Invalid match_id" });
   }
-
+  
   if (!(await validatePlayer(player_id))) {
     return res.status(400).json({ message: "Invalid player_id" });
   }
 
-  const { rating, finalGoals, finalAssists } = calculateRating(minutes_played, goals, assists);
-
   try {
-    const value = [player_id, match_id, finalGoals, finalAssists, minutes_played, rating, id];
-    const [ result ] = await db.query("UPDATE Stats SET player_id = ?, match_id = ?, goals = ?, assists = ?, minutes_played = ?, rating = ? WHERE id = ?", value);
+    const [ rows ] = await db.query("SELECT * FROM Stats WHERE id = ?", [id]);
 
-    if (result.affectedRows === 0) {
+    if (rows.length === 0) {
       return res.status(404).json({ message: "Stat not found" });
     }
+
+    const existing = rows[0];
+    const fieldsToUpdate = {};
+    const allowedFields = ["player_id", "match_id", "goals", "assists", "minutes_played"];
+  
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        fieldsToUpdate[field] = req.body[field];
+      }
+    });
+  
+    const needsRatingUpdate = 
+      fieldsToUpdate.goals !== undefined ||
+      fieldsToUpdate.assists !== undefined ||
+      fieldsToUpdate.minutes_played !== undefined;
+
+    console.log("needsRatingUpdate: ", needsRatingUpdate);
+
+    if (needsRatingUpdate) {
+      const goals = fieldsToUpdate.goals ?? existing.goals;
+      const assists = fieldsToUpdate.assists ?? existing.assists;
+      const minutes = fieldsToUpdate.minutes_played ?? existing.minutes_played;
+
+      const { rating, finalGoals, finalAssists } = calculateRating(minutes, goals, assists);
+
+      fieldsToUpdate.rating = rating;
+      fieldsToUpdate.goals = finalGoals;
+      fieldsToUpdate.assists = finalAssists;
+      fieldsToUpdate.minutes_played = minutes;
+    }
+    
+    const setClause = Object.keys(fieldsToUpdate)
+      .map(key => `${key} = ?`)
+      .join(', ');
+    
+      const value = Object.values(fieldsToUpdate);
+    value.push(id);
+
+    const sql = `UPDATE Stats SET ${setClause} WHERE id = ?`;
+    
+    await db.query(sql, value);
+
     res.status(200).json({ message: "Stat updated successfully" });
   } catch (err) {
     console.error("Error updating Stat: ", err);
