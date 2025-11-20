@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const { getPlayers, getPlayerById, addPlayer, updatePlayer, deletePlayer } = require("../controllers/playersController");
-
+const validate = require("../middlewares/validate");
+const { playersValidationRules, playersUpdateValidationRules } = require('../validators/playersValidator');
 /**
  * @swagger
  * /players:
@@ -64,7 +65,7 @@ router.get("/:id", getPlayerById);
  *       201:
  *         description: Player added successfully
  */
-router.post("/", addPlayer);
+router.post("/", playersValidationRules, validate, addPlayer);
 
 /**
  * @swagger
@@ -106,7 +107,7 @@ router.post("/", addPlayer);
  *       200:
  *         description: Player updated successfully
  */
-router.put("/:id", updatePlayer);
+router.put("/:id", playersUpdateValidationRules, validate, updatePlayer);
 
 /**
  * @swagger

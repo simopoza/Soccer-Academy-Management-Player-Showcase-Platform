@@ -44,14 +44,6 @@ const addStat = async (req, res) => {
     minutes_played
   } = req.body;
 
-  if (!(await validateMatch(match_id))) {
-    return res.status(400).json({ message: "Invalid match_id" });
-  }
-
-  if (!(await validatePlayer(player_id))) {
-    return res.status(400).json({ message: "Invalid player_id" });
-  }
-
   const { rating, finalGoals, finalAssists } = calculateRating(minutes_played, goals, assists);
   
   try {
@@ -91,18 +83,6 @@ const updateStat = async (req, res) => {
 
     if (Object.keys(fieldsToUpdate).length === 0) {
       return res.status(400).json({ message: "No fields provided to update" });
-    }
-
-    if (fieldsToUpdate.match_id !== undefined) {
-      if (!(await validateMatch(fieldsToUpdate.match_id))) {
-        return res.status(400).json({ message: "Invalid match_id" });
-      }
-    }
-
-    if (fieldsToUpdate.player_id !== undefined) {
-      if (!(await validatePlayer(fieldsToUpdate.player_id))) {
-        return res.status(400).json({ message: "Invalid player_id" });
-      }
     }
 
     const needsRatingUpdate = 
@@ -170,12 +150,3 @@ module.exports = {
   updateStat,
   deleteStat,
 };
-
-/*
-Only one improvement
-
-For PUT, you don’t need .exists() for all fields unless the user MUST update all fields.
-
-Usually, update routes allow partial updates.
-But if you want "full update", then you're good.
-*/
