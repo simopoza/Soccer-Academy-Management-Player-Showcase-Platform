@@ -42,56 +42,6 @@ const addPlayer = async (req, res) => {
     image_url,
     team_id
   } = req.body;
-  const allowedPosition = ['GK', 'CB', 'LB', 'RB', 'CDM', 'CM', 'CAM', 'LW', 'RW', 'ST'];
-  const allowedStrong_foot = ['Left', 'Right'];
-  const team_id_num = Number(team_id);
-  const height_num = Number(height);
-  const weight_num = Number(weight);
-  const dob = new Date(date_of_birth);
-  
-  if (isNaN(team_id_num) || isNaN(height_num) || isNaN(weight_num)) {
-    return res.status(400).json({ message: "height, weight, and team_id must be a number" });
-  }
-
-  if (team_id_num <= 0 || height_num <= 0 || weight_num <= 0) {
-    return res.status(400).json({ message: "height, weight, and team_id must be a positif number" });
-  }
-
-  if (!allowedPosition.includes(position)) {
-    return res.status(400).json({ message: "Invalid position. Must be 'GK' or 'CB' or 'LB' or 'RB' or 'CDM' or 'CM' or 'CAM' or 'LW' or 'RW' or 'ST'." });
-  }
-
-  if (!allowedStrong_foot.includes(strong_foot)) {
-    return res.status(400).json({ message: "Invalid strong_foot. Must be 'left' or 'right'." });
-  }
-
-  if (!first_name || first_name.trim().length === 0) {
-    return res.status(400).json({ message: "first_name must be provided and not empty" });
-  }
-
-  if (!last_name || last_name.trim().length === 0) {
-    return res.status(400).json({ message: "last_name must be provided and not empty" });
-  }
-
-  if (!height || !weight || !image_url) {
-    return res.status(400).json({
-      message: "Missing required fields: height, weight, and image_url are required."
-    });
-  }
-
-  if (isNaN(dob.getTime())) {
-    return res.status(400).json({ message: "date_of_birth must be a valid date" });
-  }
-
-  try {
-    const [rows] = await db.query("SELECT * FROM Teams WHERE id = ?", [team_id]);
-    if (rows.length === 0) {
-      return res.status(400).json({ message: "Invalid team_id" });
-    }
-  } catch (err) {
-    console.error("Error adding match:", err);
-    return res.status(500).json({ message: "Internal server error" });
-  }
 
   try {
     const query = `INSERT INTO Players (first_name, last_name, date_of_birth, height, weight, position, strong_foot, image_url, team_id) VALUES (?,?,?,?,?,?,?,?,?)`;
@@ -121,58 +71,6 @@ const updatePlayer = async (req, res) => {
     image_url,
     team_id
   } = req.body;
-  
-  const idNum = Number(id);
-  const dob = new Date(date_of_birth);
-  const allowedPosition = ['GK', 'CB', 'LB', 'RB', 'CDM', 'CM', 'CAM', 'LW', 'RW', 'ST'];
-  const allowedStrong_foot = ['Left', 'Right'];
-  const team_id_num = Number(team_id);
-  const height_num = Number(height);
-  const weight_num = Number(weight);
-
-  if (isNaN(idNum)) {
-    return res.status(400).json({ message: "Invalid player ID" });
-  }
-  
-  if (isNaN(team_id_num) || isNaN(height_num) || isNaN(weight_num)) {
-    return res.status(400).json({ message: "height, weight, and team_id must be a number" });
-  }
-
-  if (!allowedPosition.includes(position)) {
-    return res.status(400).json({ message: "Invalid position. Must be 'GK' or 'CB' or 'LB' or 'RB' or 'CDM' or 'CM' or 'CAM' or 'LW' or 'RW' or 'ST'." });
-  }
-
-  if (!allowedStrong_foot.includes(strong_foot)) {
-    return res.status(400).json({ message: "Invalid strong_foot. Must be 'left' or 'right'." });
-  }
-
-  if (!first_name || first_name.trim().length === 0) {
-    return res.status(400).json({ message: "first_name must be provided and not empty" });
-  }
-
-  if (!last_name || last_name.trim().length === 0) {
-    return res.status(400).json({ message: "last_name must be provided and not empty" });
-  }
-
-  if (!height || !weight || !image_url) {
-    return res.status(400).json({
-      message: "Missing required fields: height, weight, and image_url are required."
-    });
-  }
-
-  if (isNaN(dob.getTime())) {
-    return res.status(400).json({ message: "date_of_birth must be a valid date" });
-  }
-
-  try {
-    const [rows] = await db.query("SELECT * FROM Teams WHERE id = ?", [team_id]);
-    if (rows.length === 0) {
-      return res.status(400).json({ message: "Invalid team_id" });
-    }
-  } catch (err) {
-    console.error("Error adding match:", err);
-    return res.status(500).json({ message: "Internal server error" });
-  }
 
   try {
     const values = [first_name, last_name, date_of_birth, height, weight, position, strong_foot, image_url, team_id, idNum];

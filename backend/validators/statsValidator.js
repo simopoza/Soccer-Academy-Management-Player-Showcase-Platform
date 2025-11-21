@@ -3,11 +3,27 @@ const { check, param } = require('express-validator');
 const statsValidationRules = [
   check('player_id')
     .exists().withMessage('player_id is required')
-    .isInt({ min: 1 }).withMessage('player_id must be a positive integer'),
+    .isInt({ min: 1 }).withMessage('player_id must be a positive integer')
+    .custom(async (player_id) => {
+      const { validatePlayer } = require('../helpers/validateForeignKeys');
+      const exists = await validatePlayer(player_id);
+      if (!exists) {
+        throw new Error('Invalid player_id');
+      }
+      return true;
+    }),
 
   check('match_id')
     .exists().withMessage('match_id is required')
-    .isInt({ min: 1 }).withMessage('match_id must be a positive integer'),
+    .isInt({ min: 1 }).withMessage('match_id must be a positive integer')
+    .custom(async (match_id) => {
+      const { validateMatch } = require('../helpers/validateForeignKeys');
+      const exists = await validateMatch(match_id);
+      if (!exists) {
+        throw new Error('Invalid match_id');
+      }
+      return true;
+    }),
 
   check('goals')
     .exists().withMessage('goals is required')
@@ -29,11 +45,27 @@ const statsUpdateValidationRules = [
 
   check('player_id')
     .optional()
-    .isInt({ min: 1 }).withMessage('player_id must be a positive integer'),
+    .isInt({ min: 1 }).withMessage('player_id must be a positive integer')
+    .custom(async (player_id) => {
+      const { validatePlayer } = require('../helpers/validateForeignKeys');
+      const exists = await validatePlayer(player_id);
+      if (!exists) {
+        throw new Error('Invalid player_id');
+      }
+      return true;
+    }),
 
   check('match_id')
     .optional()
-    .isInt({ min: 1 }).withMessage('match_id must be a positive integer'),
+    .isInt({ min: 1 }).withMessage('match_id must be a positive integer')
+    .custom(async (match_id) => {
+      const { validateMatch } = require('../helpers/validateForeignKeys');
+      const exists = await validateMatch(match_id);
+      if (!exists) {
+        throw new Error('Invalid match_id');
+      }
+      return true;
+    }),
 
   check('goals')
     .optional()

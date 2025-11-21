@@ -44,14 +44,6 @@ const addStat = async (req, res) => {
     minutes_played
   } = req.body;
 
-  if (!(await validateMatch(match_id))) {
-    return res.status(400).json({ message: "Invalid match_id" });
-  }
-
-  if (!(await validatePlayer(player_id))) {
-    return res.status(400).json({ message: "Invalid player_id" });
-  }
-
   const { rating, finalGoals, finalAssists } = calculateRating(minutes_played, goals, assists);
   
   try {
@@ -71,18 +63,6 @@ const addStat = async (req, res) => {
 
 const updateStat = async (req, res) => {
   const { id } = req.params;
-  const {
-    player_id,
-    match_id
-  } = req.body;
-  
-  if (!(await validateMatch(match_id))) {
-    return res.status(400).json({ message: "Invalid match_id" });
-  }
-  
-  if (!(await validatePlayer(player_id))) {
-    return res.status(400).json({ message: "Invalid player_id" });
-  }
 
   try {
     const [ rows ] = await db.query("SELECT * FROM Stats WHERE id = ?", [id]);
@@ -100,13 +80,17 @@ const updateStat = async (req, res) => {
         fieldsToUpdate[field] = req.body[field];
       }
     });
-  
+
+    if (Object.keys(fieldsToUpdate).length === 0) {
+      return res.status(400).json({ message: "No fields provided to update" });
+    }
+
     const needsRatingUpdate = 
       fieldsToUpdate.goals !== undefined ||
       fieldsToUpdate.assists !== undefined ||
       fieldsToUpdate.minutes_played !== undefined;
 
-    console.log("needsRatingUpdate: ", needsRatingUpdate);
+    console.log("Needs rating update: ", needsRatingUpdate);
 
     if (needsRatingUpdate) {
       const goals = fieldsToUpdate.goals ?? existing.goals;
@@ -125,12 +109,12 @@ const updateStat = async (req, res) => {
       .map(key => `${key} = ?`)
       .join(', ');
     
-      const value = Object.values(fieldsToUpdate);
-    value.push(id);
+    const values = Object.values(fieldsToUpdate);
+    values.push(id);
 
     const sql = `UPDATE Stats SET ${setClause} WHERE id = ?`;
     
-    await db.query(sql, value);
+    await db.query(sql, values);
 
     res.status(200).json({ message: "Stat updated successfully" });
   } catch (err) {
@@ -166,12 +150,3 @@ module.exports = {
   updateStat,
   deleteStat,
 };
-
-/*
-Only one improvement
-
-For PUT, you don’t need .exists() for all fields unless the user MUST update all fields.
-
-Usually, update routes allow partial updates.
-But if you want "full update", then you're good.
-*/

@@ -12,7 +12,9 @@
   "author": "Mohammed Annahri",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "jest": "^30.2.0",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.4"
   },
   "dependencies": {
     "cors": "^2.8.5",
