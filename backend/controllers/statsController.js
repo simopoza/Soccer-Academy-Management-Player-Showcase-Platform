@@ -26,11 +26,6 @@ const getStats = async (req, res) => {
 
 const getStatById = async (req, res) => {
   const { id } = req.params;
-  const idNum = Number(id);
-
-  if (isNaN(idNum)) {
-    return res.status(400).json({ message: "Invalid Stats ID" });
-  }
 
   try {
     const [rows] = await db.query(`
@@ -41,7 +36,7 @@ const getStatById = async (req, res) => {
       FROM Stats s
       JOIN Players p ON s.player_id = p.id
       WHERE s.id = ?
-    `, [idNum]);
+    `, [id]);
 
     if (rows.length === 0) {
       return res.status(404).json({ message: "Stat not found" });
@@ -145,14 +140,9 @@ const updateStat = async (req, res) => {
 
 const deleteStat = async (req, res) => {
   const { id } = req.params;
-  const idNum = Number(id);
-
-  if (isNaN(idNum)) {
-    return res.status(400).json({ message: "Invalid Stats ID" });
-  }
 
   try {
-    const [ result ] = await db.query("DELETE FROM Stats WHERE id = ?", [idNum]);
+    const [ result ] = await db.query("DELETE FROM Stats WHERE id = ?", [id]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Stat not found" });
     }

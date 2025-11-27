@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getStats, getStatById, addStat, updateStat, deleteStat } = require('../controllers/statsController');
 const validate = require("../middlewares/validate");
-const { statsValidationRules, statsUpdateValidationRules } = require('../validators/statsValidator');
+const { statsValidationRules, statsUpdateValidationRules, statsGetByIdValidatorRules } = require('../validators/statsValidator');
 
 /**
  * @swagger
@@ -30,7 +30,7 @@ router.get('/', getStats);
  *       200:
  *         description: Stat data
  */
-router.get('/:id', getStatById);
+router.get('/:id', statsGetByIdValidatorRules, validate, getStatById);
 
 /**
  * @swagger
@@ -171,6 +171,6 @@ router.put('/:id', statsUpdateValidationRules, validate, updateStat);
  *       200:
  *         description: Stat deleted successfully
  */
-router.delete('/:id', deleteStat);
+router.delete('/:id', statsGetByIdValidatorRules, validate, deleteStat);
 
 module.exports = router;

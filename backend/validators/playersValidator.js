@@ -126,7 +126,14 @@ const playersUpdateValidationRules = [
   })
 ]
 
+const playersGetByIdValidatorRules = [
+  param('id')
+    .exists().withMessage('id is required')
+    .isInt({ min: 1 }).withMessage('id must be a positve integer'),
+];
+
 module.exports = {
   playersValidationRules,
-  playersUpdateValidationRules
+  playersUpdateValidationRules,
+  playersGetByIdValidatorRules
 }

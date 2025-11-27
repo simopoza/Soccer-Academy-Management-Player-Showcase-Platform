@@ -80,7 +80,14 @@ const statsUpdateValidationRules = [
     .isInt({ min: 0, max: 120 }).withMessage('minutes_played must be between 0 and 120'),
 ];
 
+const statsGetByIdValidatorRules = [
+  param('id')
+    .exists().withMessage('id is required')
+    .isInt({ min: 1 }).withMessage('id must be a positve integer'),
+];
+
 module.exports = {
   statsValidationRules,
-  statsUpdateValidationRules
+  statsUpdateValidationRules,
+  statsGetByIdValidatorRules
 };

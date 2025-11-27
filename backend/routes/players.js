@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { getPlayers, getPlayerById, addPlayer, updatePlayer, deletePlayer } = require("../controllers/playersController");
 const validate = require("../middlewares/validate");
-const { playersValidationRules, playersUpdateValidationRules } = require('../validators/playersValidator');
+const { playersValidationRules, playersUpdateValidationRules,  playersGetByIdValidatorRules} = require('../validators/playersValidator');
 /**
  * @swagger
  * /players:
@@ -29,7 +29,7 @@ router.get("/", getPlayers);
  *       200:
  *         description: Player data
  */
-router.get("/:id", getPlayerById);
+router.get("/:id", playersGetByIdValidatorRules, validate, getPlayerById);
 
 /**
  * @swagger
@@ -124,6 +124,6 @@ router.put("/:id", playersUpdateValidationRules, validate, updatePlayer);
  *       200:
  *         description: Player deleted successfully
  */
-router.delete("/:id", deletePlayer);
+router.delete("/:id", playersGetByIdValidatorRules, validate, deletePlayer);
 
 module.exports = router;

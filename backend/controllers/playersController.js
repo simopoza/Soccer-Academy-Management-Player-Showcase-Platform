@@ -16,11 +16,6 @@ const getPlayers = async (req, res) => {
 
 const getPlayerById = async (req, res) => {
   const { id } = req.params;
-  const idNum = Number(id);
-
-  if (isNaN(idNum)) {
-    return res.status(400).json({ message: "Invalid player ID" });
-  }
 
   try {
     const [rows] = await db.query(`
@@ -28,7 +23,7 @@ const getPlayerById = async (req, res) => {
       FROM Players p
       JOIN Teams t ON p.team_id = t.id
       WHERE p.id = ?
-    `, [idNum]);
+    `, [id]);
 
     if (rows.length === 0) {
       return res.status(404).json({ message: "Player not found" });
@@ -100,13 +95,9 @@ const updatePlayer = async (req, res) => {
 
 const deletePlayer = async (req, res) => {
   const { id } = req.params;
-  const idNum = Number(id);
-  if (isNaN(idNum)) {
-    return res.status(400).json({ message: "Invalid player ID" });
-  }
 
   try {
-    const [ result ] = await db.query("DELETE FROM Players WHERE id = ?", [idNum]);
+    const [ result ] = await db.query("DELETE FROM Players WHERE id = ?", [id]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Player not found" });
     }
