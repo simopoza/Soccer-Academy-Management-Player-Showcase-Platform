@@ -2,7 +2,11 @@ const db = require("../db");
 
 const getPlayers = async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM Players");
+    const [rows] = await db.query(`
+      SELECT p.*, t.name AS team_name
+      FROM Players p
+      JOIN Teams t ON p.team_id = t.id
+    `);
     res.status(200).json(rows);
   } catch (err) {
     console.error("Error fetching players:", err);
@@ -12,23 +16,31 @@ const getPlayers = async (req, res) => {
 
 const getPlayerById = async (req, res) => {
   const { id } = req.params;
-    const idNum = Number(id);
+  const idNum = Number(id);
 
   if (isNaN(idNum)) {
     return res.status(400).json({ message: "Invalid player ID" });
   }
 
   try {
-    const [rows] = await db.query("SELECT * FROM Players WHERE id = ?", [idNum]);
+    const [rows] = await db.query(`
+      SELECT p.*, t.name AS team_name
+      FROM Players p
+      JOIN Teams t ON p.team_id = t.id
+      WHERE p.id = ?
+    `, [idNum]);
+
     if (rows.length === 0) {
       return res.status(404).json({ message: "Player not found" });
     }
+
     res.status(200).json(rows[0]);
   } catch (err) {
     console.error("Error fetching player by ID:", err);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 const addPlayer = async (req, res) => {
   const {

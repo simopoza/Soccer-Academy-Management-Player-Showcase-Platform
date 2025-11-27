@@ -4,10 +4,19 @@ const calculateRating = require("../helpers/calculateRating");
 
 const getStats = async (req, res) => {
   try {
-    const [ rows ] = await db.query("SELECT * FROM Stats");
+    const [rows] = await db.query(`
+      SELECT 
+        s.*, 
+        CONCAT(p.first_name, ' ', p.last_name) AS player_name, 
+        p.team_id
+      FROM Stats s
+      JOIN Players p ON s.player_id = p.id
+    `);
+
     if (rows.length === 0) {
       return res.status(200).json({ message: "Stats table is empty" });
     }
+
     res.status(200).json(rows);
   } catch (err) {
     console.error("Error fetching Stats: ", err);
@@ -24,16 +33,27 @@ const getStatById = async (req, res) => {
   }
 
   try {
-    const [ rows ] = await db.query("SELECT * FROM Stats WHERE id = ?", [idNum]);
+    const [rows] = await db.query(`
+      SELECT 
+        s.*, 
+        CONCAT(p.first_name, ' ', p.last_name) AS player_name, 
+        p.team_id
+      FROM Stats s
+      JOIN Players p ON s.player_id = p.id
+      WHERE s.id = ?
+    `, [idNum]);
+
     if (rows.length === 0) {
       return res.status(404).json({ message: "Stat not found" });
     }
+
     res.status(200).json(rows[0]);
   } catch (err) {
     console.error("Error fetching Stats by ID: ", err);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 const addStat = async (req, res) => {
   const {

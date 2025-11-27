@@ -2,7 +2,12 @@ const db = require("../db");
 
 const getMatches = async (req, res) => {
   try {
-    const [ rows ] = await db.query("SELECT * FROM Matches");
+    const [rows] = await db.query(`
+      SELECT m.*, t.name AS team_name
+      FROM Matches m
+      JOIN Teams t ON m.team_id = t.id
+    `);
+
     res.status(200).json(rows);
   } catch (err) {
     console.error("Error fetching matches: ", err);
@@ -14,16 +19,24 @@ const getMatchById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const [ rows ] = await db.query("SELECT * FROM Matches WHERE id = ?", [id]);
+    const [rows] = await db.query(`
+      SELECT m.*, t.name AS team_name
+      FROM Matches m
+      JOIN Teams t ON m.team_id = t.id
+      WHERE m.id = ?
+    `, [id]);
+
     if (rows.length === 0) {
       return res.status(404).json({ message: "Match not found" });
     }
+
     res.status(200).json(rows[0]);
   } catch (err) {
     console.error("Error fetching match by ID:", err);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 const addMatch = async (req, res) => {
   const {
