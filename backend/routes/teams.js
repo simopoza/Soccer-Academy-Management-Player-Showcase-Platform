@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { getTeams, getTeamById, addTeam, updateTeam, deleteTeam } = require('../controllers/teamsController');
+const validate = require("../middlewares/validate");
+const { teamsValidationRules, teamsUpdateValidationRules, teamsGetByIdValidationRules } = require('../validators/teamsValidator');
 
 /**
  * @swagger
@@ -28,7 +30,7 @@ router.get('/', getTeams);
  *       200:
  *         description: Team data
  */
-router.get('/:id', getTeamById);
+router.get('/:id', teamsGetByIdValidationRules, validate, getTeamById);
 
 /**
  * @swagger
@@ -50,7 +52,7 @@ router.get('/:id', getTeamById);
  *       201:
  *         description: Team added successfully
  */
-router.post('/', addTeam);
+router.post('/', teamsValidationRules, validate, addTeam);
 
 /**
  * @swagger
@@ -78,7 +80,7 @@ router.post('/', addTeam);
  *       200:
  *         description: Team updated successfully
  */
-router.put('/:id', updateTeam);
+router.put('/:id', teamsUpdateValidationRules, validate, updateTeam);
 
 /**
  * @swagger
@@ -95,6 +97,6 @@ router.put('/:id', updateTeam);
  *       200:
  *         description: Team deleted successfully
  */
-router.delete('/:id', deleteTeam);
+router.delete('/:id', teamsGetByIdValidationRules, validate, deleteTeam);
 
 module.exports = router;

@@ -7,6 +7,8 @@ const {
   updateMatch,
   deleteMatch,
 } = require("../controllers/matchesController");
+const { matchesValidatorRules, matchesUpdateValidatorRules, matchesGetByIdValidatorRules } = require("../validators/matchesValidator");
+const validate = require("../middlewares/validate");
 
 /**
  * @swagger
@@ -34,7 +36,7 @@ router.get("/", getMatches);
  *       200:
  *         description: Match data
  */
-router.get("/:id", getMatchById);
+router.get("/:id", matchesGetByIdValidatorRules, validate, getMatchById);
 
 /**
  * @swagger
@@ -71,7 +73,7 @@ router.get("/:id", getMatchById);
  *       201:
  *         description: Match added successfully
  */
-router.post("/", addMatch);
+router.post("/", matchesValidatorRules, validate, addMatch);
 
 /**
  * @swagger
@@ -112,7 +114,7 @@ router.post("/", addMatch);
  *       200:
  *         description: Match updated successfully
  */
-router.put("/:id", updateMatch);
+router.put("/:id", matchesUpdateValidatorRules, validate, updateMatch);
 
 /**
  * @swagger
@@ -129,6 +131,6 @@ router.put("/:id", updateMatch);
  *       200:
  *         description: Match deleted successfully
  */
-router.delete("/:id", deleteMatch);
+router.delete("/:id", matchesGetByIdValidatorRules, validate, deleteMatch);
 
 module.exports = router;
