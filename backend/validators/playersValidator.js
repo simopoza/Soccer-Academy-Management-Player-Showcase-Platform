@@ -58,6 +58,17 @@ const playersValidationRules = [
       throw new Error('Invalid team_id');
     }
     return true;
+  }),
+  check('user_id')
+  .exists().withMessage('user_id is required')
+  .isInt({ min: 1 }).withMessage('user_id must be a positive integer')
+  .custom(async (user_id) => {
+    const { validateUser } = require('../helpers/validateForeignKeys');
+    const exists = await validateUser(user_id);
+    if (!exists) {
+      throw new Error('Invalid user_id');
+    }
+    return true;
   })
 ];
 
@@ -121,6 +132,17 @@ const playersUpdateValidationRules = [
     const exists = await validateTeam(team_id);
     if (!exists) {
       throw new Error('Invalid team_id');
+    }
+    return true;
+  }),
+  check('user_id')
+  .optional()
+  .isInt({ min: 1 }).withMessage('user_id must be a positive integer')
+  .custom(async (user_id) => {
+    const { validateUser } = require('../helpers/validateForeignKeys');
+    const exists = await validateUser(user_id);
+    if (!exists) {
+      throw new Error('Invalid user_id');
     }
     return true;
   })

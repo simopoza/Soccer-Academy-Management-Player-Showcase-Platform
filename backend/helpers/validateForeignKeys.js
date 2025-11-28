@@ -15,8 +15,14 @@ async function validateTeam(team_id) {
   return rows.length > 0; // true = exists
 }
 
+async function validateUser(user_id) {
+  const [rows] = await db.query("SELECT id FROM Users WHERE id = ?", [user_id]);
+  return rows.length > 0; // true = exists
+}
+
 module.exports = {
   validateMatch,
   validatePlayer,
-  validateTeam
+  validateTeam,
+  validateUser
 };

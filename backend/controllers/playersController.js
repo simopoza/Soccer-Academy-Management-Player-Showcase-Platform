@@ -36,7 +36,6 @@ const getPlayerById = async (req, res) => {
   }
 };
 
-
 const addPlayer = async (req, res) => {
   const {
     first_name,
@@ -47,12 +46,13 @@ const addPlayer = async (req, res) => {
     position,
     strong_foot,
     image_url,
-    team_id
+    team_id,
+    user_id
   } = req.body;
 
   try {
-    const query = `INSERT INTO Players (first_name, last_name, date_of_birth, height, weight, position, strong_foot, image_url, team_id) VALUES (?,?,?,?,?,?,?,?,?)`;
-    const values = [first_name, last_name, date_of_birth, height, weight, position, strong_foot, image_url, team_id];
+    const query = `INSERT INTO Players (first_name, last_name, date_of_birth, height, weight, position, strong_foot, image_url, team_id, user_id) VALUES (?,?,?,?,?,?,?,?,?,?)`;
+    const values = [first_name, last_name, date_of_birth, height, weight, position, strong_foot, image_url, team_id, user_id];
 
     const [ result ] = await db.query(query, values);
     res.status(201).json({ 
@@ -67,25 +67,38 @@ const addPlayer = async (req, res) => {
 
 const updatePlayer = async (req, res) => {
   const { id } = req.params;
-  const {
-    first_name,
-    last_name,
-    date_of_birth,
-    height,
-    weight,
-    position,
-    strong_foot,
-    image_url,
-    team_id
-  } = req.body;
 
   try {
-    const values = [first_name, last_name, date_of_birth, height, weight, position, strong_foot, image_url, team_id, idNum];
-    const [ result ] = await db.query("UPDATE Players SET first_name = ?, last_name = ?, date_of_birth = ?, height = ?, weight = ?, position = ?, strong_foot = ?, image_url = ?, team_id = ? WHERE id = ?", values);
-    
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Player not found" });
+    const [ rows ] = await db.query("SELECT * FROM Players WHERE id = ?", [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Player not found"});
     }
+
+    const fieldsToUpdate = {};
+    const allowedFields = ["first_name", "last_name", "date_of_birth", "height", "weight", "position", "strong_foot", "image_url", "team_id", "user_id"];
+
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        fieldsToUpdate[field] = req.body[field];
+      }
+    });
+
+    if (Object.keys(fieldsToUpdate).length === 0) {
+      return res.status(400).json({ message: "No fields provided to update "});
+    }
+
+    const setClause = Object.keys(fieldsToUpdate)
+      .map(key => `${key} = ?`)
+      .join(', ');
+
+    const values = Object.values(fieldsToUpdate);
+    values.push(id);
+
+    const sql = `UPDATE Players SET ${setClause} WHERE id = ?`;
+
+    await db.query(sql, values);
+
     res.status(200).json({ message: "Player updated successfully" });
   } catch (err) {
     console.error("Error updating player: ", err);

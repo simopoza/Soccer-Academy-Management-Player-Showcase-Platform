@@ -61,6 +61,8 @@ router.get("/:id", playersGetByIdValidatorRules, validate, getPlayerById);
  *                 type: string
  *               team_id:
  *                 type: integer
+ *               user_id:
+ *                 type: integer
  *     responses:
  *       201:
  *         description: Player added successfully
@@ -102,6 +104,8 @@ router.post("/", playersValidationRules, validate, addPlayer);
  *               image_url:
  *                 type: string
  *               team_id:
+ *                 type: integer
+ *               user_id:
  *                 type: integer
  *     responses:
  *       200:
