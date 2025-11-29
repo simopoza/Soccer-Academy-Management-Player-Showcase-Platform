@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS Users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(255) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
-  full_name VARCHAR(255) NOT NULL,
+  first_name VARCHAR(255) NOT NULL,
+  last_name VARCHAR(255) NOT NULL,
   role ENUM('admin', 'agent', 'player') NOT NULL
 );
 

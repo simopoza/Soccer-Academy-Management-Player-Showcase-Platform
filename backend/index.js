@@ -5,6 +5,7 @@ const apiRoutes = require("./routes/apiRoutes.js");
 const cors = require("cors");
 const swaggerJsDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
+const cookieParser = require("cookie-parser");
 
 dotenv.config();
 
@@ -12,6 +13,16 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
+
+// -------------------------------
+// CORS & Cookie Parser
+// -------------------------------
+const corsOptions = {
+  origin: "http://localhost:5173", // your frontend
+  credentials: true,              // allow cookies to be sent
+};
+app.use(cors(corsOptions));
+app.use(cookieParser());
 
 // Catch invalid JSON before routes
 app.use((err, req, res, next) => {
