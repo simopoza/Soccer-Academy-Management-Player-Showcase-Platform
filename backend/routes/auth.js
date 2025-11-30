@@ -3,6 +3,8 @@ const router = express.Router();
 const { register, login, logout } = require("../controllers/authController");
 const  validate  = require("../middlewares/validate");
 const { registerValidationRules, loginValidationRules } = require("../validators/authValidator");
+const auth = require('../middlewares/authMiddleware');
+const { registerLimiter, loginLimiter } = require("../middlewares/rateLimitMiddleware");
 
 /**
  * @swagger
@@ -32,7 +34,7 @@ const { registerValidationRules, loginValidationRules } = require("../validators
  *      201:
  *        description: User added successfully
  */
-router.post("/register", registerValidationRules, validate, register);
+router.post("/register", registerLimiter, registerValidationRules, validate, register);
 
 /**
  * @swagger
@@ -55,7 +57,7 @@ router.post("/register", registerValidationRules, validate, register);
  *       200:
  *         description: User logged in successfully
  */
-router.post("/login", loginValidationRules, validate, login);
+router.post("/login", loginLimiter, loginValidationRules, validate, login);
 
 /**
  * @swagger
@@ -66,6 +68,6 @@ router.post("/login", loginValidationRules, validate, login);
  *       200:
  *         description: User logged out successfully
  */
-router.post("/logout", logout);
+router.post("/logout", auth, logout);
 
 module.exports = router;

@@ -9,6 +9,7 @@ const {
 } = require("../controllers/matchesController");
 const { matchesValidatorRules, matchesUpdateValidatorRules, matchesGetByIdValidatorRules } = require("../validators/matchesValidator");
 const validate = require("../middlewares/validate");
+const { hasRole } = require("../middlewares/roleMiddleware");
 
 /**
  * @swagger
@@ -19,7 +20,7 @@ const validate = require("../middlewares/validate");
  *       200:
  *         description: List of all matches
  */
-router.get("/", getMatches);
+router.get("/", hasRole("admin", "agent", "player"), getMatches);
 
 /**
  * @swagger
@@ -36,7 +37,7 @@ router.get("/", getMatches);
  *       200:
  *         description: Match data
  */
-router.get("/:id", matchesGetByIdValidatorRules, validate, getMatchById);
+router.get("/:id", hasRole("admin", "agent", "player"), matchesGetByIdValidatorRules, validate, getMatchById);
 
 /**
  * @swagger
@@ -73,7 +74,7 @@ router.get("/:id", matchesGetByIdValidatorRules, validate, getMatchById);
  *       201:
  *         description: Match added successfully
  */
-router.post("/", matchesValidatorRules, validate, addMatch);
+router.post("/", hasRole("admin"), matchesValidatorRules, validate, addMatch);
 
 /**
  * @swagger
@@ -114,7 +115,7 @@ router.post("/", matchesValidatorRules, validate, addMatch);
  *       200:
  *         description: Match updated successfully
  */
-router.put("/:id", matchesUpdateValidatorRules, validate, updateMatch);
+router.put("/:id", hasRole("admin"), matchesUpdateValidatorRules, validate, updateMatch);
 
 /**
  * @swagger
@@ -131,6 +132,6 @@ router.put("/:id", matchesUpdateValidatorRules, validate, updateMatch);
  *       200:
  *         description: Match deleted successfully
  */
-router.delete("/:id", matchesGetByIdValidatorRules, validate, deleteMatch);
+router.delete("/:id", hasRole("admin"), matchesGetByIdValidatorRules, validate, deleteMatch);
 
 module.exports = router;

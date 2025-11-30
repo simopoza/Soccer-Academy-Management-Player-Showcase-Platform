@@ -4,16 +4,19 @@ const registerValidationRules = [
   check('first_name')
     .exists().withMessage('first_name is required')
     .trim()
+    .escape()
     .notEmpty().withMessage("first_name cannot be empty"),
 
   check('last_name')
     .exists().withMessage('last_name is required')
     .trim()
+    .escape()
     .notEmpty().withMessage("last_name cannot be empty"),
 
   check('email')
     .exists().withMessage('email is required')
     .trim()
+    .normalizeEmail()
     .notEmpty().withMessage('email cannot be empty')
     .isEmail().withMessage('Must be a valid email address'),
 
@@ -27,15 +30,17 @@ const registerValidationRules = [
   check('role')
     .exists().withMessage('role is required')
     .trim()
+    .escape()
     .notEmpty().withMessage('role cannot be empty')
     .isIn(['admin', 'player', 'agent'])
-    .withMessage("Invalid role. Must be 'admin' or 'player' or 'agent'. "),
+    .withMessage("Invalid role. Must be 'admin', 'player', or 'agent'."),
 ];
 
 const loginValidationRules = [
   check('email')
     .exists().withMessage('email is required')
     .trim()
+    .normalizeEmail()
     .notEmpty().withMessage('email cannot be empty')
     .isEmail().withMessage('Must be a valid email address'),
 

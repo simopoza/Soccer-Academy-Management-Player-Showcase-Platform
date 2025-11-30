@@ -3,6 +3,8 @@ const router = express.Router();
 const { getPlayers, getPlayerById, addPlayer, updatePlayer, deletePlayer } = require("../controllers/playersController");
 const validate = require("../middlewares/validate");
 const { playersValidationRules, playersUpdateValidationRules,  playersGetByIdValidatorRules} = require('../validators/playersValidator');
+const { hasRole } = require("../middlewares/roleMiddleware");
+
 /**
  * @swagger
  * /players:
@@ -12,7 +14,7 @@ const { playersValidationRules, playersUpdateValidationRules,  playersGetByIdVal
  *       200:
  *         description: List of all players
  */
-router.get("/", getPlayers);
+router.get("/", hasRole("admin", "agent", "player"), getPlayers);
 
 /**
  * @swagger
@@ -29,7 +31,7 @@ router.get("/", getPlayers);
  *       200:
  *         description: Player data
  */
-router.get("/:id", playersGetByIdValidatorRules, validate, getPlayerById);
+router.get("/:id", hasRole("admin", "agent", "player"), playersGetByIdValidatorRules, validate, getPlayerById);
 
 /**
  * @swagger
@@ -67,7 +69,7 @@ router.get("/:id", playersGetByIdValidatorRules, validate, getPlayerById);
  *       201:
  *         description: Player added successfully
  */
-router.post("/", playersValidationRules, validate, addPlayer);
+router.post("/", hasRole("admin"), playersValidationRules, validate, addPlayer);
 
 /**
  * @swagger
@@ -111,7 +113,7 @@ router.post("/", playersValidationRules, validate, addPlayer);
  *       200:
  *         description: Player updated successfully
  */
-router.put("/:id", playersUpdateValidationRules, validate, updatePlayer);
+router.put("/:id", hasRole("admin"), playersUpdateValidationRules, validate, updatePlayer);
 
 /**
  * @swagger
@@ -128,6 +130,6 @@ router.put("/:id", playersUpdateValidationRules, validate, updatePlayer);
  *       200:
  *         description: Player deleted successfully
  */
-router.delete("/:id", playersGetByIdValidatorRules, validate, deletePlayer);
+router.delete("/:id", hasRole("admin"), playersGetByIdValidatorRules, validate, deletePlayer);
 
 module.exports = router;

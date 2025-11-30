@@ -1,5 +1,4 @@
 const db = require("../db");
-const { validateMatch, validatePlayer } = require("../helpers/validateForeignKeys");
 const calculateRating = require("../helpers/calculateRating");
 
 const getStats = async (req, res) => {

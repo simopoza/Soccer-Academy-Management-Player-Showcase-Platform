@@ -8,7 +8,6 @@ const matchesValidatorRules = [
     .custom((date) => {
       const minDate = new Date('2024-01-01');
       const maxDate = new Date();
-
       if (date < minDate || date > maxDate) {
         throw new Error('Date must be realistic');
       }
@@ -17,7 +16,7 @@ const matchesValidatorRules = [
 
   check('opponent')
     .exists().withMessage('opponent is required')
-    .trim()
+    .trim().escape()
     .notEmpty().withMessage('opponent cannot be empty'),
 
   check('location')
@@ -27,7 +26,7 @@ const matchesValidatorRules = [
 
   check('match_type')
     .exists().withMessage('match_type is required')
-    .trim()
+    .trim().escape()
     .notEmpty().withMessage('match_type cannot be empty')
     .isIn(['Friendly', 'Officially'])
     .withMessage("Invalid type. Must be 'Friendly' or 'Officially'."),
@@ -54,7 +53,7 @@ const matchesValidatorRules = [
 const matchesUpdateValidatorRules = [
   param('id')
     .exists().withMessage('id is required')
-    .isInt({ min: 1 }).withMessage('id must be a positve integer'),
+    .isInt({ min: 1 }).withMessage('id must be a positive integer'),
 
   check('date')
     .optional()
@@ -63,7 +62,6 @@ const matchesUpdateValidatorRules = [
     .custom((date) => {
       const minDate = new Date('2024-01-01');
       const maxDate = new Date();
-
       if (date < minDate || date > maxDate) {
         throw new Error('Date must be realistic');
       }
@@ -72,7 +70,7 @@ const matchesUpdateValidatorRules = [
 
   check('opponent')
     .optional()
-    .trim()
+    .trim().escape()
     .notEmpty().withMessage('opponent cannot be empty'),
 
   check('location')
@@ -82,7 +80,7 @@ const matchesUpdateValidatorRules = [
 
   check('match_type')
     .optional()
-    .trim()
+    .trim().escape()
     .notEmpty().withMessage('match_type cannot be empty')
     .isIn(['Friendly', 'Officially'])
     .withMessage("Invalid type. Must be 'Friendly' or 'Officially'."),
@@ -106,15 +104,14 @@ const matchesUpdateValidatorRules = [
     .isInt({ min: 0 }).withMessage("opponent_goals must be a non-negative integer")
 ];
 
-
 const matchesGetByIdValidatorRules = [
   param('id')
     .exists().withMessage('id is required')
-    .isInt({ min: 1 }).withMessage('id must be a positve integer'),
+    .isInt({ min: 1 }).withMessage('id must be a positive integer'),
 ];
 
 module.exports = {
   matchesValidatorRules,
   matchesUpdateValidatorRules,
   matchesGetByIdValidatorRules
-}
+};

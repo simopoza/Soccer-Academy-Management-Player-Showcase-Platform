@@ -4,11 +4,12 @@ const teamsValidationRules = [
   check('name')
     .exists().withMessage("name is required")
     .trim()
+    .escape()
     .notEmpty().withMessage("name cannot be empty"),
 
   check('age_limit')
     .exists()
-    .isInt({ min: 9, max: 17}).withMessage("age_limit must be a number between 9 and 17"),
+    .isInt({ min: 9, max: 17 }).withMessage("age_limit must be a number between 9 and 17"),
 ];
 
 const teamsUpdateValidationRules = [
@@ -19,11 +20,12 @@ const teamsUpdateValidationRules = [
   check('name')
     .optional()
     .trim()
+    .escape()
     .notEmpty().withMessage("name cannot be empty"),
 
   check('age_limit')
     .optional()
-    .isInt({ min: 9, max: 17}).withMessage("age_limit must be a number between 9 and 17"),
+    .isInt({ min: 9, max: 17 }).withMessage("age_limit must be a number between 9 and 17"),
 ];
 
 const teamsGetByIdValidationRules = [
@@ -36,4 +38,4 @@ module.exports = {
   teamsValidationRules,
   teamsUpdateValidationRules,
   teamsGetByIdValidationRules
-}
+};

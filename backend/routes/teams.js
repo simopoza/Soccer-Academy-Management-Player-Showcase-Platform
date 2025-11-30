@@ -3,6 +3,7 @@ const router = express.Router();
 const { getTeams, getTeamById, addTeam, updateTeam, deleteTeam } = require('../controllers/teamsController');
 const validate = require("../middlewares/validate");
 const { teamsValidationRules, teamsUpdateValidationRules, teamsGetByIdValidationRules } = require('../validators/teamsValidator');
+const { hasRole } = require("../middlewares/roleMiddleware");
 
 /**
  * @swagger
@@ -13,7 +14,7 @@ const { teamsValidationRules, teamsUpdateValidationRules, teamsGetByIdValidation
  *       200:
  *         description: List of all teams
  */
-router.get('/', getTeams);
+router.get('/', hasRole("admin", "agent", "player"), getTeams);
 
 /**
  * @swagger
@@ -30,7 +31,7 @@ router.get('/', getTeams);
  *       200:
  *         description: Team data
  */
-router.get('/:id', teamsGetByIdValidationRules, validate, getTeamById);
+router.get('/:id', hasRole("admin", "agent", "player"), teamsGetByIdValidationRules, validate, getTeamById);
 
 /**
  * @swagger
@@ -52,7 +53,7 @@ router.get('/:id', teamsGetByIdValidationRules, validate, getTeamById);
  *       201:
  *         description: Team added successfully
  */
-router.post('/', teamsValidationRules, validate, addTeam);
+router.post('/', hasRole("admin"), teamsValidationRules, validate, addTeam);
 
 /**
  * @swagger
@@ -80,7 +81,7 @@ router.post('/', teamsValidationRules, validate, addTeam);
  *       200:
  *         description: Team updated successfully
  */
-router.put('/:id', teamsUpdateValidationRules, validate, updateTeam);
+router.put('/:id', hasRole("admin"), teamsUpdateValidationRules, validate, updateTeam);
 
 /**
  * @swagger
@@ -97,6 +98,6 @@ router.put('/:id', teamsUpdateValidationRules, validate, updateTeam);
  *       200:
  *         description: Team deleted successfully
  */
-router.delete('/:id', teamsGetByIdValidationRules, validate, deleteTeam);
+router.delete('/:id', hasRole("admin"), teamsGetByIdValidationRules, validate, deleteTeam);
 
 module.exports = router;
