@@ -1,6 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const db = require("./db.js");
+const ensureIndexes = require("./indexes");
 const apiRoutes = require("./routes/apiRoutes.js");
 const cors = require("cors");
 const swaggerJsDoc = require("swagger-jsdoc");
@@ -67,6 +68,11 @@ app.use((err, req, res, next) => {
 
 // **Export app before listen**
 module.exports = app;
+
+// ==========================================
+// 🔥 RUN INDEXES BEFORE SERVER STARTS
+// ==========================================
+ensureIndexes();
 
 // Only listen if this file is run directly
 if (require.main === module) {
