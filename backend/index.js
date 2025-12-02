@@ -69,12 +69,12 @@ app.use((err, req, res, next) => {
 // **Export app before listen**
 module.exports = app;
 
-// ==========================================
-// 🔥 RUN INDEXES BEFORE SERVER STARTS
-// ==========================================
-ensureIndexes();
 
 // Only listen if this file is run directly
 if (require.main === module) {
+  // ==========================================
+  // 🔥 RUN INDEXES BEFORE SERVER STARTS
+  // ==========================================
+  ensureIndexes();
   app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
 }
