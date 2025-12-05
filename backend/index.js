@@ -13,7 +13,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(express.json());
 
 // -------------------------------
 // CORS & Cookie Parser
@@ -25,6 +24,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(cookieParser());
 
+app.use(express.json());
+
 // Catch invalid JSON before routes
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
@@ -33,7 +34,12 @@ app.use((err, req, res, next) => {
   next();
 });
 
-app.use(cors());
+app.use((req, res, next) => {
+  console.log("CORS DEBUG:", req.method, req.url, req.headers.origin);
+  next();
+});
+
+
 // Swagger configuration
 const swaggerOptions = {
   swaggerDefinition: {
@@ -55,7 +61,16 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-app.use("/api/v1", apiRoutes);
+// app.use("/api/v1", () => {
+//   console.log("API v1 route accessed");
+//   apiRoutes;
+// });
+
+app.use("/api/v1", (req, res, next) => {
+  console.log("API v1 route accessed:", req.method, req.url);
+  next();
+}, apiRoutes);
+
 
 app.get("/", (req, res) => {
   res.send("Welcome to Soccer School API ⚽");
