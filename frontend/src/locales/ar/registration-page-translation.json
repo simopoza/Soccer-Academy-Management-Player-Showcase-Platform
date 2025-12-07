@@ -1,0 +1,22 @@
+{
+  "joinAcademy": "انضم إلى الأكاديمية",
+  "createAccount": "أنشئ حسابك لبدء رحلتك الكروية",
+  "firstName": "الاسم الشخصي",
+  "lastName": "الاسم العائلي",
+  "firstNamePlaceholder": "محمد",
+  "lastNamePlaceholder": "النّهري",
+  "email": "البريد الإلكتروني",
+  "password": "كلمة المرور",
+  "role": "الدور",
+  "selectRole": "اختر دورك",
+  "admin": "مشرف",
+  "player": "لاعب",
+  "agent": "وكيل",
+  "register": "تسجيل",
+  "alreadyAccount": "هل لديك حساب؟",
+  "loginHere": "سجّل الدخول من هنا",
+  "successRegister": "تم التسجيل بنجاح",
+  "successMessage": "يمكنك الآن تسجيل الدخول!",
+  "failedRegister": "فشل التسجيل",
+  "somethingWrong": "حدث خطأ ما"
+}

@@ -1,6 +1,55 @@
+// import { Box, Flex, Circle, Text, Stack } from "@chakra-ui/react";
+
+// const AuthCard = ({ title, subtitle, children }) => {
+//   return (
+//     <Flex
+//       minH="100vh"
+//       align="center"
+//       justify="center"
+//       bgGradient="linear(to-b, green.50, white)"
+//       p={4}
+//     >
+//       <Box
+//         w="full"
+//         maxW="450px"
+//         bg="white"
+//         borderRadius="lg"
+//         boxShadow="lg"
+//         p={8}
+//         textAlign="center"
+//       >
+//         {/* Logo */}
+//         <Circle size="60px" bg="green.500" mx="auto" mb={4}>
+//           {/* Placeholder icon */}
+//           <Text fontSize="2xl" color="white">⚽</Text>
+//         </Circle>
+//         {/* Title + Subtitle */}
+//         <Stack>
+//           <Text fontSize="xl" fontWeight="bold">
+//             {title}
+//           </Text>
+//           <Text fontSize="sm" color="gray.600">
+//             {subtitle}
+//           </Text>
+//         </Stack>
+//         {/* The children (form fields) */}
+//         {children}
+//       </Box>
+//     </Flex>
+//   );
+// };
+
+// export default AuthCard;
+
 import { Box, Flex, Circle, Text, Stack } from "@chakra-ui/react";
+import { useTranslation } from "react-i18next";
 
 const AuthCard = ({ title, subtitle, children }) => {
+  const { i18n } = useTranslation();
+
+  // Check if current lang is RTL
+  const isRTL = i18n.language === "ar";
+
   return (
     <Flex
       minH="100vh"
@@ -8,6 +57,7 @@ const AuthCard = ({ title, subtitle, children }) => {
       justify="center"
       bgGradient="linear(to-b, green.50, white)"
       p={4}
+      direction="column"
     >
       <Box
         w="full"
@@ -17,14 +67,15 @@ const AuthCard = ({ title, subtitle, children }) => {
         boxShadow="lg"
         p={8}
         textAlign="center"
+        dir={isRTL ? "rtl" : "ltr"}   // switch direction
       >
         {/* Logo */}
         <Circle size="60px" bg="green.500" mx="auto" mb={4}>
-          {/* Placeholder icon */}
           <Text fontSize="2xl" color="white">⚽</Text>
         </Circle>
+
         {/* Title + Subtitle */}
-        <Stack>
+        <Stack spacing={1} mb={4}>
           <Text fontSize="xl" fontWeight="bold">
             {title}
           </Text>
@@ -32,7 +83,8 @@ const AuthCard = ({ title, subtitle, children }) => {
             {subtitle}
           </Text>
         </Stack>
-        {/* The children (form fields) */}
+
+        {/* Form */}
         {children}
       </Box>
     </Flex>

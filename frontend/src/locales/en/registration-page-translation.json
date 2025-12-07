@@ -1,0 +1,22 @@
+{
+  "joinAcademy": "Join Our Academy",
+  "createAccount": "Create your account to start your football journey",
+  "firstName": "First Name",
+  "lastName": "Last Name",
+  "firstNamePlaceholder": "Mohammed",
+  "lastNamePlaceholder": "Annahri",
+  "email": "Email",
+  "password": "Password",
+  "role": "Role",
+  "selectRole": "Select your role",
+  "admin": "Admin",
+  "player": "Player",
+  "agent": "Agent",
+  "register": "Register",
+  "alreadyAccount": "Already have an account?",
+  "loginHere": "Login here",
+  "successRegister": "Registration successful",
+  "successMessage": "You can now log in!",
+  "failedRegister": "Registration failed",
+  "somethingWrong": "Something went wrong"
+}
