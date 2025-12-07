@@ -5,4 +5,14 @@ const register = async (userData) => {
   return response.data;
 };
 
-export default { register };
+const login = async (userData) => {
+  const response = await axiosInstance.post("/auth/login", userData);
+  return response.data;
+};
+
+const logout = async () => {
+  const response = await axiosInstance.post("/auth/logout");
+  return response.data;
+};
+
+export default { register, login, logout };

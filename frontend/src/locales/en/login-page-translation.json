@@ -1,0 +1,23 @@
+{
+  "loginTitle": "Login to Your Account",
+  "loginSubtitle": "Enter your credentials to access your account",
+  "email": "Email",
+  "password": "Password",
+  "emailPlaceholder": "john.doe@example.com",
+  "passwordPlaceholder": "*********",
+  "login": "Login",
+  "forgotPassword": "Forgot your password?",
+  "noAccount": "Don't have an account?",
+  "registerHere": "Register here",
+  "successLogin": "Login successful",
+  "failedLogin": "Login failed",
+  "somethingWrong": "Something went wrong",
+
+  "errors": {
+    "emailRequired": "Email is required",
+    "invalidEmail": "Invalid email format",
+    "passwordRequired": "Password is required",
+    "passwordMin": "Password must be at least 8 characters",
+    "invalidCredentials": "Invalid email or password"
+  }
+}
