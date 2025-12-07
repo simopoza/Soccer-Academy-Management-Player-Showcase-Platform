@@ -18,5 +18,22 @@
   "successRegister": "تم التسجيل بنجاح",
   "successMessage": "يمكنك الآن تسجيل الدخول!",
   "failedRegister": "فشل التسجيل",
-  "somethingWrong": "حدث خطأ ما"
+  "somethingWrong": "حدث خطأ ما",
+
+  "errors": {
+    "firstNameRequired": "الاسم الشخصي مطلوب",
+    "lastNameRequired": "الاسم العائلي مطلوب",
+    "nameTooShort": "الاسم قصير جدًا",
+    "emailRequired": "البريد الإلكتروني مطلوب",
+    "invalidEmail": "صيغة البريد الإلكتروني غير صحيحة",
+    "passwordRequired": "كلمة المرور مطلوبة",
+    "passwordMin": "يجب أن تكون كلمة المرور على الأقل 8 أحرف",
+    "uppercaseRequired": "حرف كبير",
+    "lowercaseRequired": "حرف صغير",
+    "numberRequired": "رقم",
+    "specialCharRequired": "رمز خاص",
+    "passwordStrength": "يجب أن تحتوي كلمة المرور على {{rules}}",
+    "roleRequired": "يرجى اختيار الدور",
+    "invalidRole": "دور غير صالح. يجب أن يكون: {{roles}}"
+  }
 }

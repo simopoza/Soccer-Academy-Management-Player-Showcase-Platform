@@ -18,5 +18,22 @@
   "successRegister": "Registration successful",
   "successMessage": "You can now log in!",
   "failedRegister": "Registration failed",
-  "somethingWrong": "Something went wrong"
+  "somethingWrong": "Something went wrong",
+
+  "errors": {
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required",
+    "nameTooShort": "Name is too short",
+    "emailRequired": "Email is required",
+    "invalidEmail": "Invalid email format",
+    "passwordRequired": "Password is required",
+    "passwordMin": "Password must be at least 8 characters",
+    "uppercaseRequired": "an uppercase letter",
+    "lowercaseRequired": "a lowercase letter",
+    "numberRequired": "a number",
+    "specialCharRequired": "a special character",
+    "passwordStrength": "Password must contain {{rules}}",
+    "roleRequired": "Please select a role",
+    "invalidRole": "Invalid role. Must be: {{roles}}"
+  }
 }
