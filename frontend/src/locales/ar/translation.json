@@ -18,6 +18,16 @@
   "successRegister": "تم التسجيل بنجاح",
   "successMessage": "يمكنك الآن تسجيل الدخول!",
   "failedRegister": "فشل التسجيل",
+  "loginTitle": "تسجيل الدخول إلى حسابك",
+  "loginSubtitle": "أدخل بياناتك للوصول إلى حسابك",
+  "emailPlaceholder": "john.doe@example.com",
+  "passwordPlaceholder": "*********",
+  "login": "تسجيل الدخول",
+  "forgotPassword": "هل نسيت كلمة المرور؟",
+  "noAccount": "ليس لديك حساب؟",
+  "registerHere": "سجّل هنا",
+  "successLogin": "تم تسجيل الدخول بنجاح",
+  "failedLogin": "فشل تسجيل الدخول",
   "somethingWrong": "حدث خطأ ما",
 
   "errors": {
@@ -34,6 +44,7 @@
     "specialCharRequired": "رمز خاص",
     "passwordStrength": "يجب أن تحتوي كلمة المرور على {{rules}}",
     "roleRequired": "يرجى اختيار الدور",
-    "invalidRole": "دور غير صالح. يجب أن يكون: {{roles}}"
+    "invalidRole": "دور غير صالح. يجب أن يكون: {{roles}}",
+    "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة"
   }
 }
