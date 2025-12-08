@@ -150,7 +150,7 @@ import { useNavigate } from "react-router-dom";
 
 import AuthCard from "../components/AuthCard";
 import AuthForm from "../components/AuthForm";
-import authService from "../services/authService";
+import { useAuth } from "../context/AuthContext";
 import { loginSchema } from "../utils/validationSchemas";
 import useLanguageSwitcher from "../hooks/useLanguageSwitcher";
 
@@ -158,6 +158,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const toast = useToast();
+  const { login } = useAuth(); // Use AuthContext
   const { switchLanguage, isArabic, currentLang } = useLanguageSwitcher();
 
   const resolver = useMemo(() => yupResolver(loginSchema(i18n)), [currentLang]);
@@ -176,12 +177,28 @@ const LoginPage = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await authService.login(data);
-      const user = response.user; // user object returned from backend
+      // Use AuthContext login method
+      const result = await login(data.email, data.password);
 
+      if (!result.success) {
+        // Handle login failure
+        toast({
+          title: t("failedLogin"),
+          description: result.error || t("somethingWrong"),
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      const user = result.user;
       console.log("Logged in user:", user);
-      // reset form errors and values
+
+      // Reset form
       reset();
+
+      // Show success message
       toast({
         title: t("successLogin"),
         description: t("successMessage"),
@@ -193,16 +210,16 @@ const LoginPage = () => {
       // 🔹 Role-based navigation
       switch (user.role) {
         case "player":
-          navigate("/complete-profile"); // redirect player to complete profile
+          navigate("/complete-profile");
           break;
         case "admin":
-          navigate("/admin/dashboard"); // redirect admin to dashboard
+          navigate("/admin/dashboard");
           break;
         case "agent":
-          navigate("/agent/dashboard"); // redirect agent to dashboard
+          navigate("/agent/dashboard");
           break;
         default:
-          navigate("/login"); // fallback
+          navigate("/login");
       }
     } catch (error) {
       if (error.response?.data?.errors) {
