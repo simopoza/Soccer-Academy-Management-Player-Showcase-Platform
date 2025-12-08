@@ -18,6 +18,16 @@
   "successRegister": "Registration successful",
   "successMessage": "You can now log in!",
   "failedRegister": "Registration failed",
+  "loginTitle": "Welcome Back!",
+  "loginSubtitle": "Please log in to your account",
+  "emailPlaceholder": "john.doe@example.com",
+  "passwordPlaceholder": "*********",
+  "login": "Login",
+  "forgotPassword": "Forgot your password?",
+  "noAccount": "Don't have an account?",
+  "registerHere": "Register here",
+  "successLogin": "Login successful",
+  "failedLogin": "Login failed",
   "somethingWrong": "Something went wrong",
 
   "errors": {
@@ -34,6 +44,7 @@
     "specialCharRequired": "a special character",
     "passwordStrength": "Password must contain {{rules}}",
     "roleRequired": "Please select a role",
-    "invalidRole": "Invalid role. Must be: {{roles}}"
+    "invalidRole": "Invalid role. Must be: {{roles}}",
+    "invalidCredentials": "Invalid email or password"
   }
 }

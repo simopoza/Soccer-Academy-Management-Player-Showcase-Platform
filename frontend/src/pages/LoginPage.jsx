@@ -1,46 +1,61 @@
-// import { useToast, Button, Flex, FormControl, Input } from "@chakra-ui/react";
-// import authService from "../services/authService";
 // import { useEffect, useMemo } from "react";
 // import { useForm } from "react-hook-form";
 // import { yupResolver } from "@hookform/resolvers/yup";
+// import { useToast, Button, Flex, FormControl, FormLabel, Input, FormErrorMessage, Text } from "@chakra-ui/react";
 // import { Link } from "react-router-dom";
 // import { useTranslation } from "react-i18next";
-// import { loginSchema } from "../utils/validationSchemas";
+
 // import AuthCard from "../components/AuthCard";
-// import i18next from "i18next";
+// import authService from "../services/authService";
+// import { loginSchema } from "../utils/validationSchemas";
+// import useLanguageSwitcher from "../hooks/useLanguageSwitcher";
 
 // const LoginPage = () => {
 //   const { t, i18n } = useTranslation();
 //   const toast = useToast();
+//   const { switchLanguage, isArabic, currentLang } = useLanguageSwitcher();
 
 //   // 🔹 Create resolver dynamically when language changes
-//   const resolver = useMemo(() => yupResolver(loginSchema(i18n)), [i18n.language]);
+//   const resolver = useMemo(() => yupResolver(loginSchema(i18n)), [currentLang]);
 
+//   // 🔹 React Hook Form setup
 //   const {
-//     register,
+//     register: formRegister,
 //     handleSubmit,
 //     setError,
 //     reset,
 //     formState: { errors, isSubmitting },
 //   } = useForm({ resolver });
 
-//   // Reset form values on language switch (keeps user input)
+//   // 🔹 Reset form values on language switch, keep user input
 //   useEffect(() => {
 //     reset(undefined, { keepValues: true });
-//   }, [i18n.language]);
+//   }, [currentLang]);
 
-//   const switchLanguage = () => {
-//     const newLang = i18n.language === "en" ? "ar" : "en";
-//     i18n.changeLanguage(newLang);
-//     document.body.dir = newLang === "ar" ? "rtl" : "ltr";
-//   };
-
+//   // 🔹 Form submit handler
 //   const onSubmit = async (data) => {
 //     try {
-//       await authService.login(data);
+//       const response = await authService.login(data);
+//       const user = response.user; // user object returned from backend
 
+//       console.log("Logged in user:", user);
+
+//       // 🔹 Role-based navigation
+//       switch (user.role) {
+//         case "player":
+//           navigate("/complete-profile"); // redirect player to complete profile
+//           break;
+//         case "admin":
+//           navigate("/admin/dashboard"); // redirect admin to dashboard
+//           break;
+//         case "agent":
+//           navigate("/agent/dashboard"); // redirect agent to dashboard
+//           break;
+//         default:
+//           navigate("/login"); // fallback
+//       }
 //       toast({
-//         title: t("successfulLogin"),
+//         title: t("successLogin"),
 //         description: t("successMessage"),
 //         status: "success",
 //         duration: 5000,
@@ -49,12 +64,9 @@
 //     } catch (error) {
 //       if (error.response?.data?.errors) {
 //         const fieldErrors = error.response.data.errors;
-//         Object.keys(fieldErrors).forEach((field) => {
-//           setError(field, {
-//             type: "server",
-//             message: fieldErrors[field],
-//           });
-//         });
+//         Object.keys(fieldErrors).forEach((field) =>
+//           setError(field, { type: "server", message: fieldErrors[field] })
+//         );
 //       }
 
 //       toast({
@@ -68,52 +80,60 @@
 //   };
 
 //   return (
-//     <AuthCard
-//       title={t("Welcome Back!")}
-//       subtitle={t("Please log in to your account")}
-//     >
-//       <Flex justify="flex-end">
+//     <AuthCard title={t("loginTitle")} subtitle={t("loginSubtitle")}>
+//       {/* 🔹 Language switch button */}
+//       <Flex justify="flex-end" mb={4}>
 //         <Button size="sm" variant="outline" onClick={switchLanguage}>
-//           {i18next.language === "en" ? "العربية" : "English"}
+//           {isArabic ? "English" : "العربية"}
 //         </Button>
 //       </Flex>
+
+//       {/* 🔹 Login form */}
 //       <form onSubmit={handleSubmit(onSubmit)}>
-//         <FormControl isInvalid={errors.email}>
-//           <FormLabel fontSize="sm">{t("Email")}</FormLabel>
-//           <Input
-//             placeholder="john.doe@example.com"
-//             bg="gray.50"
-//             type="email"
-//             {...register("email")}
-//           />
-//           <FormErrorMessage>{errors.email?.message}</FormErrorMessage>
-//         </FormControl>
+//         <Flex direction="column" gap={4}>
+//           {/* Email */}
+//           <FormControl isInvalid={errors.email}>
+//             <FormLabel fontSize="sm">{t("email")}</FormLabel>
+//             <Input
+//               placeholder={t("emailPlaceholder")}
+//               bg="gray.50"
+//               type="email"
+//               {...formRegister("email")}
+//             />
+//             <FormErrorMessage>{errors.email?.message}</FormErrorMessage>
+//           </FormControl>
 
-//         <FormControl mt={4} isInvalid={errors.password}>
-//           <FormLabel fontSize="sm">{t("Password")}</FormLabel>
-//           <Input
-//             placeholder="********"
-//             bg="gray.50"
-//             type="password"
-//             {...register("password")}
-//           />
-//           <FormErrorMessage>{errors.password?.message}</FormErrorMessage>
-//         </FormControl>
-//         <Button
-//           type="submit"
-//           colorScheme="green"
-//           mt={2}
-//           isLoading={isSubmitting}
-//         >
-//           {t("Log In")}
-//         </Button>
+//           {/* Password */}
+//           <FormControl isInvalid={errors.password}>
+//             <FormLabel fontSize="sm">{t("password")}</FormLabel>
+//             <Input
+//               placeholder={t("passwordPlaceholder")}
+//               bg="gray.50"
+//               type="password"
+//               {...formRegister("password")}
+//             />
+//             <FormErrorMessage>{errors.password?.message}</FormErrorMessage>
+//           </FormControl>
 
-//         <Text fontSize="sm" textAlign="center" mt={2}>
-//           {t("Don't have an account?")}
-//           <Link to="/register" style={{ color: "#2f855a", fontWeight: "500" }}>
-//             {t("Register Now")}
-//           </Link>
-//         </Text>
+//           {/* Submit button */}
+//           <Button
+//             type="submit"
+//             colorScheme="green"
+//             mt={2}
+//             isLoading={isSubmitting}
+//             isDisabled={isSubmitting} // optional: prevent double submission
+//           >
+//             {t("login")}
+//           </Button>
+
+//           {/* No account link */}
+//           <Text fontSize="sm" textAlign="center" mt={2}>
+//             {t("noAccount")}{" "}
+//             <Link to="/" style={{ color: "#2f855a", fontWeight: "500" }}>
+//               {t("registerHere")}
+//             </Link>
+//           </Text>
+//         </Flex>
 //       </form>
 //     </AuthCard>
 //   );
@@ -121,25 +141,29 @@
 
 // export default LoginPage;
 
-
-import { useToast, Button, Flex, FormControl, Input, FormLabel, FormErrorMessage, Text } from "@chakra-ui/react";
-import authService from "../services/authService";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Link } from "react-router-dom";
+import { useToast } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
-import { loginSchema } from "../utils/validationSchemas";
+import { useNavigate } from "react-router-dom";
+
 import AuthCard from "../components/AuthCard";
+import AuthForm from "../components/AuthForm";
+import authService from "../services/authService";
+import { loginSchema } from "../utils/validationSchemas";
+import useLanguageSwitcher from "../hooks/useLanguageSwitcher";
 
 const LoginPage = () => {
+  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const toast = useToast();
+  const { switchLanguage, isArabic, currentLang } = useLanguageSwitcher();
 
-  const resolver = useMemo(() => yupResolver(loginSchema(i18n)), [i18n.language]);
+  const resolver = useMemo(() => yupResolver(loginSchema(i18n)), [currentLang]);
 
   const {
-    register,
+    register: formRegister,
     handleSubmit,
     setError,
     reset,
@@ -148,17 +172,16 @@ const LoginPage = () => {
 
   useEffect(() => {
     reset(undefined, { keepValues: true });
-  }, [i18n.language]);
-
-  const switchLanguage = () => {
-    const newLang = i18n.language === "en" ? "ar" : "en";
-    i18n.changeLanguage(newLang);
-    document.body.dir = newLang === "ar" ? "rtl" : "ltr";
-  };
+  }, [currentLang]);
 
   const onSubmit = async (data) => {
     try {
-      await authService.login(data);
+      const response = await authService.login(data);
+      const user = response.user; // user object returned from backend
+
+      console.log("Logged in user:", user);
+      // reset form errors and values
+      reset();
       toast({
         title: t("successLogin"),
         description: t("successMessage"),
@@ -166,15 +189,27 @@ const LoginPage = () => {
         duration: 5000,
         isClosable: true,
       });
+
+      // 🔹 Role-based navigation
+      switch (user.role) {
+        case "player":
+          navigate("/complete-profile"); // redirect player to complete profile
+          break;
+        case "admin":
+          navigate("/admin/dashboard"); // redirect admin to dashboard
+          break;
+        case "agent":
+          navigate("/agent/dashboard"); // redirect agent to dashboard
+          break;
+        default:
+          navigate("/login"); // fallback
+      }
     } catch (error) {
       if (error.response?.data?.errors) {
         const fieldErrors = error.response.data.errors;
-        Object.keys(fieldErrors).forEach((field) => {
-          setError(field, {
-            type: "server",
-            message: fieldErrors[field],
-          });
-        });
+        Object.keys(fieldErrors).forEach((field) =>
+          setError(field, { type: "server", message: fieldErrors[field] })
+        );
       }
       toast({
         title: t("failedLogin"),
@@ -186,55 +221,24 @@ const LoginPage = () => {
     }
   };
 
+  const fields = [
+    { name: "email", label: t("email"), placeholder: "john.doe@example.com", register: formRegister("email"), error: errors.email },
+    { name: "password", label: t("password"), placeholder: "**************", type: "password", register: formRegister("password"), error: errors.password },
+  ];
+
   return (
-    <AuthCard
-      title={t("Welcome Back!")}
-      subtitle={t("Please log in to your account")}
-    >
-      <Flex justify="flex-end">
-        <Button size="sm" variant="outline" onClick={switchLanguage}>
-          {i18n.language === "en" ? "العربية" : "English"}
-        </Button>
-      </Flex>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <FormControl mt={4} isInvalid={errors.email}>
-          <FormLabel fontSize="sm">{t("email")}</FormLabel>
-          <Input
-            placeholder={t("john.doe@example.com")}
-            bg="gray.50"
-            type="email"
-            {...register("email")}
-          />
-          <FormErrorMessage>{errors.email?.message}</FormErrorMessage>
-        </FormControl>
-
-        <FormControl mt={4} isInvalid={errors.password}>
-          <FormLabel fontSize="sm">{t("password")}</FormLabel>
-          <Input
-            placeholder={t("**************")}
-            bg="gray.50"
-            type="password"
-            {...register("password")}
-          />
-          <FormErrorMessage>{errors.password?.message}</FormErrorMessage>
-        </FormControl>
-
-        <Button
-          type="submit"
-          colorScheme="green"
-          mt={2}
-          isLoading={isSubmitting}
-        >
-          {t("Log In")}
-        </Button>
-
-        <Text fontSize="sm" textAlign="center" mt={2}>
-          {t("Don't have an account?")}{" "}
-          <Link to="/" style={{ color: "#2f855a", fontWeight: "500" }}>
-            {t("Register Now")}
-          </Link>
-        </Text>
-      </form>
+    <AuthCard title={t("loginTitle")} subtitle={t("loginSubtitle")}>
+      <AuthForm
+        fields={fields}
+        onSubmit={handleSubmit(onSubmit)}
+        isSubmitting={isSubmitting}
+        switchLanguage={switchLanguage}
+        isArabic={isArabic}
+        buttonText={t("login")}
+        bottomText={t("noAccount")}
+        bottomLink="/"
+        bottomLinkText={t("registerHere")}
+      />
     </AuthCard>
   );
 };
