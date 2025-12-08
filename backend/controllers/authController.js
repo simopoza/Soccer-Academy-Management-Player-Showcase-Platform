@@ -15,8 +15,17 @@ const register = async (req, res) => {
     const hashedPassword = await hashPassword(password);
 
     const result =await db.query(
-      "INSERT INTO Users (first_name, last_name, email, password, role) VALUES (?, ?, ?, ?, ?)",
-      [first_name, last_name, email, hashedPassword, role]
+      "INSERT INTO Users (first_name, last_name, email, password, role, profile_completed) VALUES (?, ?, ?, ?, ?, ?)",
+      [
+        first_name, 
+        last_name, 
+        email, 
+        hashedPassword, 
+        role,
+        // Admin & Agent: profile_completed = true (no profile needed)
+        // Player: profile_completed = false (needs to complete profile)
+        role === 'admin' || role === 'agent' ? true : false
+      ]
     );
 
     const userId = result[0].insertId;
@@ -85,6 +94,7 @@ const login = async (req, res) => {
         last_name: existingUser[0].last_name,
         email: existingUser[0].email,
         role: existingUser[0].role,
+        profile_completed: existingUser[0].profile_completed
       },
     });
 

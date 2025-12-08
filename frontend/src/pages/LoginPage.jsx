@@ -207,10 +207,15 @@ const LoginPage = () => {
         isClosable: true,
       });
 
-      // 🔹 Role-based navigation
+      // 🔹 Role-based navigation with profile_completed check
       switch (user.role) {
         case "player":
-          navigate("/complete-profile");
+          // Check if player completed profile
+          if (user.profile_completed) {
+            navigate("/player/dashboard");  // Already completed
+          } else {
+            navigate("/complete-profile");  // First time - needs to complete
+          }
           break;
         case "admin":
           navigate("/admin/dashboard");

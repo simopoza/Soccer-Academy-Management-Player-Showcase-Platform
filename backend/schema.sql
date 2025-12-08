@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS Users (
   password VARCHAR(255) NOT NULL,
   first_name VARCHAR(255) NOT NULL,
   last_name VARCHAR(255) NOT NULL,
+  profile_completed BOOLEAN DEFAULT FALSE,
   role ENUM('admin', 'agent', 'player') NOT NULL
 );
 

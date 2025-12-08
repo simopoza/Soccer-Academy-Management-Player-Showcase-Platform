@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { getPlayers, getPlayerById, addPlayer, updatePlayer, deletePlayer } = require("../controllers/playersController");
+const { getPlayers, getPlayerById, addPlayer, updatePlayer, deletePlayer, completeProfile } = require("../controllers/playersController");
 const validate = require("../middlewares/validate");
 const { playersValidationRules, playersUpdateValidationRules,  playersGetByIdValidatorRules} = require('../validators/playersValidator');
 const { hasRole } = require("../middlewares/roleMiddleware");
@@ -114,6 +114,56 @@ router.post("/", hasRole("admin"), playersValidationRules, validate, addPlayer);
  *         description: Player updated successfully
  */
 router.put("/:id", hasRole("admin"), playersUpdateValidationRules, validate, updatePlayer);
+
+/**
+ * @swagger
+ * /players/{id}/complete-profile:
+ *   put:
+ *     summary: Complete player profile (player only, first time)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - first_name
+ *               - last_name
+ *               - date_of_birth
+ *               - position
+ *             properties:
+ *               first_name:
+ *                 type: string
+ *               last_name:
+ *                 type: string
+ *               date_of_birth:
+ *                 type: string
+ *                 format: date
+ *               height:
+ *                 type: number
+ *               weight:
+ *                 type: number
+ *               position:
+ *                 type: string
+ *               strong_foot:
+ *                 type: string
+ *               image_url:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile completed successfully
+ *       400:
+ *         description: Profile already completed or missing required fields
+ *       403:
+ *         description: Access denied
+ */
+router.put("/:id/complete-profile", hasRole("player"), playersUpdateValidationRules, validate, completeProfile);
 
 /**
  * @swagger

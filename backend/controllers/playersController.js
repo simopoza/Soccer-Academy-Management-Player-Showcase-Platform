@@ -121,10 +121,98 @@ const deletePlayer = async (req, res) => {
   }
 };
 
+const completeProfile = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+  const userRole = req.user.role;
+
+  try {
+    // Only players can complete their own profile
+    if (userRole !== 'player') {
+      return res.status(403).json({ message: "Only players can complete profile" });
+    }
+
+    // Check if player belongs to this user
+    const [player] = await db.query(
+      "SELECT p.*, u.profile_completed FROM Players p JOIN Users u ON p.user_id = u.id WHERE p.id = ? AND p.user_id = ?",
+      [id, userId]
+    );
+
+    if (player.length === 0) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    // Check if profile already completed
+    if (player[0].profile_completed) {
+      return res.status(400).json({ 
+        message: "Profile already completed. Contact admin to make changes." 
+      });
+    }
+
+    // Extract and validate required fields
+    const {
+      first_name,
+      last_name,
+      date_of_birth,
+      height,
+      weight,
+      position,
+      strong_foot,
+      image_url
+    } = req.body;
+
+    // Validate required fields
+    if (!first_name || !last_name || !date_of_birth || !position) {
+      return res.status(400).json({ 
+        message: "Missing required fields: first_name, last_name, date_of_birth, position" 
+      });
+    }
+
+    // Update player data
+    const fieldsToUpdate = {
+      first_name,
+      last_name,
+      date_of_birth,
+      position
+    };
+
+    // Add optional fields if provided
+    if (height !== undefined) fieldsToUpdate.height = height;
+    if (weight !== undefined) fieldsToUpdate.weight = weight;
+    if (strong_foot !== undefined) fieldsToUpdate.strong_foot = strong_foot;
+    if (image_url !== undefined) fieldsToUpdate.image_url = image_url;
+
+    const setClause = Object.keys(fieldsToUpdate)
+      .map(key => `${key} = ?`)
+      .join(', ');
+
+    const values = Object.values(fieldsToUpdate);
+    values.push(id);
+
+    // Update Players table
+    await db.query(`UPDATE Players SET ${setClause} WHERE id = ?`, values);
+
+    // Mark profile as completed in Users table
+    await db.query(
+      "UPDATE Users SET profile_completed = TRUE WHERE id = ?",
+      [userId]
+    );
+
+    res.status(200).json({ 
+      message: "Profile completed successfully",
+      profile_completed: true 
+    });
+  } catch (err) {
+    console.error("Error completing profile: ", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
     getPlayers,
     getPlayerById,
     addPlayer,
     updatePlayer,
     deletePlayer,
+    completeProfile,
 };
