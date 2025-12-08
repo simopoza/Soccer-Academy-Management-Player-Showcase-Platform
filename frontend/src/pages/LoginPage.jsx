@@ -35,8 +35,25 @@
 //   // 🔹 Form submit handler
 //   const onSubmit = async (data) => {
 //     try {
-//       await authService.login(data);
+//       const response = await authService.login(data);
+//       const user = response.user; // user object returned from backend
 
+//       console.log("Logged in user:", user);
+
+//       // 🔹 Role-based navigation
+//       switch (user.role) {
+//         case "player":
+//           navigate("/complete-profile"); // redirect player to complete profile
+//           break;
+//         case "admin":
+//           navigate("/admin/dashboard"); // redirect admin to dashboard
+//           break;
+//         case "agent":
+//           navigate("/agent/dashboard"); // redirect agent to dashboard
+//           break;
+//         default:
+//           navigate("/login"); // fallback
+//       }
 //       toast({
 //         title: t("successLogin"),
 //         description: t("successMessage"),
@@ -129,6 +146,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useToast } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 import AuthCard from "../components/AuthCard";
 import AuthForm from "../components/AuthForm";
@@ -137,6 +155,7 @@ import { loginSchema } from "../utils/validationSchemas";
 import useLanguageSwitcher from "../hooks/useLanguageSwitcher";
 
 const LoginPage = () => {
+  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const toast = useToast();
   const { switchLanguage, isArabic, currentLang } = useLanguageSwitcher();
@@ -157,7 +176,12 @@ const LoginPage = () => {
 
   const onSubmit = async (data) => {
     try {
-      await authService.login(data);
+      const response = await authService.login(data);
+      const user = response.user; // user object returned from backend
+
+      console.log("Logged in user:", user);
+      // reset form errors and values
+      reset();
       toast({
         title: t("successLogin"),
         description: t("successMessage"),
@@ -165,6 +189,21 @@ const LoginPage = () => {
         duration: 5000,
         isClosable: true,
       });
+
+      // 🔹 Role-based navigation
+      switch (user.role) {
+        case "player":
+          navigate("/complete-profile"); // redirect player to complete profile
+          break;
+        case "admin":
+          navigate("/admin/dashboard"); // redirect admin to dashboard
+          break;
+        case "agent":
+          navigate("/agent/dashboard"); // redirect agent to dashboard
+          break;
+        default:
+          navigate("/login"); // fallback
+      }
     } catch (error) {
       if (error.response?.data?.errors) {
         const fieldErrors = error.response.data.errors;

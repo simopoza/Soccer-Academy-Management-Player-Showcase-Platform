@@ -200,7 +200,9 @@ const RegisterPage = () => {
 
   const onSubmit = async (data) => {
     try {
-      await authService.register(data);
+      const response = await authService.register(data);
+      const user = response.user; // user object returned from backend
+
       toast({
         title: t("successRegister"),
         description: t("successMessage"),
@@ -208,7 +210,21 @@ const RegisterPage = () => {
         duration: 5000,
         isClosable: true,
       });
-      navigate("/login");
+
+      // 🔹 Role-based navigation
+      switch (user.role) {
+        case "player":
+          navigate("/complete-profile"); // redirect player to complete profile
+          break;
+        case "admin":
+          navigate("/admin/dashboard"); // redirect admin to dashboard
+          break;
+        case "agent":
+          navigate("/agent/dashboard"); // redirect agent to dashboard
+          break;
+        default:
+          navigate("/login"); // fallback
+      }
     } catch (error) {
       if (error.response?.data?.errors) {
         const fieldErrors = error.response.data.errors;
