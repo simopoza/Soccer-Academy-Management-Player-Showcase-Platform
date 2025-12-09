@@ -6,6 +6,13 @@ const register = async (req, res) => {
   try {
     const { first_name, last_name, email, password, role } = req.body;
 
+      // 1. Prevent admin registration
+    if (role === 'admin') {
+      return res.status(400).json({ 
+        message: "Admin accounts cannot be created via registration. Contact existing admin." 
+      });
+    }
+
     const [ existingUsers ] = await db.query("SELECT email FROM Users WHERE email = ?", [email]);
     
     if (existingUsers.length > 0) {
@@ -14,8 +21,8 @@ const register = async (req, res) => {
 
     const hashedPassword = await hashPassword(password);
 
-    const result =await db.query(
-      "INSERT INTO Users (first_name, last_name, email, password, role, profile_completed) VALUES (?, ?, ?, ?, ?, ?)",
+    const result = await db.query(
+      "INSERT INTO Users (first_name, last_name, email, password, role, status, profile_completed) VALUES (?, ?, ?, ?, ?, 'pending', ?)",
       [
         first_name, 
         last_name, 
@@ -38,8 +45,8 @@ const register = async (req, res) => {
     };
 
     res.status(201).json({
-      message: "User registered successfully",
-      user: {userId, first_name, last_name, email, role}
+      message: "Account created successfully. Please wait for admin approval before logging in.",
+      user: { userId, first_name, last_name, email, role, status: 'pending' }
     });
   }  catch (error) {
     console.error("Error in register:", error);
@@ -64,6 +71,21 @@ const login = async (req, res) => {
     
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials." });
+    }
+
+    // 4. Check approval status (AFTER password verification)
+    if (existingUser[0].status === 'pending') {
+      return res.status(403).json({ 
+        message: "Your account is pending approval. You will receive an email once approved.",
+        status: 'pending'
+      });
+    }
+
+    if (existingUser[0].status === 'rejected') {
+      return res.status(403).json({ 
+        message: "Your account was not approved.",
+        status: 'rejected'
+      });
     }
 
     const accessToken = generateAccessToken(existingUser[0]);

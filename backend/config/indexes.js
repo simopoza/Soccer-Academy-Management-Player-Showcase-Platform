@@ -1,5 +1,5 @@
 // indexes.js
-const db = require("./db");
+const db = require("../db");
 
 const DEFAULT_INDEXES = [
   // =====================
@@ -9,6 +9,11 @@ const DEFAULT_INDEXES = [
     name: "idx_users_role",
     table: "Users",
     column: "role",
+  },
+  {
+    name: "idx_users_status",
+    table: "Users",
+    column: "status",
   },
 
   // =====================

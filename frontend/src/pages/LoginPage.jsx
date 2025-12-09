@@ -201,9 +201,9 @@ const LoginPage = () => {
       // Show success message
       toast({
         title: t("successLogin"),
-        description: t("successMessage"),
+        description: t("loginSuccessMessage"),
         status: "success",
-        duration: 5000,
+        duration: 3000,
         isClosable: true,
       });
 
@@ -227,17 +227,49 @@ const LoginPage = () => {
           navigate("/login");
       }
     } catch (error) {
+      // Handle validation errors
       if (error.response?.data?.errors) {
         const fieldErrors = error.response.data.errors;
         Object.keys(fieldErrors).forEach((field) =>
           setError(field, { type: "server", message: fieldErrors[field] })
         );
       }
+
+      // Handle different status codes
+      const statusCode = error.response?.status;
+      const responseData = error.response?.data;
+      
+      let toastTitle = t("failedLogin");
+      let toastDescription = t("somethingWrong");
+      let toastStatus = "error";
+
+      if (statusCode === 403) {
+        // Check if it's a status-related error
+        if (responseData?.status === 'pending') {
+          toastTitle = "Account Pending Approval";
+          toastDescription = "Your account is pending admin approval. You will receive an email once approved.";
+          toastStatus = "warning";
+        } else if (responseData?.status === 'rejected') {
+          toastTitle = "Account Not Approved";
+          toastDescription = "Your account was not approved. Please contact the administrator for more information.";
+          toastStatus = "error";
+        } else {
+          // Generic 403 error
+          toastDescription = responseData?.message || "Access denied.";
+        }
+      } else if (statusCode === 401) {
+        toastTitle = "Login Failed";
+        toastDescription = "Invalid email or password. Please try again.";
+      } else {
+        // Other errors (500, network errors, etc.)
+        toastDescription = responseData?.message || t("somethingWrong");
+      }
+
       toast({
-        title: t("failedLogin"),
-        description: error.response?.data?.message || t("somethingWrong"),
-        status: "error",
-        duration: 5000,
+        title: toastTitle,
+        description: toastDescription,
+        status: toastStatus,
+        duration: 7000,
         isClosable: true,
       });
     }

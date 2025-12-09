@@ -200,31 +200,24 @@ const RegisterPage = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await authService.register(data);
-      const user = response.user; // user object returned from backend
+      await authService.register(data);
 
+      // Show success message with approval info
       toast({
         title: t("successRegister"),
         description: t("successMessage"),
         status: "success",
-        duration: 5000,
+        duration: 8000, // Longer duration so user can read the message
         isClosable: true,
       });
 
-      // 🔹 Role-based navigation
-      switch (user.role) {
-        case "player":
-          navigate("/complete-profile"); // redirect player to complete profile
-          break;
-        case "admin":
-          navigate("/admin/dashboard"); // redirect admin to dashboard
-          break;
-        case "agent":
-          navigate("/agent/dashboard"); // redirect agent to dashboard
-          break;
-        default:
-          navigate("/login"); // fallback
-      }
+      // Reset form
+      reset();
+
+      // Redirect to login page (user can't login yet, but they know where to go)
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500); // Small delay so user can read the success message
     } catch (error) {
       if (error.response?.data?.errors) {
         const fieldErrors = error.response.data.errors;
@@ -232,11 +225,27 @@ const RegisterPage = () => {
           setError(field, { type: "server", message: fieldErrors[field] })
         );
       }
+
+      // Handle specific error cases
+      const statusCode = error.response?.status;
+      const responseData = error.response?.data;
+      
+      let toastTitle = t("failedRegister");
+      let toastDescription = t("somethingWrong");
+
+      if (statusCode === 400 && responseData?.message?.includes("admin")) {
+        // Trying to register as admin
+        toastTitle = t("registrationNotAllowed");
+        toastDescription = t("adminRegistrationError");
+      } else {
+        toastDescription = responseData?.message || t("somethingWrong");
+      }
+
       toast({
-        title: t("failedRegister"),
-        description: error.response?.data?.message || t("somethingWrong"),
+        title: toastTitle,
+        description: toastDescription,
         status: "error",
-        duration: 5000,
+        duration: 7000,
         isClosable: true,
       });
     }
@@ -255,7 +264,6 @@ const RegisterPage = () => {
     { name: "password", label: t("password"), placeholder: "*********", type: "password", register: formRegister("password"), error: errors.password },
     { name: "role", label: t("role"), component: "select", placeholder: t("selectRole"), register: formRegister("role"), error: errors.role,
       options: [
-        { value: "admin", label: t("admin") },
         { value: "player", label: t("player") },
         { value: "agent", label: t("agent") },
       ],

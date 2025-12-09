@@ -16,8 +16,13 @@ CREATE TABLE IF NOT EXISTS Users (
   password VARCHAR(255) NOT NULL,
   first_name VARCHAR(255) NOT NULL,
   last_name VARCHAR(255) NOT NULL,
+  role ENUM('admin', 'agent', 'player') NOT NULL,
+  status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+  approved_by INT NULL,
+  approved_at DATETIME NULL,
   profile_completed BOOLEAN DEFAULT FALSE,
-  role ENUM('admin', 'agent', 'player') NOT NULL
+
+  FOREIGN KEY (approved_by) REFERENCES Users(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- =====================

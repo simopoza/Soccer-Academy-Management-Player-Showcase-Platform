@@ -8,11 +8,13 @@ const matchesRoutes = require("./matches");
 const statsRoutes = require("./stats");
 const userRoutes = require("./user");
 const authRoutes = require("./auth");
+const adminRoutes = require('./admin');
 
 router.use("/auth", authRoutes);
 router.use("/users", auth, userRoutes);
 router.use("/players", auth, playersRoutes);
 router.use("/teams", auth, teamsRoutes);
+router.use("/admin", auth, adminRoutes);
 router.use("/matches", auth, matchesRoutes);
 router.use("/stats", auth, statsRoutes);
 
