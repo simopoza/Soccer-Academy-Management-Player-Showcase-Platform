@@ -13,11 +13,11 @@ const playersValidationRules = [
 
   check('height')
     .exists()
-    .isInt({ min: 1 }).withMessage("Height must be a number"),
+    .isFloat({ min: 1 }).withMessage("Height must be a positive number"),
 
   check('weight')
     .exists()
-    .isInt({ min: 1 }).withMessage("Weight must be a number"),
+    .isFloat({ min: 1 }).withMessage("Weight must be a positive number"),
 
   check('position')
     .exists()
@@ -86,11 +86,11 @@ const playersUpdateValidationRules = [
 
   check('height')
     .optional()
-    .isInt({ min: 1 }).withMessage("Height must be a number"),
+    .isFloat({ min: 1 }).withMessage("Height must be a positive number"),
 
   check('weight')
     .optional()
-    .isInt({ min: 1 }).withMessage("Weight must be a number"),
+    .isFloat({ min: 1 }).withMessage("Weight must be a positive number"),
 
   check('position')
     .optional()
