@@ -39,6 +39,14 @@ const AdminDashboardPage = () => {
       color: "orange",
       disabled: true,
     },
+    {
+      title: t("analyticsReports") || "Analytics & Reports",
+      description: t("analyticsReportsDesc") || "View performance analytics and detailed reports",
+      icon: "📊",
+      path: "/admin/analytics",
+      color: "teal",
+      // disabled: true,
+    },
   ];
 
   return (

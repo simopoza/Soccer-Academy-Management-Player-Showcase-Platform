@@ -4,6 +4,7 @@ import LoginPage from "../pages/LoginPage";
 import CompleteProfilePage from "../pages/CompleteProfilePage";
 import AdminDashboard from "../pages/AdminDashboardPage";
 import AdminUserManagementPage from "../pages/AdminUserManagementPage";
+import AdminAnalyticsPage from "../pages/AdminAnalyticsPage";
 import AgentDashboard from "../pages/AgentDashboardPage";
 import ProtectedRoute from "../components/ProtectedRoute";
 import RoleBasedRoute from "../components/RoleBasedRoute";
@@ -39,6 +40,14 @@ function AppRoutes() {
         element={
           <RoleBasedRoute allowedRoles={["admin"]}>
             <AdminUserManagementPage />
+          </RoleBasedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/analytics" 
+        element={
+          <RoleBasedRoute allowedRoles={["admin"]}>
+            <AdminAnalyticsPage />
           </RoleBasedRoute>
         } 
       />
