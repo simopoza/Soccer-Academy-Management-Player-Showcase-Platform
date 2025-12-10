@@ -1,6 +1,13 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Create transporter with Gmail
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 const sendApprovalEmail = async (email, firstName) => {
   try {
@@ -8,8 +15,8 @@ const sendApprovalEmail = async (email, firstName) => {
 
     const loginLink = `${process.env.FRONTEND_URL}/login`;
 
-    const { data, error } = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'Soccer Academy <onboarding@resend.dev>',
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || 'Soccer Academy <mohammedannahri18@gmail.com>',
       to: email,
       subject: 'Your Account Has Been Approved! ✅',
       html: `
@@ -28,17 +35,13 @@ const sendApprovalEmail = async (email, firstName) => {
           </p>
         </div>
       `,
-    });
+    };
 
-    if (error) {
-      console.error('❌ Error sending approval email:', error);
-      return false;
-    }
-
-    console.log('✅ Approval email sent successfully:', data);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Approval email sent successfully:', info.messageId);
     return true;
   } catch (error) {
-    console.error('❌ Exception sending approval email:', error);
+    console.error('❌ Error sending approval email:', error);
     return false;
   }
 };
@@ -47,8 +50,8 @@ const sendRejectionEmail = async (email, firstName) => {
   try {
     console.log(`📧 Sending rejection email to: ${email}`);
     
-    const { data, error } = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'Soccer Academy <onboarding@resend.dev>',
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || 'Soccer Academy <mohammedannahri18@gmail.com>',
       to: email,
       subject: 'Account Registration Update',
       html: `
@@ -64,17 +67,13 @@ const sendRejectionEmail = async (email, firstName) => {
           </p>
         </div>
       `,
-    });
+    };
 
-    if (error) {
-      console.error('❌ Error sending rejection email:', error);
-      return false;
-    }
-
-    console.log('✅ Rejection email sent successfully:', data);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Rejection email sent successfully:', info.messageId);
     return true;
   } catch (error) {
-    console.error('❌ Exception sending rejection email:', error);
+    console.error('❌ Error sending rejection email:', error);
     return false;
   }
 };
