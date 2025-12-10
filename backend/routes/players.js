@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const { getPlayers, getPlayerById, addPlayer, updatePlayer, deletePlayer, completeProfile } = require("../controllers/playersController");
+const { getPlayers, getPlayerById, addPlayer, updatePlayer, deletePlayer, completeProfile, getCurrentPlayer } = require("../controllers/playersController");
 const validate = require("../middlewares/validate");
-const { playersValidationRules, playersUpdateValidationRules,  playersGetByIdValidatorRules} = require('../validators/playersValidator');
+const { playersValidationRules, playersUpdateValidationRules, playersGetByIdValidatorRules, completeProfileValidationRules } = require('../validators/playersValidator');
 const { hasRole } = require("../middlewares/roleMiddleware");
 
 /**
@@ -15,6 +15,17 @@ const { hasRole } = require("../middlewares/roleMiddleware");
  *         description: List of all players
  */
 router.get("/", hasRole("admin", "agent", "player"), getPlayers);
+
+/**
+ * @swagger
+ * /players/me:
+ *   get:
+ *     summary: Get current logged-in player's info
+ *     responses:
+ *       200:
+ *         description: Current player data
+ */
+router.get("/me", hasRole("player"), getCurrentPlayer);
 
 /**
  * @swagger
@@ -163,7 +174,7 @@ router.put("/:id", hasRole("admin"), playersUpdateValidationRules, validate, upd
  *       403:
  *         description: Access denied
  */
-router.put("/:id/complete-profile", hasRole("player"), playersUpdateValidationRules, validate, completeProfile);
+router.put("/:id/complete-profile", hasRole("player"), completeProfileValidationRules, validate, completeProfile);
 
 /**
  * @swagger

@@ -1,0 +1,22 @@
+{
+  "completeProfile": "أكمل ملفك الشخصي",
+  "tellUsAboutYou": "أخبرنا المزيد عن رحلتك في كرة القدم",
+  "fillAllFields": "يرجى ملء جميع الحقول المطلوبة",
+  "dateOfBirth": "تاريخ الميلاد",
+  "team": "الفريق",
+  "selectTeam": "اختر فريقك",
+  "position": "المركز",
+  "selectPosition": "اختر مركزك",
+  "height": "الطول",
+  "weight": "الوزن",
+  "strongFoot": "القدم الأقوى",
+  "selectFoot": "اختر قدمك الأقوى",
+  "profilePhoto": "صورة الملف الشخصي",
+  "optional": "اختياري",
+  "uploadPhoto": "رفع صورة",
+  "changePhoto": "تغيير الصورة",
+  "success": "نجاح",
+  "profileCompleted": "تم إكمال الملف الشخصي بنجاح!",
+  "error": "خطأ",
+  "somethingWrong": "حدث خطأ ما"
+}

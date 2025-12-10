@@ -1,0 +1,22 @@
+{
+  "completeProfile": "Complete Your Profile",
+  "tellUsAboutYou": "Tell us more about your football journey",
+  "fillAllFields": "Please fill in all required fields",
+  "dateOfBirth": "Date of Birth",
+  "team": "Team",
+  "selectTeam": "Select your team",
+  "position": "Position",
+  "selectPosition": "Select your position",
+  "height": "Height",
+  "weight": "Weight",
+  "strongFoot": "Strong Foot",
+  "selectFoot": "Select your strong foot",
+  "profilePhoto": "Profile Photo",
+  "optional": "Optional",
+  "uploadPhoto": "Upload Photo",
+  "changePhoto": "Change Photo",
+  "success": "Success",
+  "profileCompleted": "Profile completed successfully!",
+  "error": "Error",
+  "somethingWrong": "Something went wrong"
+}

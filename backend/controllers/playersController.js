@@ -36,6 +36,26 @@ const getPlayerById = async (req, res) => {
   }
 };
 
+const getCurrentPlayer = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM Players WHERE user_id = ?",
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Player profile not found" });
+    }
+
+    res.status(200).json(rows[0]);
+  } catch (err) {
+    console.error("Error fetching current player:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 const addPlayer = async (req, res) => {
   const {
     first_name,
@@ -126,6 +146,8 @@ const completeProfile = async (req, res) => {
   const userId = req.user.id;
   const userRole = req.user.role;
 
+  console.log("User attempting to complete profile:", userId, "for player ID:", id);
+
   try {
     // Only players can complete their own profile
     if (userRole !== 'player') {
@@ -149,11 +171,10 @@ const completeProfile = async (req, res) => {
       });
     }
 
-    // Extract and validate required fields
+    // Extract fields (already validated by middleware)
     const {
-      first_name,
-      last_name,
       date_of_birth,
+      team_id,
       height,
       weight,
       position,
@@ -161,26 +182,18 @@ const completeProfile = async (req, res) => {
       image_url
     } = req.body;
 
-    // Validate required fields
-    if (!first_name || !last_name || !date_of_birth || !position) {
-      return res.status(400).json({ 
-        message: "Missing required fields: first_name, last_name, date_of_birth, position" 
-      });
-    }
-
     // Update player data
     const fieldsToUpdate = {
-      first_name,
-      last_name,
       date_of_birth,
-      position
+      team_id,
+      position,
+      height,
+      weight,
+      strong_foot
     };
 
-    // Add optional fields if provided
-    if (height !== undefined) fieldsToUpdate.height = height;
-    if (weight !== undefined) fieldsToUpdate.weight = weight;
-    if (strong_foot !== undefined) fieldsToUpdate.strong_foot = strong_foot;
-    if (image_url !== undefined) fieldsToUpdate.image_url = image_url;
+    // Add optional image_url if provided
+    if (image_url) fieldsToUpdate.image_url = image_url;
 
     const setClause = Object.keys(fieldsToUpdate)
       .map(key => `${key} = ?`)
@@ -189,6 +202,10 @@ const completeProfile = async (req, res) => {
     const values = Object.values(fieldsToUpdate);
     values.push(id);
 
+    console.log("Completing profile for player ID:", id);
+    console.log("Fields to update:", fieldsToUpdate);
+    console.log("SQL Set Clause:", setClause);
+    console.log("Values:", values);
     // Update Players table
     await db.query(`UPDATE Players SET ${setClause} WHERE id = ?`, values);
 
@@ -211,6 +228,7 @@ const completeProfile = async (req, res) => {
 module.exports = {
     getPlayers,
     getPlayerById,
+    getCurrentPlayer,
     addPlayer,
     updatePlayer,
     deletePlayer,

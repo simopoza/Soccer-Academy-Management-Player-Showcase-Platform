@@ -5,6 +5,7 @@ import CompleteProfilePage from "../pages/CompleteProfilePage";
 import AdminDashboard from "../pages/AdminDashboardPage";
 import AdminUserManagementPage from "../pages/AdminUserManagementPage";
 import AdminAnalyticsPage from "../pages/AdminAnalyticsPage";
+import PlayerDashboardPage from "../pages/PlayerDashboardPage";
 import AgentDashboard from "../pages/AgentDashboardPage";
 import ProtectedRoute from "../components/ProtectedRoute";
 import RoleBasedRoute from "../components/RoleBasedRoute";
@@ -48,6 +49,16 @@ function AppRoutes() {
         element={
           <RoleBasedRoute allowedRoles={["admin"]}>
             <AdminAnalyticsPage />
+          </RoleBasedRoute>
+        } 
+      />
+      
+      {/* Player only routes */}
+      <Route 
+        path="/player/dashboard" 
+        element={
+          <RoleBasedRoute allowedRoles={["player"]}>
+            <PlayerDashboardPage />
           </RoleBasedRoute>
         } 
       />

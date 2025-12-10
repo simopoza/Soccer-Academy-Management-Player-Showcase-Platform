@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS Players (
   height DECIMAL(4,1) NULL,
   weight DECIMAL(4,1) NULL,
   strong_foot ENUM('Left','Right') NULL,
-  image_url VARCHAR(255) NULL,
+  image_url TEXT NULL,
 
   -- Position optionally NULL (recommended)
   position ENUM('GK','CB','LB','RB','CDM','CM','CAM','LW','RW','ST') NULL,

@@ -30,10 +30,22 @@ const playersValidationRules = [
     .withMessage("Invalid strong_foot."),
 
   check('image_url')
-    .optional()
-    .isString().withMessage("Image URL must be a string")
-    .isURL().withMessage('Must be a valid URL')
-    .matches(/\.(jpg|jpeg|png|gif|webp)$/i).withMessage('Must be an image URL'),
+    .optional({ nullable: true, checkFalsy: true })
+    .custom((value) => {
+      // Skip if null, undefined, or empty
+      if (!value) return true;
+      
+      // Allow base64 data URIs or regular URLs
+      if (value.startsWith('data:image/')) {
+        return true;
+      }
+      // Validate as URL
+      const urlPattern = /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i;
+      if (!urlPattern.test(value)) {
+        throw new Error('Must be a valid image URL or base64 data URI');
+      }
+      return true;
+    }),
 
   check('date_of_birth')
     .optional()
@@ -103,10 +115,22 @@ const playersUpdateValidationRules = [
     .withMessage("Invalid strong_foot."),
 
   check('image_url')
-    .optional()
-    .isString().withMessage("Image URL must be a string")
-    .isURL().withMessage('Must be a valid URL')
-    .matches(/\.(jpg|jpeg|png|gif|webp)$/i).withMessage('Must be an image URL'),
+    .optional({ nullable: true, checkFalsy: true })
+    .custom((value) => {
+      // Skip if null, undefined, or empty
+      if (!value) return true;
+      
+      // Allow base64 data URIs or regular URLs
+      if (value.startsWith('data:image/')) {
+        return true;
+      }
+      // Validate as URL
+      const urlPattern = /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i;
+      if (!urlPattern.test(value)) {
+        throw new Error('Must be a valid image URL or base64 data URI');
+      }
+      return true;
+    }),
 
   check('date_of_birth')
     .optional()
@@ -148,8 +172,74 @@ const playersGetByIdValidatorRules = [
     .isInt({ min: 1 }).withMessage('id must be a positive integer'),
 ];
 
+const completeProfileValidationRules = [
+  param('id')
+    .exists().withMessage('id is required')
+    .isInt({ min: 1 }).withMessage('id must be a positive integer'),
+
+  check('date_of_birth')
+    .exists().withMessage('date_of_birth is required')
+    .isISO8601().withMessage('Must be a valid date')
+    .toDate()
+    .custom((date) => {
+      const minDate = new Date('1900-01-01');
+      const maxDate = new Date();
+      if (date < minDate || date > maxDate) {
+        throw new Error('Date of birth must be a realistic date');
+      }
+      return true;
+    }),
+
+  check('team_id')
+    .exists().withMessage('team_id is required')
+    .isInt({ min: 1 }).withMessage('team_id must be a positive integer')
+    .custom(async (team_id) => {
+      const { validateTeam } = require('../helpers/validateForeignKeys');
+      const exists = await validateTeam(team_id);
+      if (!exists) throw new Error('Invalid team_id');
+      return true;
+    }),
+
+  check('position')
+    .exists().withMessage('position is required')
+    .isIn(['GK', 'CB', 'LB', 'RB', 'CDM', 'CM', 'CAM', 'LW', 'RW', 'ST'])
+    .withMessage("Invalid position."),
+
+  check('height')
+    .exists().withMessage('height is required')
+    .isFloat({ min: 1 }).withMessage("Height must be a positive number"),
+
+  check('weight')
+    .exists().withMessage('weight is required')
+    .isFloat({ min: 1 }).withMessage("Weight must be a positive number"),
+
+  check('strong_foot')
+    .exists().withMessage('strong_foot is required')
+    .isIn(['Left', 'Right'])
+    .withMessage("Invalid strong_foot."),
+
+  check('image_url')
+    .optional({ nullable: true, checkFalsy: true })
+    .custom((value) => {
+      // Skip if null, undefined, or empty
+      if (!value) return true;
+      
+      // Allow base64 data URIs or regular URLs
+      if (value.startsWith('data:image/')) {
+        return true;
+      }
+      // Validate as URL
+      const urlPattern = /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i;
+      if (!urlPattern.test(value)) {
+        throw new Error('Must be a valid image URL or base64 data URI');
+      }
+      return true;
+    }),
+];
+
 module.exports = {
   playersValidationRules,
   playersUpdateValidationRules,
-  playersGetByIdValidatorRules
+  playersGetByIdValidatorRules,
+  completeProfileValidationRules
 };
