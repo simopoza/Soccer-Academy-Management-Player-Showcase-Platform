@@ -49,7 +49,31 @@ const loginValidationRules = [
     .notEmpty().withMessage('password cannot be empty'),
 ];
 
+const forgetPasswordValidationRules = [
+  check('email')
+    .exists().withMessage('email is required')
+    .trim()
+    .normalizeEmail()
+    .notEmpty().withMessage('email cannot be empty')
+    .isEmail().withMessage('Must be a valid email address'),
+];
+
+const resetPasswordValidationRules = [
+  check('token')
+    .exists().withMessage('token is required')
+    .notEmpty().withMessage('token cannot be empty'),
+
+  check('newPassword')
+    .exists().withMessage('newPassword is required')
+    .notEmpty().withMessage('newPassword cannot be empty')
+    .isLength({ min: 8 }).withMessage('New password must be at least 8 characters long')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/)
+    .withMessage('New password must contain uppercase, lowercase, number, and special character'),
+];
+
 module.exports = {
   registerValidationRules,
   loginValidationRules,
+  forgetPasswordValidationRules,
+  resetPasswordValidationRules,
 };

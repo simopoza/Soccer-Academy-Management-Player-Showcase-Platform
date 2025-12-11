@@ -78,7 +78,41 @@ const sendRejectionEmail = async (email, firstName) => {
   }
 };
 
+const sendResetEmail = async (email, resetToken) => {
+  try {
+    console.log(`📧 Sending password reset email to: ${email}`);
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || 'Soccer Academy <mohammedannahri18@gmail.com>',
+      to: email,
+      subject: 'Password Reset Request',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">Password Reset Request</h2>
+          <p>You requested a password reset. Click the link below to reset your password:</p>
+          <a href="${resetLink}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; margin: 16px 0;">
+            Reset Password
+          </a>
+          <p>If you did not request this, please ignore this email.</p>
+          <p style="color: #666; margin-top: 32px;">
+            Best regards,<br/>
+            Soccer Academy Team
+          </p>
+        </div>
+      `,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Password reset email sent successfully:', info.messageId);
+    return true;
+  } catch (error) {
+    console.error('❌ Error sending password reset email:', error);
+    return false;
+  }
+};
+
 module.exports = {
   sendApprovalEmail,
-  sendRejectionEmail
+  sendRejectionEmail,
+  sendResetEmail
 };

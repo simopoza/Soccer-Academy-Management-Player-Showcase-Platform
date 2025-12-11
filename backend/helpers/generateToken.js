@@ -29,7 +29,13 @@ const generateRefreshToken = (user) => {
   );
 };
 
+const generateResetToken = () => {
+  const token = require('crypto').randomBytes(32).toString('hex');
+  return token;
+}
+
 module.exports = {
   generateAccessToken,
-  generateRefreshToken
+  generateRefreshToken,
+  generateResetToken
 };

@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const { register, login, logout } = require("../controllers/authController");
+const { register, login, forgetPassword, resetPassword, verifyResetToken, logout } = require("../controllers/authController");
 const  validate  = require("../middlewares/validate");
-const { registerValidationRules, loginValidationRules } = require("../validators/authValidator");
+const { registerValidationRules, loginValidationRules, forgetPasswordValidationRules, resetPasswordValidationRules } = require("../validators/authValidator");
 const auth = require('../middlewares/authMiddleware');
 const { registerLimiter, loginLimiter } = require("../middlewares/rateLimitMiddleware");
 
@@ -58,6 +58,12 @@ router.post("/register", registerLimiter, registerValidationRules, validate, reg
  *         description: User logged in successfully
  */
 router.post("/login", loginLimiter, loginValidationRules, validate, login);
+
+router.post("/forgot-password", forgetPasswordValidationRules, validate, forgetPassword);
+
+router.post("/reset-password", resetPasswordValidationRules, validate, resetPassword);
+
+router.get("/verify-reset-token/:token", verifyResetToken);
 
 /**
  * @swagger

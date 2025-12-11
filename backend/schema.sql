@@ -107,3 +107,17 @@ CREATE TABLE IF NOT EXISTS Stats (
       ON DELETE CASCADE
       ON UPDATE CASCADE
 );
+
+-- =====================
+-- Table: PasswordResets
+-- =====================
+CREATE TABLE PasswordResets (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  token VARCHAR(255) UNIQUE NOT NULL,
+  expires_at DATETIME NOT NULL,
+  used BOOLEAN DEFAULT FALSE,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+);
+

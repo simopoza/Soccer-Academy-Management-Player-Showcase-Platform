@@ -1,6 +1,7 @@
 const db = require('../db');
 const { hashPassword, comparePassword } = require('../helpers/hashPassword');
-const { generateAccessToken, generateRefreshToken } = require('../helpers/generateToken');
+const { generateAccessToken, generateRefreshToken, generateResetToken } = require('../helpers/generateToken');
+const { sendResetEmail } = require('../helpers/emailService');
 
 const register = async (req, res) => {
   try {
@@ -150,8 +151,116 @@ const logout = (req, res) => {
   }
 };
 
+const forgetPassword = async (req, res) => {
+  const { email } = req.body;
+  
+  try {
+    const [ users ] = await db.query("SELECT id, first_name FROM Users WHERE email = ?", [email]);
+    if (users.length === 0) {
+      return res.status(200).json({ message: "If that email exists, you'll receive a reset link" });
+    }
+
+    const user = users[0];
+
+    const resetToken = generateResetToken();
+    const resetTokenExpiration = new Date(Date.now() + 15 * 60 * 1000); // 15 min from now
+
+    // Delete any existing reset tokens for this user
+    await db.query(
+      "DELETE FROM PasswordResets WHERE user_id = ?",
+      [user.id]
+    );
+
+    // Insert new reset token
+    await db.query(
+      "INSERT INTO PasswordResets (user_id, token, expires_at) VALUES (?, ?, ?)",
+      [user.id, resetToken, resetTokenExpiration]
+    );
+
+    await sendResetEmail(email, resetToken);
+
+    res.status(200).json({ message: "If that email exists, you'll receive a reset link" });
+  } catch (error) {
+    console.error("Error in forgetPassword:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  const { token, newPassword, confirmNewPassword } = req.body;
+
+  if (newPassword !== confirmNewPassword) {
+    return res.status(400).json({ message: "Passwords do not match" });
+  }
+
+  try {
+    const [ rows ] = await db.query(
+      "SELECT user_id, expires_at, used FROM PasswordResets WHERE token = ? AND used = FALSE",
+      [token]
+    );
+
+    if (rows.length === 0) {
+      return res.status(400).json({ message: "Invalid or expired reset token" });
+    }
+
+    const resetRecord = rows[0];
+    const now = new Date();
+
+    if (now > new Date(resetRecord.expires_at)) {
+      return res.status(400).json({ message: "Invalid or expired reset token" });
+    }
+
+    const hashedPassword = await hashPassword(newPassword);
+
+    await db.query(
+      "UPDATE Users SET password = ? WHERE id = ?",
+      [hashedPassword, resetRecord.user_id]
+    );
+
+    await db.query(
+      "UPDATE PasswordResets SET used = TRUE WHERE token = ?",
+      [token]
+    );
+
+    res.status(200).json({ message: "Password has been reset successfully" }); 
+  } catch (error) {
+    console.error("Error in resetPassword:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const verifyResetToken = async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    const [ rows ] = await db.query(
+      "SELECT user_id, expires_at, used FROM PasswordResets WHERE token = ? AND used = FALSE",
+      [token]
+    );
+
+    if (rows.length === 0) {
+      return res.status(400).json({ valid: false, message: "Invalid or expired reset token" });
+    }
+
+    const resetRecord = rows[0];
+    const now = new Date();
+
+    if (now > new Date(resetRecord.expires_at)) {
+      return res.status(400).json({ valid: false, message: "Invalid or expired reset token" });
+    }
+
+    res.status(200).json({ valid: true, message: "Reset token is valid" });
+  } catch (error) {
+    console.error("Error in verifyResetToken:", error);
+    res.status(500).json({ valid: false, message: "Server error" });
+  }
+};
+
 module.exports = { 
   register,
   login,
+  forgetPassword,
+  resetPassword,
+  verifyResetToken,
   logout
 };
