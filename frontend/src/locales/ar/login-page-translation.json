@@ -7,6 +7,7 @@
   "passwordPlaceholder": "*********",
   "login": "تسجيل الدخول",
   "forgotPassword": "هل نسيت كلمة المرور؟",
+  "forgotPasswordLink": "نسيت كلمة المرور؟",
   "noAccount": "ليس لديك حساب؟",
   "registerHere": "سجّل هنا",
   "successLogin": "تم تسجيل الدخول بنجاح",

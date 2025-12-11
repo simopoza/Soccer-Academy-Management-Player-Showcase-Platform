@@ -13,6 +13,7 @@ const AuthForm = ({
   bottomLink,
   bottomLinkText,
   buttonText,
+  forgotPasswordLink, // New prop
 }) => {
   return (
     <Flex direction="column" gap={4}>
@@ -80,6 +81,15 @@ const AuthForm = ({
               </FormControl>
             );
           })}
+
+          {/* Forgot Password Link - only for login */}
+          {forgotPasswordLink && (
+            <Text fontSize="sm" textAlign="right" mt={-2}>
+              <Link to="/forgot-password" style={{ color: "#2563eb", fontWeight: "500" }}>
+                {forgotPasswordLink}
+              </Link>
+            </Text>
+          )}
 
           <Button type="submit" colorScheme="green" mt={2} isLoading={isSubmitting}>
             {buttonText}

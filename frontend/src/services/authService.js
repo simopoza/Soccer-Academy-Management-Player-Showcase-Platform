@@ -15,4 +15,19 @@ const logout = async () => {
   return response.data;
 };
 
-export default { register, login, logout };
+const forgotPassword = async (data) => {
+  const response = await axiosInstance.post("/auth/forgot-password", data);
+  return response.data;
+};
+
+const verifyResetToken = async (token) => {
+  const response = await axiosInstance.get(`/auth/verify-reset-token/${token}`);
+  return response.data;
+};
+
+const resetPassword = async (data) => {
+  const response = await axiosInstance.post("/auth/reset-password", data);
+  return response.data;
+};
+
+export default { register, login, logout, forgotPassword, verifyResetToken, resetPassword };

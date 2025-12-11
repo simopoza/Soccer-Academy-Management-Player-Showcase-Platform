@@ -1,6 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import RegisterPage from "../pages/RegisterPage";
 import LoginPage from "../pages/LoginPage";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/ResetPasswordPage";
 import CompleteProfilePage from "../pages/CompleteProfilePage";
 import AdminDashboard from "../pages/AdminDashboardPage";
 import AdminUserManagementPage from "../pages/AdminUserManagementPage";
@@ -16,6 +18,8 @@ function AppRoutes() {
       {/* Public routes */}
       <Route path="/" element={<RegisterPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       
       {/* Player only route - for completing profile */}
       <Route 
