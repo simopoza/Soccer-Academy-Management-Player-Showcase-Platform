@@ -1,5 +1,7 @@
 {
   "adminDashboard": "لوحة تحكم المشرف",
+  "playerDashboard": "لوحة تحكم اللاعب",
+  "agentDashboard": "لوحة تحكم الوكيل",
   "welcomeAdmin": "مرحبًا! أدِر أكاديميتك الكروية من هنا.",
   "userManagement": "إدارة المستخدمين",
   "manageUsersDesc": "وافق أو ارفض طلبات التسجيل المعلقة",
@@ -12,7 +14,17 @@
   "analyticsReports": "التحليلات والتقارير",
   "analyticsReportsDesc": "عرض تحليلات الأداء والتقارير التفصيلية",
   "manage": "إدارة",
-  "comingSoon": "قريبًا",
+  "comingSoon": "قريباً",
+  
+  "soccerAcademy": "أكاديمية كرة القدم",
+  "management": "نظام الإدارة",
+  "dashboard": "لوحة التحكم",
+  "myProfile": "ملفي الشخصي",
+  "myStats": "إحصائياتي",
+  "myTeam": "فريقي",
+  "settings": "الإعدادات",
+  "myPlayers": "لاعبيني",
+  "contracts": "العقود",
   
   "logout": "تسجيل الخروج",
   "loggingOut": "جارٍ تسجيل الخروج...",
@@ -37,6 +49,14 @@
   "success": "نجاح",
   "error": "خطأ",
   
-  "welcomeToAnalytics": "مرحبًا بك في صفحة التحليلات",
+  "theme": "المظهر",
+  "language": "اللغة",
+  "users": "المستخدمون",
+  "players": "اللاعبون",
+  "teams": "الفرق",
+  "matches": "المباريات",
+  "analytics": "التحليلات",
+  
+  "welcomeToAnalytics": "مرحبًا في صفحة التحليلات",
   "analyticsComingSoon": "لوحة التحليلات والتقارير قريبًا..."
 }

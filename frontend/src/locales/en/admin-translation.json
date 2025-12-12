@@ -1,5 +1,7 @@
 {
   "adminDashboard": "Admin Dashboard",
+  "playerDashboard": "Player Dashboard",
+  "agentDashboard": "Agent Dashboard",
   "welcomeAdmin": "Welcome! Manage your soccer academy from here.",
   "userManagement": "User Management",
   "manageUsersDesc": "Approve or reject pending user registrations",
@@ -13,6 +15,16 @@
   "analyticsReportsDesc": "View performance analytics and detailed reports",
   "manage": "Manage",
   "comingSoon": "Coming Soon",
+  
+  "soccerAcademy": "Soccer Academy",
+  "management": "Management System",
+  "dashboard": "Dashboard",
+  "myProfile": "My Profile",
+  "myStats": "My Stats",
+  "myTeam": "My Team",
+  "settings": "Settings",
+  "myPlayers": "My Players",
+  "contracts": "Contracts",
   
   "logout": "Logout",
   "loggingOut": "Logging out...",
@@ -36,6 +48,14 @@
   "refresh": "Refresh",
   "success": "Success",
   "error": "Error",
+  
+  "theme": "Theme",
+  "language": "Language",
+  "users": "Users",
+  "players": "Players",
+  "teams": "Teams",
+  "matches": "Matches",
+  "analytics": "Analytics",
   
   "welcomeToAnalytics": "Welcome to Analytics Page",
   "analyticsComingSoon": "Analytics and reports dashboard coming soon..."
