@@ -1,4 +1,4 @@
-import { Flex, FormControl, FormLabel, Input, Select, Button, Text, FormErrorMessage, HStack } from "@chakra-ui/react";
+import { Flex, FormControl, FormLabel, Input, Select, Button, Text, FormErrorMessage, HStack, useColorModeValue } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 
 const AuthForm = ({
@@ -15,11 +15,16 @@ const AuthForm = ({
   buttonText,
   forgotPasswordLink, // New prop
 }) => {
+  // Color mode values
+  const inputBg = useColorModeValue("gray.50", "gray.600");
+  const placeholderColor = useColorModeValue("gray.400", "gray.400");
+  const langBtnColor = useColorModeValue("gray.800", "white");
+
   return (
     <Flex direction="column" gap={4}>
       {/* Language switch button */}
       <Flex justify="flex-end" mb={4}>
-        <Button size="sm" variant="outline" onClick={switchLanguage}>
+        <Button size="sm" variant="outline" color={langBtnColor} onClick={switchLanguage}>
           {isArabic ? "English" : "العربية"}
         </Button>
       </Flex>
@@ -36,7 +41,7 @@ const AuthForm = ({
                     <FormControl key={input.name} isInvalid={input.error}>
                       <FormLabel fontSize="sm">{input.label}</FormLabel>
                       {input.component === "select" ? (
-                        <Select placeholder={input.placeholder} bg="gray.50" {...input.register}>
+                        <Select placeholder={input.placeholder} bg={inputBg} {...input.register}>
                           {input.options.map((opt) => (
                             <option key={opt.value} value={opt.value}>
                               {opt.label}
@@ -46,7 +51,8 @@ const AuthForm = ({
                       ) : (
                         <Input
                           placeholder={input.placeholder}
-                          bg="gray.50"
+                          bg={inputBg}
+                          _placeholder={{ color: placeholderColor }}
                           type={input.type || "text"}
                           {...input.register}
                         />
@@ -62,7 +68,7 @@ const AuthForm = ({
               <FormControl key={field.name} isInvalid={field.error}>
                 <FormLabel fontSize="sm">{field.label}</FormLabel>
                 {field.component === "select" ? (
-                  <Select placeholder={field.placeholder} bg="gray.50" {...field.register}>
+                  <Select placeholder={field.placeholder} bg={inputBg} {...field.register}>
                     {field.options.map((opt) => (
                       <option key={opt.value} value={opt.value}>
                         {opt.label}
@@ -72,7 +78,8 @@ const AuthForm = ({
                 ) : (
                   <Input
                     placeholder={field.placeholder}
-                    bg="gray.50"
+                    bg={inputBg}
+                    _placeholder={{ color: placeholderColor }}
                     type={field.type || "text"}
                     {...field.register}
                   />

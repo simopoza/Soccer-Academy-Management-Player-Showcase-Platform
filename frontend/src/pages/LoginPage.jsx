@@ -1,12 +1,13 @@
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useToast } from "@chakra-ui/react";
+import { useToast, useColorModeValue, Box } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import AuthCard from "../components/AuthCard";
 import AuthForm from "../components/AuthForm";
+import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 import { loginSchema } from "../utils/validationSchemas";
 import useLanguageSwitcher from "../hooks/useLanguageSwitcher";
@@ -17,6 +18,12 @@ const LoginPage = () => {
   const toast = useToast();
   const { login } = useAuth(); // Use AuthContext
   const { switchLanguage, isArabic, currentLang } = useLanguageSwitcher();
+
+  // Color mode values
+  const bgGradient = useColorModeValue(
+    "linear(to-b, green.50, white)",
+    "linear(to-b, gray.900, gray.800)"
+  );
 
   const resolver = useMemo(() => yupResolver(loginSchema(i18n)), [currentLang]);
 
@@ -138,20 +145,25 @@ const LoginPage = () => {
   ];
 
   return (
-    <AuthCard title={t("loginTitle")} subtitle={t("loginSubtitle")}>
-      <AuthForm
-        fields={fields}
-        onSubmit={handleSubmit(onSubmit)}
-        isSubmitting={isSubmitting}
-        switchLanguage={switchLanguage}
-        isArabic={isArabic}
-        buttonText={t("login")}
-        bottomText={t("noAccount")}
-        bottomLink="/"
-        bottomLinkText={t("registerHere")}
-        forgotPasswordLink={t("forgotPasswordLink")}
-      />
-    </AuthCard>
+    <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bgGradient={bgGradient} py={8} position="relative">
+      <Box position="absolute" top={4} right={4}>
+        <ThemeToggle />
+      </Box>
+      <AuthCard title={t("loginTitle")} subtitle={t("loginSubtitle")} maxWidth="460px">
+        <AuthForm
+          fields={fields}
+          onSubmit={handleSubmit(onSubmit)}
+          isSubmitting={isSubmitting}
+          switchLanguage={switchLanguage}
+          isArabic={isArabic}
+          buttonText={t("login")}
+          bottomText={t("noAccount")}
+          bottomLink="/"
+          bottomLinkText={t("registerHere")}
+          forgotPasswordLink={t("forgotPasswordLink")}
+        />
+      </AuthCard>
+    </Box>
   );
 };
 

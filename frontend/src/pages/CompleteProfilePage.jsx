@@ -24,8 +24,10 @@ import {
   Avatar,
   Icon,
   Flex,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
+import ThemeToggle from "../components/ThemeToggle";
 import playerService from "../services/playerService";
 
 const CompleteProfilePage = () => {
@@ -50,6 +52,16 @@ const CompleteProfilePage = () => {
     strong_foot: "",
     image_url: "",
   });
+
+  // Color mode values
+  const bgGradient = useColorModeValue(
+    "linear(to-b, green.50, white)",
+    "linear(to-b, gray.900, gray.800)"
+  );
+  const cardBg = useColorModeValue("white", "gray.700");
+  const inputBg = useColorModeValue("gray.50", "gray.600");
+  const labelColor = useColorModeValue("gray.700", "gray.200");
+  const headerBg = useColorModeValue("green.500", "green.600");
 
   // Fetch teams and player info on mount
   useEffect(() => {
@@ -166,10 +178,13 @@ const CompleteProfilePage = () => {
   }
 
   return (
-    <Box minH="100vh" bgGradient="linear(to-b, green.50, white)" py={8} dir={isRTL ? "rtl" : "ltr"}>
+    <Box minH="100vh" bgGradient={bgGradient} py={8} dir={isRTL ? "rtl" : "ltr"} position="relative">
+      <Box position="absolute" top={4} right={4}>
+        <ThemeToggle />
+      </Box>
       <Container maxW="container.sm">
-        <Card boxShadow="xl" borderRadius="lg" overflow="hidden">
-          <CardHeader bg="green.500" textAlign="center" py={6}>
+        <Card boxShadow="xl" borderRadius="lg" overflow="hidden" bg={cardBg}>
+          <CardHeader bg={headerBg} textAlign="center" py={6}>
             <Flex justify="center" mb={4}>
               <Box
                 w="16"
@@ -204,27 +219,27 @@ const CompleteProfilePage = () => {
 
                 {/* Date of Birth */}
                 <FormControl isRequired>
-                  <FormLabel fontSize="sm" fontWeight="medium" color="gray.700">
+                  <FormLabel fontSize="sm" fontWeight="medium" color={labelColor}>
                     {t("dateOfBirth") || "Date of Birth"}
                   </FormLabel>
                   <Input
                     type="date"
                     value={formData.date_of_birth}
                     onChange={(e) => handleInputChange("date_of_birth", e.target.value)}
-                    bg="gray.50"
+                    bg={inputBg}
                   />
                 </FormControl>
 
                 {/* Team */}
                 <FormControl isRequired>
-                  <FormLabel fontSize="sm" fontWeight="medium" color="gray.700">
+                  <FormLabel fontSize="sm" fontWeight="medium" color={labelColor}>
                     {t("team") || "Team"}
                   </FormLabel>
                   <Select
                     placeholder={t("selectTeam") || "Select your team"}
                     value={formData.team_id}
                     onChange={(e) => handleInputChange("team_id", e.target.value)}
-                    bg="gray.50"
+                    bg={inputBg}
                   >
                     {teams.map((team) => (
                       <option key={team.id} value={team.id}>
@@ -236,14 +251,14 @@ const CompleteProfilePage = () => {
 
                 {/* Position */}
                 <FormControl isRequired>
-                  <FormLabel fontSize="sm" fontWeight="medium" color="gray.700">
+                  <FormLabel fontSize="sm" fontWeight="medium" color={labelColor}>
                     {t("position") || "Position"}
                   </FormLabel>
                   <Select
                     placeholder={t("selectPosition") || "Select your position"}
                     value={formData.position}
                     onChange={(e) => handleInputChange("position", e.target.value)}
-                    bg="gray.50"
+                    bg={inputBg}
                   >
                     <option value="GK">Goalkeeper (GK)</option>
                     <option value="CB">Center Back (CB)</option>
@@ -261,7 +276,7 @@ const CompleteProfilePage = () => {
                 {/* Height & Weight */}
                 <Grid templateColumns="repeat(2, 1fr)" gap={4}>
                   <FormControl isRequired>
-                    <FormLabel fontSize="sm" fontWeight="medium" color="gray.700">
+                    <FormLabel fontSize="sm" fontWeight="medium" color={labelColor}>
                       {t("height") || "Height"} (cm)
                     </FormLabel>
                     <Input
@@ -269,12 +284,13 @@ const CompleteProfilePage = () => {
                       placeholder="175"
                       value={formData.height}
                       onChange={(e) => handleInputChange("height", e.target.value)}
-                      bg="gray.50"
+                      bg={inputBg}
+                      _placeholder={{ color: "gray.400" }}
                     />
                   </FormControl>
 
                   <FormControl isRequired>
-                    <FormLabel fontSize="sm" fontWeight="medium" color="gray.700">
+                    <FormLabel fontSize="sm" fontWeight="medium" color={labelColor}>
                       {t("weight") || "Weight"} (kg)
                     </FormLabel>
                     <Input
@@ -282,21 +298,22 @@ const CompleteProfilePage = () => {
                       placeholder="70"
                       value={formData.weight}
                       onChange={(e) => handleInputChange("weight", e.target.value)}
-                      bg="gray.50"
+                      bg={inputBg}
+                      _placeholder={{ color: "gray.400" }}
                     />
                   </FormControl>
                 </Grid>
 
                 {/* Strong Foot */}
                 <FormControl isRequired>
-                  <FormLabel fontSize="sm" fontWeight="medium" color="gray.700">
+                  <FormLabel fontSize="sm" fontWeight="medium" color={labelColor}>
                     {t("strongFoot") || "Strong Foot"}
                   </FormLabel>
                   <Select
                     placeholder={t("selectFoot") || "Select your strong foot"}
                     value={formData.strong_foot}
                     onChange={(e) => handleInputChange("strong_foot", e.target.value)}
-                    bg="gray.50"
+                    bg={inputBg}
                   >
                     <option value="Left">Left</option>
                     <option value="Right">Right</option>
@@ -305,7 +322,7 @@ const CompleteProfilePage = () => {
 
                 {/* Profile Photo */}
                 <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="medium" color="gray.700">
+                  <FormLabel fontSize="sm" fontWeight="medium" color={labelColor}>
                     {t("profilePhoto") || "Profile Photo"} ({t("optional") || "Optional"})
                   </FormLabel>
                   <Flex align="center" gap={4}>

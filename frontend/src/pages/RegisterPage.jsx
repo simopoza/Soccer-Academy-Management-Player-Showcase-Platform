@@ -169,11 +169,12 @@ import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@chakra-ui/react";
+import { useToast, useColorModeValue, Box } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
 
 import AuthCard from "../components/AuthCard";
 import AuthForm from "../components/AuthForm";
+import ThemeToggle from "../components/ThemeToggle";
 import authService from "../services/authService";
 import { registerSchema } from "../utils/validationSchemas";
 import useLanguageSwitcher from "../hooks/useLanguageSwitcher";
@@ -183,6 +184,12 @@ const RegisterPage = () => {
   const toast = useToast();
   const navigate = useNavigate();
   const { switchLanguage, isArabic, currentLang } = useLanguageSwitcher();
+
+  // Color mode values
+  const bgGradient = useColorModeValue(
+    "linear(to-b, green.50, white)",
+    "linear(to-b, gray.900, gray.800)"
+  );
 
   const resolver = useMemo(() => yupResolver(registerSchema(i18n)), [currentLang]);
 
@@ -271,19 +278,24 @@ const RegisterPage = () => {
   ];
 
   return (
-    <AuthCard title={t("joinAcademy")} subtitle={t("createAccount")}>
-      <AuthForm
-        fields={fields}
-        onSubmit={handleSubmit(onSubmit)}
-        isSubmitting={isSubmitting}
-        switchLanguage={switchLanguage}
-        isArabic={isArabic}
-        buttonText={t("register")}
-        bottomText={t("alreadyAccount")}
-        bottomLink="/login"
-        bottomLinkText={t("loginHere")}
-      />
-    </AuthCard>
+    <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bgGradient={bgGradient} py={8} position="relative">
+      <Box position="absolute" top={4} right={4}>
+        <ThemeToggle />
+      </Box>
+      <AuthCard title={t("joinAcademy")} subtitle={t("createAccount")}>
+        <AuthForm
+          fields={fields}
+          onSubmit={handleSubmit(onSubmit)}
+          isSubmitting={isSubmitting}
+          switchLanguage={switchLanguage}
+          isArabic={isArabic}
+          buttonText={t("register")}
+          bottomText={t("alreadyAccount")}
+          bottomLink="/login"
+          bottomLinkText={t("loginHere")}
+        />
+      </AuthCard>
+    </Box>
   );
 };
 
