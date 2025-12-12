@@ -1,11 +1,41 @@
-import { Box, Container, Heading, Text, SimpleGrid, Card, CardHeader, CardBody, Button, Icon, Stack } from "@chakra-ui/react";
+import { Box, Container, Heading, Text, SimpleGrid, Card, CardHeader, CardBody, Button, Icon, Stack, Flex, useToast } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const AdminDashboardPage = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const { logout, user } = useAuth();
+  const toast = useToast();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const isRTL = i18n.language === "ar";
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      toast({
+        title: t("logoutSuccess") || "Logged out successfully",
+        description: t("logoutMessage") || "You have been logged out. See you soon!",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+      navigate("/login");
+    } catch (error) {
+      toast({
+        title: t("logoutError") || "Logout failed",
+        description: t("somethingWrong") || "Something went wrong. Please try again.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const dashboardCards = [
     {
@@ -52,14 +82,26 @@ const AdminDashboardPage = () => {
   return (
     <Box minH="100vh" bgGradient="linear(to-b, green.50, white)" py={8} dir={isRTL ? "rtl" : "ltr"}>
       <Container maxW="container.xl">
-        <Stack spacing={6} mb={8}>
-          <Heading size="xl" color="green.700">
-            ⚽ {t("adminDashboard") || "Admin Dashboard"}
-          </Heading>
-          <Text color="gray.600" fontSize="lg">
-            {t("welcomeAdmin") || "Welcome! Manage your soccer academy from here."}
-          </Text>
-        </Stack>
+        {/* Header with Logout Button */}
+        <Flex justify="space-between" align="center" mb={8}>
+          <Stack spacing={2}>
+            <Heading size="xl" color="green.700">
+              ⚽ {t("adminDashboard") || "Admin Dashboard"}
+            </Heading>
+            <Text color="gray.600" fontSize="lg">
+              {t("welcomeAdmin") || "Welcome! Manage your soccer academy from here."}
+            </Text>
+          </Stack>
+          <Button
+            colorScheme="red"
+            variant="outline"
+            onClick={handleLogout}
+            isLoading={isLoggingOut}
+            loadingText={t("loggingOut") || "Logging out..."}
+          >
+            {t("logout") || "Logout"}
+          </Button>
+        </Flex>
 
         <SimpleGrid columns={{ base: 1, md: 2, lg: 2 }} spacing={6}>
           {dashboardCards.map((card, index) => (

@@ -14,6 +14,13 @@
   "manage": "Manage",
   "comingSoon": "Coming Soon",
   
+  "logout": "Logout",
+  "loggingOut": "Logging out...",
+  "logoutSuccess": "Logged out successfully",
+  "logoutMessage": "You have been logged out. See you soon!",
+  "logoutError": "Logout failed",
+  "somethingWrong": "Something went wrong. Please try again.",
+  
   "pendingUsersSubtitle": "Review and approve pending user registrations",
   "pending": "Pending",
   "noPendingUsers": "No Pending Users",

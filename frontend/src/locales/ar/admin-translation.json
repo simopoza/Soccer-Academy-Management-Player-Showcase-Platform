@@ -14,6 +14,13 @@
   "manage": "إدارة",
   "comingSoon": "قريبًا",
   
+  "logout": "تسجيل الخروج",
+  "loggingOut": "جارٍ تسجيل الخروج...",
+  "logoutSuccess": "تم تسجيل الخروج بنجاح",
+  "logoutMessage": "تم تسجيل خروجك. نراك قريبًا!",
+  "logoutError": "فشل تسجيل الخروج",
+  "somethingWrong": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+  
   "pendingUsersSubtitle": "راجع ووافق على طلبات التسجيل المعلقة",
   "pending": "معلق",
   "noPendingUsers": "لا توجد طلبات معلقة",
