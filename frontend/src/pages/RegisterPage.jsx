@@ -174,7 +174,6 @@ import { useTranslation } from "react-i18next";
 
 import AuthCard from "../components/AuthCard";
 import AuthForm from "../components/AuthForm";
-import ThemeToggle from "../components/ThemeToggle";
 import authService from "../services/authService";
 import { registerSchema } from "../utils/validationSchemas";
 import useLanguageSwitcher from "../hooks/useLanguageSwitcher";
@@ -278,10 +277,7 @@ const RegisterPage = () => {
   ];
 
   return (
-    <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bgGradient={bgGradient} py={8} position="relative">
-      <Box position="absolute" top={4} right={4}>
-        <ThemeToggle />
-      </Box>
+    <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bgGradient={bgGradient} py={8}>
       <AuthCard title={t("joinAcademy")} subtitle={t("createAccount")}>
         <AuthForm
           fields={fields}

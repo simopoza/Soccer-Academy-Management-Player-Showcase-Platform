@@ -1,5 +1,6 @@
 import { Flex, FormControl, FormLabel, Input, Select, Button, Text, FormErrorMessage, HStack, useColorModeValue } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
+import ThemeToggle from "./ThemeToggle";
 
 const AuthForm = ({
   title,
@@ -22,11 +23,14 @@ const AuthForm = ({
 
   return (
     <Flex direction="column" gap={4}>
-      {/* Language switch button */}
+      {/* Language switch button and Theme toggle */}
       <Flex justify="flex-end" mb={4}>
-        <Button size="sm" variant="outline" color={langBtnColor} onClick={switchLanguage}>
-          {isArabic ? "English" : "العربية"}
-        </Button>
+        <HStack spacing={2}>
+          <ThemeToggle />
+          <Button size="sm" variant="outline" color={langBtnColor} onClick={switchLanguage}>
+            {isArabic ? "English" : "العربية"}
+          </Button>
+        </HStack>
       </Flex>
 
       {/* Form */}

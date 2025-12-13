@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 
 import AuthCard from "../components/AuthCard";
 import AuthForm from "../components/AuthForm";
-import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 import { loginSchema } from "../utils/validationSchemas";
 import useLanguageSwitcher from "../hooks/useLanguageSwitcher";
@@ -145,10 +144,7 @@ const LoginPage = () => {
   ];
 
   return (
-    <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bgGradient={bgGradient} py={8} position="relative">
-      <Box position="absolute" top={4} right={4}>
-        <ThemeToggle />
-      </Box>
+    <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bgGradient={bgGradient} py={8}>
       <AuthCard title={t("loginTitle")} subtitle={t("loginSubtitle")} maxWidth="460px">
         <AuthForm
           fields={fields}
