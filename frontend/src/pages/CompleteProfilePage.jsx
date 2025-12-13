@@ -28,6 +28,7 @@ import {
 } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
 import ThemeToggle from "../components/ThemeToggle";
+import useLanguageSwitcher from "../hooks/useLanguageSwitcher";
 import playerService from "../services/playerService";
 
 const CompleteProfilePage = () => {
@@ -36,6 +37,7 @@ const CompleteProfilePage = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const isRTL = i18n.language === "ar";
+  const { switchLanguage, isArabic } = useLanguageSwitcher();
 
   const [teams, setTeams] = useState([]);
   const [playerId, setPlayerId] = useState(null);
@@ -178,13 +180,18 @@ const CompleteProfilePage = () => {
   }
 
   return (
-    <Box minH="100vh" bgGradient={bgGradient} py={8} dir={isRTL ? "rtl" : "ltr"} position="relative">
-      <Box position="absolute" top={4} right={4}>
-        <ThemeToggle />
-      </Box>
+    <Box minH="100vh" bgGradient={bgGradient} py={8} dir={isRTL ? "rtl" : "ltr"}>
       <Container maxW="container.sm">
         <Card boxShadow="xl" borderRadius="lg" overflow="hidden" bg={cardBg}>
-          <CardHeader bg={headerBg} textAlign="center" py={6}>
+          <CardHeader bg={headerBg} textAlign="center" py={6} position="relative">
+            {/* Theme and Language Controls */}
+            <Flex position="absolute" top={4} right={4} gap={2}>
+              <ThemeToggle />
+              <Button size="sm" variant="outline" color="white" onClick={switchLanguage}>
+                {isArabic ? "English" : "العربية"}
+              </Button>
+            </Flex>
+            
             <Flex justify="center" mb={4}>
               <Box
                 w="16"
