@@ -2,7 +2,6 @@ import {
   Box,
   Flex,
   VStack,
-  HStack,
   Text,
   Avatar,
   Divider,
@@ -13,7 +12,6 @@ import {
   DrawerContent,
   DrawerCloseButton,
   useColorModeValue,
-  Tooltip,
 } from "@chakra-ui/react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -95,7 +93,7 @@ const SidebarDrawer = ({ isOpen, onClose }) => {
       <DrawerContent bg={sidebarBg}>
         <DrawerCloseButton />
         <DrawerBody p={0}>
-          <Box h="100vh" overflowY="auto">
+          <Flex direction="column" h="100vh">
             {/* Logo Section */}
             <Flex h="70px" align="center" justify="center" borderBottom="1px" borderColor={borderColor}>
               <Text fontSize="xl" fontWeight="bold" color="green.500">
@@ -147,41 +145,58 @@ const SidebarDrawer = ({ isOpen, onClose }) => {
               })}
             </VStack>
 
+            {/* Spacer to push bottom controls down */}
+            <Box flex="1" />
+
             <Divider />
 
             {/* Bottom Controls */}
-            <VStack spacing={4} p={4} mt="auto">
+            <VStack spacing={1} align="stretch" p={4}>
               {/* Theme Toggle */}
-              <HStack justify="space-between" w="100%">
+              <Button
+                variant="ghost"
+                justifyContent="space-between"
+                w="100%"
+                _hover={{ bg: hoverBg }}
+                dir={isRTL ? "rtl" : "ltr"}
+                rightIcon={<ThemeToggle />}
+              >
                 <Text fontSize="sm" color={textColor}>
                   {t("theme")}
                 </Text>
-                <ThemeToggle />
-              </HStack>
+              </Button>
 
               {/* Language Toggle */}
-              <HStack justify="space-between" w="100%">
+              <Button
+                variant="ghost"
+                justifyContent="space-between"
+                w="100%"
+                _hover={{ bg: hoverBg }}
+                onClick={switchLanguage}
+                dir={isRTL ? "rtl" : "ltr"}
+              >
                 <Text fontSize="sm" color={textColor}>
                   {t("language")}
                 </Text>
-                <Tooltip label={isArabic ? "English" : "العربية"}>
-                  <Button size="sm" onClick={switchLanguage} variant="outline">
-                    {isArabic ? "EN" : "AR"}
-                  </Button>
-                </Tooltip>
-              </HStack>
+                <Text fontSize="sm" fontWeight="bold">
+                  {isArabic ? "EN" : "AR"}
+                </Text>
+              </Button>
 
               {/* Logout Button */}
               <Button
-                colorScheme="red"
-                variant="outline"
+                variant="ghost"
+                justifyContent="flex-start"
                 w="100%"
+                color="red.500"
+                _hover={{ bg: useColorModeValue("red.50", "red.900") }}
                 onClick={handleLogout}
+                dir={isRTL ? "rtl" : "ltr"}
               >
                 {t("logout")}
               </Button>
             </VStack>
-          </Box>
+          </Flex>
         </DrawerBody>
       </DrawerContent>
     </Drawer>
