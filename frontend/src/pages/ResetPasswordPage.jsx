@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useToast, Button, Flex, FormControl, FormLabel, Input, FormErrorMessage, Text, Spinner } from "@chakra-ui/react";
+import { useToast, Button, Flex, FormControl, FormLabel, Input, FormErrorMessage, Text, Spinner, useColorModeValue, HStack } from "@chakra-ui/react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -9,6 +9,7 @@ import AuthCard from "../components/AuthCard";
 import authService from "../services/authService";
 import { resetPasswordSchema } from "../utils/validationSchemas";
 import useLanguageSwitcher from "../hooks/useLanguageSwitcher";
+import ThemeToggle from "../components/ThemeToggle";
 
 const ResetPasswordPage = () => {
   const { t, i18n } = useTranslation();
@@ -22,6 +23,10 @@ const ResetPasswordPage = () => {
   const token = searchParams.get("token");
 
   const resolver = useMemo(() => yupResolver(resetPasswordSchema(i18n)), [currentLang]);
+
+  // Color mode values
+  const inputBg = useColorModeValue("gray.50", "gray.700");
+  const linkColor = useColorModeValue("#2f855a", "green.300");
 
   const {
     register: formRegister,
@@ -115,9 +120,12 @@ const ResetPasswordPage = () => {
   return (
     <AuthCard title={t("resetPassword.title")} subtitle={t("resetPassword.subtitle")}>
       <Flex justify="flex-end" mb={4}>
-        <Button size="sm" variant="outline" onClick={switchLanguage}>
-          {isArabic ? "English" : "العربية"}
-        </Button>
+        <HStack spacing={2}>
+          <ThemeToggle />
+          <Button size="sm" variant="outline" onClick={switchLanguage}>
+            {isArabic ? "English" : "العربية"}
+          </Button>
+        </HStack>
       </Flex>
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -126,7 +134,7 @@ const ResetPasswordPage = () => {
             <FormLabel fontSize="sm">{t("resetPassword.newPassword")}</FormLabel>
             <Input
               placeholder={t("resetPassword.newPasswordPlaceholder")}
-              bg="gray.50"
+              bg={inputBg}
               type="password"
               {...formRegister("newPassword")}
             />
@@ -137,7 +145,7 @@ const ResetPasswordPage = () => {
             <FormLabel fontSize="sm">{t("resetPassword.confirmPassword")}</FormLabel>
             <Input
               placeholder={t("resetPassword.confirmPasswordPlaceholder")}
-              bg="gray.50"
+              bg={inputBg}
               type="password"
               {...formRegister("confirmNewPassword")}
             />
@@ -156,7 +164,7 @@ const ResetPasswordPage = () => {
 
           <Text fontSize="sm" textAlign="center" mt={2}>
             {t("resetPassword.rememberPassword")}{" "}
-            <Link to="/login" style={{ color: "#2f855a", fontWeight: "500" }}>
+            <Link to="/login" style={{ color: linkColor, fontWeight: "500" }}>
               {t("resetPassword.backToLogin")}
             </Link>
           </Text>

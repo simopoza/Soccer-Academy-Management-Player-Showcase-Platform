@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useToast, Button, Flex, FormControl, FormLabel, Input, FormErrorMessage, Text } from "@chakra-ui/react";
+import { useToast, Button, Flex, FormControl, FormLabel, Input, FormErrorMessage, Text, useColorModeValue, HStack } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -9,6 +9,7 @@ import AuthCard from "../components/AuthCard";
 import authService from "../services/authService";
 import { forgotPasswordSchema } from "../utils/validationSchemas";
 import useLanguageSwitcher from "../hooks/useLanguageSwitcher";
+import ThemeToggle from "../components/ThemeToggle";
 
 const ForgotPasswordPage = () => {
   const { t, i18n } = useTranslation();
@@ -48,12 +49,19 @@ const ForgotPasswordPage = () => {
     }
   };
 
+  // Color mode values
+  const inputBg = useColorModeValue("gray.50", "gray.700");
+  const linkColor = useColorModeValue("#2f855a", "green.300");
+
   return (
     <AuthCard title={t("forgotPassword.title")} subtitle={t("forgotPassword.subtitle")}>
       <Flex justify="flex-end" mb={4}>
-        <Button size="sm" variant="outline" onClick={switchLanguage}>
-          {isArabic ? "English" : "العربية"}
-        </Button>
+        <HStack spacing={2}>
+          <ThemeToggle />
+          <Button size="sm" variant="outline" onClick={switchLanguage}>
+            {isArabic ? "English" : "العربية"}
+          </Button>
+        </HStack>
       </Flex>
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -62,7 +70,7 @@ const ForgotPasswordPage = () => {
             <FormLabel fontSize="sm">{t("email")}</FormLabel>
             <Input
               placeholder={t("emailPlaceholder")}
-              bg="gray.50"
+              bg={inputBg}
               type="email"
               {...formRegister("email")}
             />
@@ -81,7 +89,7 @@ const ForgotPasswordPage = () => {
 
           <Text fontSize="sm" textAlign="center" mt={2}>
             {t("forgotPassword.rememberPassword")}{" "}
-            <Link to="/login" style={{ color: "#2f855a", fontWeight: "500" }}>
+            <Link to="/login" style={{ color: linkColor, fontWeight: "500" }}>
               {t("forgotPassword.backToLogin")}
             </Link>
           </Text>
