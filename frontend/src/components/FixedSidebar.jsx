@@ -19,7 +19,11 @@ import {
   MdPerson,
   MdBarChart,
   MdSettings,
-  MdDescription
+  MdDescription,
+  MdLogout,
+  MdLanguage,
+  MdDarkMode,
+  MdLightMode
 } from "react-icons/md";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
@@ -163,32 +167,38 @@ const FixedSidebar = () => {
           {/* Theme Toggle */}
           <Button
             variant="ghost"
-            justifyContent="space-between"
+            justifyContent="flex-start"
             w="100%"
             _hover={{ bg: hoverBg }}
             dir={isRTL ? "rtl" : "ltr"}
-            rightIcon={<ThemeToggle />}
+            leftIcon={<Icon as={MdDarkMode} boxSize={5} />}
           >
-            <Text fontSize="sm" color={textColor}>
-              {t("theme")}
-            </Text>
+            <Flex justify="space-between" align="center" w="100%">
+              <Text fontSize="sm" color={textColor}>
+                {t("theme")}
+              </Text>
+              <ThemeToggle />
+            </Flex>
           </Button>
 
           {/* Language Toggle */}
           <Button
             variant="ghost"
-            justifyContent="space-between"
+            justifyContent="flex-start"
             w="100%"
             _hover={{ bg: hoverBg }}
             onClick={switchLanguage}
             dir={isRTL ? "rtl" : "ltr"}
+            leftIcon={<Icon as={MdLanguage} boxSize={5} />}
           >
-            <Text fontSize="sm" color={textColor}>
-              {t("language")}
-            </Text>
-            <Text fontSize="sm" fontWeight="bold">
-              {isArabic ? "EN" : "AR"}
-            </Text>
+            <Flex justify="space-between" align="center" w="100%">
+              <Text fontSize="sm" color={textColor}>
+                {t("language")}
+              </Text>
+              <Text fontSize="sm" fontWeight="bold">
+                {isArabic ? "EN" : "AR"}
+              </Text>
+            </Flex>
           </Button>
 
           {/* Logout Button */}
@@ -200,6 +210,7 @@ const FixedSidebar = () => {
             _hover={{ bg: useColorModeValue("red.50", "red.900") }}
             onClick={handleLogout}
             dir={isRTL ? "rtl" : "ltr"}
+            leftIcon={<Icon as={MdLogout} boxSize={5} />}
           >
             {t("logout")}
           </Button>
