@@ -3,7 +3,6 @@ import {
   Flex,
   VStack,
   Text,
-  Avatar,
   Divider,
   Button,
   Drawer,
@@ -94,34 +93,32 @@ const SidebarDrawer = ({ isOpen, onClose }) => {
         <DrawerCloseButton />
         <DrawerBody p={0}>
           <Flex direction="column" h="100vh">
-            {/* Logo Section */}
-            <Flex h="70px" align="center" justify="center" borderBottom="1px" borderColor={borderColor}>
-              <Text fontSize="xl" fontWeight="bold" color="green.500">
-                {t("soccerAcademy")}
-              </Text>
-            </Flex>
-
-            {/* User Profile Section */}
-            <Box p={6}>
-              <Flex align="center" gap={3}>
-                <Avatar
-                  size="lg"
-                  name={`${user?.first_name} ${user?.last_name}`}
-                  bg="green.500"
-                  color="white"
-                />
+            {/* Academy Logo & Role Section */}
+            <Box p={6} borderBottom="1px" borderColor={borderColor}>
+              <Flex align="center" gap={4}>
+                <Box
+                  w="12"
+                  h="12"
+                  bgGradient="linear(to-br, green.400, green.600)"
+                  borderRadius="full"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  boxShadow="lg"
+                  flexShrink={0}
+                >
+                  <Text fontSize="2xl">⚽</Text>
+                </Box>
                 <Box>
-                  <Text fontWeight="bold" color={textColor}>
-                    {user?.first_name} {user?.last_name}
+                  <Text fontSize="md" fontWeight="bold" color={textColor} lineHeight="1.2">
+                    {t("soccerAcademy")}
                   </Text>
-                  <Text fontSize="sm" color="gray.500">
-                    {user?.role?.toUpperCase()}
+                  <Text fontSize="sm" color="gray.500" mt={1}>
+                    {user?.role?.toUpperCase()} Portal
                   </Text>
                 </Box>
               </Flex>
             </Box>
-
-            <Divider />
 
             {/* Navigation Menu */}
             <VStack spacing={1} align="stretch" p={4}>

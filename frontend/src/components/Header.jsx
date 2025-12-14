@@ -11,11 +11,13 @@ import {
 import { HamburgerIcon } from "@chakra-ui/icons";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import SidebarDrawer from "./SidebarDrawer";
 
 const Header = ({ pageTitle, pageSubtitle }) => {
   const { user } = useAuth();
   const { i18n } = useTranslation();
+  const navigate = useNavigate();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isRTL = i18n.language === "ar";
 
@@ -38,7 +40,7 @@ const Header = ({ pageTitle, pageSubtitle }) => {
         boxShadow="sm"
       >
         <Flex
-          h="70px"
+          h="80px"
           px={4}
           align="center"
           justify="space-between"
@@ -46,13 +48,14 @@ const Header = ({ pageTitle, pageSubtitle }) => {
         >
           {/* Left Side (EN) / Right Side (AR) */}
           <HStack spacing={4}>
-            {/* Hamburger Button */}
+            {/* Hamburger Button - only visible on mobile */}
             <IconButton
               icon={<HamburgerIcon />}
               onClick={onOpen}
               aria-label="Open menu"
               variant="ghost"
               size="lg"
+              display={{ base: "flex", lg: "none" }}
               _hover={{ bg: useColorModeValue("gray.100", "gray.700") }}
             />
 
@@ -74,11 +77,13 @@ const Header = ({ pageTitle, pageSubtitle }) => {
             bg="green.500"
             color="white"
             cursor="pointer"
+            onClick={() => navigate("/profile")}
+            _hover={{ opacity: 0.8 }}
           />
         </Flex>
       </Box>
 
-      {/* Sidebar Drawer */}
+      {/* Sidebar Drawer - only for mobile */}
       <SidebarDrawer isOpen={isOpen} onClose={onClose} />
     </>
   );
