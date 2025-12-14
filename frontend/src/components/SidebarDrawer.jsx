@@ -11,8 +11,21 @@ import {
   DrawerContent,
   DrawerCloseButton,
   useColorModeValue,
+  Icon,
 } from "@chakra-ui/react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { 
+  MdDashboard, 
+  MdPeople, 
+  MdSportsSoccer, 
+  MdGroups, 
+  MdSportsScore, 
+  MdAnalytics,
+  MdPerson,
+  MdBarChart,
+  MdSettings,
+  MdDescription
+} from "react-icons/md";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
 import ThemeToggle from "./ThemeToggle";
@@ -41,27 +54,27 @@ const SidebarDrawer = ({ isOpen, onClose }) => {
     switch (user.role) {
       case "admin":
         return [
-          { label: t("dashboard"), path: "/admin-dashboard" },
-          { label: t("users"), path: "/users" },
-          { label: t("players"), path: "/players" },
-          { label: t("teams"), path: "/teams" },
-          { label: t("matches"), path: "/matches" },
-          { label: t("analytics"), path: "/analytics" },
+          { label: t("dashboard"), path: "/admin-dashboard", icon: MdDashboard },
+          { label: t("users"), path: "/users", icon: MdPeople },
+          { label: t("players"), path: "/players", icon: MdSportsSoccer },
+          { label: t("teams"), path: "/teams", icon: MdGroups },
+          { label: t("matches"), path: "/matches", icon: MdSportsScore },
+          { label: t("analytics"), path: "/analytics", icon: MdAnalytics },
         ];
       case "player":
         return [
-          { label: t("dashboard"), path: "/player-dashboard" },
-          { label: t("myProfile"), path: "/profile" },
-          { label: t("myStats"), path: "/stats" },
-          { label: t("myTeam"), path: "/team" },
-          { label: t("settings"), path: "/settings" },
+          { label: t("dashboard"), path: "/player-dashboard", icon: MdDashboard },
+          { label: t("myProfile"), path: "/profile", icon: MdPerson },
+          { label: t("myStats"), path: "/stats", icon: MdBarChart },
+          { label: t("myTeam"), path: "/team", icon: MdGroups },
+          { label: t("settings"), path: "/settings", icon: MdSettings },
         ];
       case "agent":
         return [
-          { label: t("dashboard"), path: "/agent-dashboard" },
-          { label: t("myPlayers"), path: "/my-players" },
-          { label: t("contracts"), path: "/contracts" },
-          { label: t("settings"), path: "/settings" },
+          { label: t("dashboard"), path: "/agent-dashboard", icon: MdDashboard },
+          { label: t("myPlayers"), path: "/my-players", icon: MdSportsSoccer },
+          { label: t("contracts"), path: "/contracts", icon: MdDescription },
+          { label: t("settings"), path: "/settings", icon: MdSettings },
         ];
       default:
         return [];
@@ -135,6 +148,7 @@ const SidebarDrawer = ({ isOpen, onClose }) => {
                     onClick={() => handleNavigation(item.path)}
                     w="100%"
                     dir={isRTL ? "rtl" : "ltr"}
+                    leftIcon={<Icon as={item.icon} boxSize={5} />}
                   >
                     {item.label}
                   </Button>
