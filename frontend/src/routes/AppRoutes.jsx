@@ -11,6 +11,7 @@ import PlayerDashboardPage from "../pages/PlayerDashboardPage";
 import AgentDashboard from "../pages/AgentDashboardPage";
 import ProtectedRoute from "../components/ProtectedRoute";
 import RoleBasedRoute from "../components/RoleBasedRoute";
+import ProfileCompletionGuard from "../components/ProfileCompletionGuard";
 
 function AppRoutes() {
   return (
@@ -22,12 +23,13 @@ function AppRoutes() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       
       {/* Player only route - for completing profile */}
+      {/* Only accessible by players who haven't completed their profile */}
       <Route 
         path="/complete-profile" 
         element={
-          <RoleBasedRoute allowedRoles={["player"]}>
+          <ProfileCompletionGuard>
             <CompleteProfilePage />
-          </RoleBasedRoute>
+          </ProfileCompletionGuard>
         } 
       />
       

@@ -3,14 +3,22 @@ import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import authService from "../services/authService";
 
-const RoleBasedRoute = ({ children, allowedRoles }) => {
-  const { user, isAuthenticated, loading, updateUser } = useAuth();
+/**
+ * ProfileCompletionGuard - Protects the complete-profile route
+ * Only allows players with profile_completed = false to access
+ * Redirects if:
+ * - User is not a player
+ * - Profile is already completed
+ * - User is not authenticated
+ */
+const ProfileCompletionGuard = ({ children }) => {
+  const { isAuthenticated, loading, updateUser } = useAuth();
   const [verifying, setVerifying] = useState(true);
   const [verifiedUser, setVerifiedUser] = useState(null);
 
-  // Verify user role and status from backend on mount
+  // Verify user data from backend on mount
   useEffect(() => {
-    const verifyRole = async () => {
+    const verifyUser = async () => {
       // Wait for auth to finish loading
       if (loading) {
         return;
@@ -31,18 +39,17 @@ const RoleBasedRoute = ({ children, allowedRoles }) => {
         updateUser(backendUser);
         setVerifiedUser(backendUser);
       } catch (error) {
-        console.error("Error verifying role:", error);
-        // If verification fails, treat as unauthenticated
+        console.error("Error verifying user:", error);
         setVerifiedUser(null);
       } finally {
         setVerifying(false);
       }
     };
 
-    verifyRole();
+    verifyUser();
   }, [isAuthenticated, loading, updateUser]);
 
-  // Show loading state while checking authentication or verifying role
+  // Show loading state while checking authentication or verifying
   if (loading || verifying) {
     return (
       <div style={{ 
@@ -57,44 +64,27 @@ const RoleBasedRoute = ({ children, allowedRoles }) => {
   }
 
   // Redirect to login if not authenticated
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !verifiedUser) {
     return <Navigate to="/login" replace />;
   }
 
-  // If verification failed or no user data
-  if (!verifiedUser) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Check user status (Vulnerability #4 fix)
-  if (verifiedUser.status !== 'accepted') {
-    // User is pending or rejected - logout and redirect
-    return <Navigate to="/login" replace />;
-  }
-
-  // Check if verified role is in the allowed roles
-  if (!allowedRoles.includes(verifiedUser.role)) {
-    // Redirect to their appropriate dashboard
+  // Only players can access this route
+  if (verifiedUser.role !== 'player') {
     const redirectMap = {
       admin: "/admin/dashboard",
       agent: "/agent/dashboard",
-      player: "/player/dashboard",
     };
-
     const redirectPath = redirectMap[verifiedUser.role] || "/login";
     return <Navigate to={redirectPath} replace />;
   }
 
-  // For player routes (except complete-profile), check if profile is completed (Vulnerability #5 fix)
-  if (verifiedUser.role === 'player' && !verifiedUser.profile_completed) {
-    // Only redirect if NOT on the complete-profile page
-    if (window.location.pathname !== '/complete-profile') {
-      return <Navigate to="/complete-profile" replace />;
-    }
+  // If profile is already completed, redirect to player dashboard
+  if (verifiedUser.profile_completed === true) {
+    return <Navigate to="/player/dashboard" replace />;
   }
 
-  // Render the protected component
+  // Allow access - player needs to complete profile
   return children;
 };
 
-export default RoleBasedRoute;
+export default ProfileCompletionGuard;
