@@ -256,11 +256,35 @@ const verifyResetToken = async (req, res) => {
   }
 };
 
+const getMe = async (req, res) => {
+  try {
+    // req.user is set by authMiddleware
+    const userId = req.user.id;
+
+    const [users] = await db.query(
+      "SELECT id, first_name, last_name, email, role, profile_completed, status FROM Users WHERE id = ?",
+      [userId]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      user: users[0]
+    });
+  } catch (error) {
+    console.error("Error in getMe:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = { 
   register,
   login,
   forgetPassword,
   resetPassword,
   verifyResetToken,
-  logout
+  logout,
+  getMe
 };

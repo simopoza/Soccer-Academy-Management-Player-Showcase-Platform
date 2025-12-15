@@ -1,11 +1,43 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useState, useEffect } from "react";
+import authService from "../services/authService";
 
 const RoleBasedRoute = ({ children, allowedRoles }) => {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading, updateUser } = useAuth();
+  const [verifying, setVerifying] = useState(true);
+  const [verifiedRole, setVerifiedRole] = useState(null);
 
-  // Show loading state while checking authentication
-  if (loading) {
+  // Verify user role from backend on mount
+  useEffect(() => {
+    const verifyRole = async () => {
+      if (!isAuthenticated || loading) {
+        setVerifying(false);
+        return;
+      }
+
+      try {
+        // Fetch real user data from backend
+        const response = await authService.getMe();
+        const verifiedUser = response.user;
+        
+        // Update context with verified data
+        updateUser(verifiedUser);
+        setVerifiedRole(verifiedUser.role);
+      } catch (error) {
+        console.error("Error verifying role:", error);
+        // If verification fails, treat as unauthenticated
+        setVerifiedRole(null);
+      } finally {
+        setVerifying(false);
+      }
+    };
+
+    verifyRole();
+  }, [isAuthenticated, loading]);
+
+  // Show loading state while checking authentication or verifying role
+  if (loading || verifying) {
     return (
       <div style={{ 
         display: "flex", 
@@ -23,16 +55,16 @@ const RoleBasedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Check if user's role is in the allowed roles
-  if (!allowedRoles.includes(user?.role)) {
+  // Check if verified role is in the allowed roles
+  if (!allowedRoles.includes(verifiedRole)) {
     // Redirect to their appropriate dashboard
     const redirectMap = {
-      admin: "/admin/dashboard",
-      agent: "/agent/dashboard",
-      player: "/player/profile",
+      admin: "/admin-dashboard",
+      agent: "/agent-dashboard",
+      player: "/player-dashboard",
     };
 
-    const redirectPath = redirectMap[user?.role] || "/login";
+    const redirectPath = redirectMap[verifiedRole] || "/login";
     return <Navigate to={redirectPath} replace />;
   }
 

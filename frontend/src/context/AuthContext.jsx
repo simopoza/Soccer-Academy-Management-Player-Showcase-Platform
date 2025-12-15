@@ -11,15 +11,30 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize auth state on mount
   useEffect(() => {
-    const initializeAuth = () => {
+    const initializeAuth = async () => {
       try {
-        // Only check for user data (token is in httpOnly cookie)
+        // Check if user data exists in localStorage
         const storedUser = localStorage.getItem("user");
 
         if (storedUser) {
-          const userData = JSON.parse(storedUser);
-          setUser(userData);
-          setIsAuthenticated(true);
+          // Verify with backend - fetch real user data from server
+          try {
+            const response = await authService.getMe();
+            const verifiedUser = response.user;
+            
+            // Update with verified data from backend
+            setUser(verifiedUser);
+            setIsAuthenticated(true);
+            
+            // Update localStorage with verified data
+            localStorage.setItem("user", JSON.stringify(verifiedUser));
+          } catch (error) {
+            console.error("Error verifying user:", error);
+            // If verification fails (e.g., token expired), clear everything
+            localStorage.removeItem("user");
+            setUser(null);
+            setIsAuthenticated(false);
+          }
         }
       } catch (error) {
         console.error("Error initializing auth:", error);

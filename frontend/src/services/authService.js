@@ -30,4 +30,9 @@ const resetPassword = async (data) => {
   return response.data;
 };
 
-export default { register, login, logout, forgotPassword, verifyResetToken, resetPassword };
+const getMe = async () => {
+  const response = await axiosInstance.get("/auth/me");
+  return response.data;
+};
+
+export default { register, login, logout, forgotPassword, verifyResetToken, resetPassword, getMe };
