@@ -13,25 +13,29 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Check if user data exists in localStorage
-        const storedUser = localStorage.getItem("user");
+        // Check if user data exists in localStorage (only UI data)
+        const storedUserUI = localStorage.getItem("userUI");
 
-        if (storedUser) {
+        if (storedUserUI) {
           // Verify with backend - fetch real user data from server
           try {
             const response = await authService.getMe();
             const verifiedUser = response.user;
             
-            // Update with verified data from backend
+            // Update with verified data from backend (full data in memory)
             setUser(verifiedUser);
             setIsAuthenticated(true);
             
-            // Update localStorage with verified data
-            localStorage.setItem("user", JSON.stringify(verifiedUser));
+            // Update localStorage with ONLY non-sensitive UI data
+            localStorage.setItem("userUI", JSON.stringify({
+              first_name: verifiedUser.first_name,
+              last_name: verifiedUser.last_name,
+              email: verifiedUser.email
+            }));
           } catch (error) {
             console.error("Error verifying user:", error);
             // If verification fails (e.g., token expired), clear everything
-            localStorage.removeItem("user");
+            localStorage.removeItem("userUI");
             setUser(null);
             setIsAuthenticated(false);
           }
@@ -39,7 +43,7 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.error("Error initializing auth:", error);
         // Clear invalid data
-        localStorage.removeItem("user");
+        localStorage.removeItem("userUI");
       } finally {
         setLoading(false);
       }
@@ -56,10 +60,14 @@ export const AuthProvider = ({ children }) => {
       // Token is also set in httpOnly cookie automatically
       const { user: userData } = response;
 
-      // Store ONLY user info (token is in httpOnly cookie - more secure!)
-      localStorage.setItem("user", JSON.stringify(userData));
+      // Store ONLY non-sensitive UI data in localStorage
+      localStorage.setItem("userUI", JSON.stringify({
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        email: userData.email
+      }));
 
-      // Update state
+      // Update state with full user data (in memory only)
       setUser(userData);
       setIsAuthenticated(true);
 
@@ -80,7 +88,7 @@ export const AuthProvider = ({ children }) => {
       console.error("Logout error:", error);
     } finally {
       // Clear local state (cookies cleared by backend)
-      localStorage.removeItem("user");
+      localStorage.removeItem("userUI");
       setUser(null);
       setIsAuthenticated(false);
     }
@@ -102,7 +110,13 @@ export const AuthProvider = ({ children }) => {
   const updateUser = (updatedUserData) => {
     const updatedUser = { ...user, ...updatedUserData };
     setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
+    
+    // Update localStorage with ONLY non-sensitive UI data
+    localStorage.setItem("userUI", JSON.stringify({
+      first_name: updatedUser.first_name,
+      last_name: updatedUser.last_name,
+      email: updatedUser.email
+    }));
   };
 
   const hasRole = (...roles) => {

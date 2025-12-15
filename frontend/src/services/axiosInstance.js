@@ -29,8 +29,8 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token expired or invalid (httpOnly cookie)
-      // Clear user data (cookie is cleared by backend or expired)
-      localStorage.removeItem("user");
+      // Clear user UI data (cookie is cleared by backend or expired)
+      localStorage.removeItem("userUI");
       
       // Redirect to login if not already there
       if (window.location.pathname !== "/login") {
