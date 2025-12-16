@@ -22,8 +22,20 @@ const RoleBasedRoute = ({ children, allowedRoles }) => {
         return;
       }
 
+      // If we already have a user from context, use it directly
+      if (user && !verifiedUser) {
+        setVerifiedUser(user);
+        setVerifying(false);
+        return;
+      }
+      
+      // If we already verified, don't re-fetch
+      if (verifiedUser) {
+        return;
+      }
+
+      // If no user in context but authenticated, fetch from backend
       try {
-        // Fetch real user data from backend
         const response = await authService.getMe();
         const backendUser = response.user;
         
@@ -40,7 +52,15 @@ const RoleBasedRoute = ({ children, allowedRoles }) => {
     };
 
     verifyRole();
-  }, [isAuthenticated, loading, updateUser]);
+  }, [isAuthenticated, loading]); // Only depend on auth state, not user
+  
+  // Separate effect to sync user from context when it changes
+  useEffect(() => {
+    if (user && !loading && isAuthenticated && !verifiedUser) {
+      setVerifiedUser(user);
+      setVerifying(false);
+    }
+  }, [user]);
 
   // Show loading state while checking authentication or verifying role
   if (loading || verifying) {
@@ -67,8 +87,7 @@ const RoleBasedRoute = ({ children, allowedRoles }) => {
   }
 
   // Check user status (Vulnerability #4 fix)
-  if (verifiedUser.status !== 'accepted') {
-    // User is pending or rejected - logout and redirect
+  if (verifiedUser.status !== 'approved') {
     return <Navigate to="/login" replace />;
   }
 

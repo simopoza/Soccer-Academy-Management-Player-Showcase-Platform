@@ -117,7 +117,8 @@ const login = async (req, res) => {
         last_name: existingUser[0].last_name,
         email: existingUser[0].email,
         role: existingUser[0].role,
-        profile_completed: existingUser[0].profile_completed
+        profile_completed: existingUser[0].profile_completed,
+        status: existingUser[0].status
       },
     });
 

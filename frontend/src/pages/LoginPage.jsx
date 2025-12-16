@@ -75,19 +75,19 @@ const LoginPage = () => {
         case "player":
           // Check if player completed profile
           if (user.profile_completed) {
-            navigate("/player/dashboard");  // Already completed
+            navigate("/player/dashboard", { replace: true });  // Already completed
           } else {
-            navigate("/complete-profile");  // First time - needs to complete
+            navigate("/complete-profile", { replace: true });  // First time - needs to complete
           }
           break;
         case "admin":
-          navigate("/admin/dashboard");
+          navigate("/admin/dashboard", { replace: true });
           break;
         case "agent":
-          navigate("/agent/dashboard");
+          navigate("/agent/dashboard", { replace: true });
           break;
         default:
-          navigate("/login");
+          console.error("Unknown user role:", user.role);
       }
     } catch (error) {
       // Handle validation errors

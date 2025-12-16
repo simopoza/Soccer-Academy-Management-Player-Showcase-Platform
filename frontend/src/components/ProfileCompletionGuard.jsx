@@ -12,7 +12,7 @@ import authService from "../services/authService";
  * - User is not authenticated
  */
 const ProfileCompletionGuard = ({ children }) => {
-  const { isAuthenticated, loading, updateUser } = useAuth();
+  const { user, isAuthenticated, loading, updateUser } = useAuth();
   const [verifying, setVerifying] = useState(true);
   const [verifiedUser, setVerifiedUser] = useState(null);
 
@@ -30,8 +30,15 @@ const ProfileCompletionGuard = ({ children }) => {
         return;
       }
 
+      // If we already have a user from context, use it directly
+      if (user) {
+        setVerifiedUser(user);
+        setVerifying(false);
+        return;
+      }
+
+      // If no user in context but authenticated, fetch from backend
       try {
-        // Fetch real user data from backend
         const response = await authService.getMe();
         const backendUser = response.user;
         
@@ -47,7 +54,7 @@ const ProfileCompletionGuard = ({ children }) => {
     };
 
     verifyUser();
-  }, [isAuthenticated, loading, updateUser]);
+  }, [isAuthenticated, loading, user]); // Added user back to dependencies
 
   // Show loading state while checking authentication or verifying
   if (loading || verifying) {

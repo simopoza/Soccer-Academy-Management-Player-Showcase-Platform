@@ -2,6 +2,7 @@ import {
   Box,
   Flex,
   VStack,
+  HStack,
   Text,
   Divider,
   Button,
@@ -168,21 +169,25 @@ const SidebarDrawer = ({ isOpen, onClose }) => {
             {/* Bottom Controls */}
             <VStack spacing={1} align="stretch" p={4}>
               {/* Theme Toggle */}
-              <Button
-                variant="ghost"
-                justifyContent="flex-start"
+              <Flex
+                justify="space-between"
+                align="center"
                 w="100%"
+                px={4}
+                py={2}
+                borderRadius="md"
                 _hover={{ bg: hoverBg }}
+                cursor="pointer"
                 dir={isRTL ? "rtl" : "ltr"}
-                leftIcon={<Icon as={MdDarkMode} boxSize={5} />}
               >
-                <Flex justify="space-between" align="center" w="100%">
+                <HStack spacing={3}>
+                  <Icon as={MdDarkMode} boxSize={5} color={textColor} />
                   <Text fontSize="sm" color={textColor}>
                     {t("theme")}
                   </Text>
-                  <ThemeToggle />
-                </Flex>
-              </Button>
+                </HStack>
+                <ThemeToggle />
+              </Flex>
 
               {/* Language Toggle */}
               <Button
