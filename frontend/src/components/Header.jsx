@@ -21,11 +21,11 @@ const Header = ({ pageTitle, pageSubtitle }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isRTL = i18n.language === "ar";
 
-  // Color mode values
-  const headerBg = useColorModeValue("white", "gray.800");
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const titleColor = useColorModeValue("green.700", "green.300");
-  const subtitleColor = useColorModeValue("gray.600", "gray.400");
+  // Color mode values - Design System
+  const headerBg = useColorModeValue("#FFFFFF", "gray.800");
+  const borderColor = useColorModeValue("#E5E7EB", "gray.700");
+  const titleColor = useColorModeValue("#00B050", "green.300");
+  const subtitleColor = useColorModeValue("#6B7280", "gray.400");
 
   return (
     <>
@@ -41,7 +41,7 @@ const Header = ({ pageTitle, pageSubtitle }) => {
       >
         <Flex
           h="80px"
-          px={4}
+          px={6}
           align="center"
           justify="space-between"
           dir={isRTL ? "rtl" : "ltr"}
@@ -61,12 +61,24 @@ const Header = ({ pageTitle, pageSubtitle }) => {
 
             {/* Page Title and Subtitle */}
             <Box>
-              <Text fontSize="lg" fontWeight="bold" color={titleColor}>
+              <Text 
+                fontSize="xl" 
+                fontWeight="600" 
+                color={titleColor}
+                lineHeight="28px"
+              >
                 {pageTitle}
               </Text>
-              <Text fontSize="sm" color={subtitleColor}>
-                {pageSubtitle || `Welcome back, ${user?.first_name} ${user?.last_name}`}
-              </Text>
+              {pageSubtitle && (
+                <Text 
+                  fontSize="sm" 
+                  fontWeight="400"
+                  color={subtitleColor}
+                  lineHeight="20px"
+                >
+                  {pageSubtitle}
+                </Text>
+              )}
             </Box>
           </HStack>
 
@@ -74,7 +86,7 @@ const Header = ({ pageTitle, pageSubtitle }) => {
           <Avatar
             size="md"
             name={`${user?.first_name} ${user?.last_name}`}
-            bg="green.500"
+            bg="#00B050"
             color="white"
             cursor="pointer"
             onClick={() => navigate("/profile")}

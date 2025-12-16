@@ -15,8 +15,8 @@ const Layout = ({ children, pageTitle, pageSubtitle }) => {
       {/* Main Content Area */}
       <Box
         flex="1"
-        ml={{ base: 0, lg: isRTL ? 0 : "280px" }}
-        mr={{ base: 0, lg: isRTL ? "280px" : 0 }}
+        ml={{ base: 0, lg: isRTL ? 0 : "260px" }}
+        mr={{ base: 0, lg: isRTL ? "260px" : 0 }}
       >
         <Header pageTitle={pageTitle} pageSubtitle={pageSubtitle} />
         <Box>{children}</Box>

@@ -100,7 +100,7 @@ const FixedSidebar = () => {
       right={isRTL ? 0 : "auto"}
       top={0}
       h="100vh"
-      w="280px"
+      w="260px"
       bg={sidebarBg}
       borderRight={!isRTL ? "1px" : "none"}
       borderLeft={isRTL ? "1px" : "none"}
@@ -109,12 +109,12 @@ const FixedSidebar = () => {
       display={{ base: "none", lg: "block" }}
     >
       <Flex direction="column" h="100%">
-        {/* Academy Logo & Role Section */}
-        <Box p={6} borderBottom="1px" borderColor={borderColor}>
-          <Flex align="center" gap={4}>
+        {/* Sidebar Header Section - Figma-like exact spacing */}
+        <VStack align="stretch" spacing={0} pt="24px" px="20px">
+          <Box display="flex" alignItems="center" gap={3}>
             <Box
-              w="12"
-              h="12"
+              w="14"
+              h="14"
               bgGradient="linear(to-br, green.400, green.600)"
               borderRadius="full"
               display="flex"
@@ -123,21 +123,35 @@ const FixedSidebar = () => {
               boxShadow="lg"
               flexShrink={0}
             >
-              <Text fontSize="2xl">⚽</Text>
+              <Text fontSize="3xl">⚽</Text>
             </Box>
             <Box>
-              <Text fontSize="md" fontWeight="bold" color={primaryGreen} lineHeight="1.2">
+              <Text
+                fontSize="lg"
+                fontWeight="600"
+                color={primaryGreen}
+                lineHeight="1.2"
+              >
                 {t("soccerAcademy")}
               </Text>
-              <Text fontSize="sm" color={mutedText} mt={1}>
+              <Text
+                fontSize="xs"
+                fontWeight="500"
+                letterSpacing="0.08em"
+                textTransform="uppercase"
+                color={mutedText}
+                mt="4px"
+                mb="16px"
+              >
                 {user?.role?.toUpperCase()} Portal
               </Text>
             </Box>
-          </Flex>
-        </Box>
+          </Box>
+          <Divider mb="16px" />
+        </VStack>
 
         {/* Navigation Menu */}
-        <VStack spacing={1} align="stretch" p={4}>
+        <VStack spacing={2} align="stretch" px={5} py={6}>
           {navigationItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -150,9 +164,11 @@ const FixedSidebar = () => {
                 _hover={{ bg: isActive ? activeBg : hoverBg }}
                 onClick={() => handleNavigation(item.path)}
                 w="100%"
+                h="44px"
                 dir={isRTL ? "rtl" : "ltr"}
                 leftIcon={<Icon as={item.icon} boxSize={5} />}
-                fontWeight={isActive ? "medium" : "normal"}
+                fontWeight="500"
+                fontSize="sm"
                 borderRadius="md"
               >
                 {item.label}
@@ -164,17 +180,17 @@ const FixedSidebar = () => {
         {/* Spacer to push bottom controls down */}
         <Box flex="1" />
 
-        <Divider />
+        <Divider mt={8} />
 
         {/* Bottom Controls */}
-        <VStack spacing={1} align="stretch" p={4}>
+        <VStack spacing={1} align="stretch" px={5} py={3}>
           {/* Theme Toggle */}
           <Flex
             justify="space-between"
             align="center"
             w="100%"
-            px={4}
-            py={2}
+            px={3}
+            h="44px"
             borderRadius="md"
             _hover={{ bg: hoverBg }}
             cursor="pointer"
@@ -182,7 +198,7 @@ const FixedSidebar = () => {
           >
             <HStack spacing={3}>
               <Icon as={FiMoon} boxSize={5} color={textColor} />
-              <Text fontSize="sm" color={textColor}>
+              <Text fontSize="sm" fontWeight="500" color={textColor}>
                 {t("theme")}
               </Text>
             </HStack>
@@ -194,16 +210,19 @@ const FixedSidebar = () => {
             variant="ghost"
             justifyContent="flex-start"
             w="100%"
+            h="44px"
             _hover={{ bg: hoverBg }}
             onClick={switchLanguage}
             dir={isRTL ? "rtl" : "ltr"}
             leftIcon={<Icon as={FiGlobe} boxSize={5} />}
+            fontWeight="500"
+            fontSize="sm"
           >
             <Flex justify="space-between" align="center" w="100%">
               <Text fontSize="sm" color={textColor}>
                 {t("language")}
               </Text>
-              <Text fontSize="sm" fontWeight="bold">
+              <Text fontSize="sm" fontWeight="600">
                 {isArabic ? "EN" : "AR"}
               </Text>
             </Flex>
@@ -214,11 +233,14 @@ const FixedSidebar = () => {
             variant="ghost"
             justifyContent="flex-start"
             w="100%"
+            h="44px"
             color="#E11D48"
             _hover={{ bg: useColorModeValue("#FEE2E2", "red.900") }}
             onClick={handleLogout}
             dir={isRTL ? "rtl" : "ltr"}
             leftIcon={<Icon as={FiLogOut} boxSize={5} />}
+            fontWeight="500"
+            fontSize="sm"
           >
             {t("logout")}
           </Button>

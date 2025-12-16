@@ -27,9 +27,11 @@ import { FiUsers, FiAward, FiCalendar } from "react-icons/fi";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Layout from "../components/Layout";
 import axiosInstance from "../services/axiosInstance";
+import { useAuth } from "../context/AuthContext";
 
 const AdminDashboardPage = () => {
   const { t, i18n } = useTranslation();
+  const { user } = useAuth();
   const isRTL = i18n.language === "ar";
 
   // State for data
@@ -154,19 +156,12 @@ const AdminDashboardPage = () => {
   };
 
   return (
-    <Layout pageTitle={t("adminDashboard") || "Admin Dashboard"}>
-      <Box minH="100vh" bg={bgGradient} py={8} px={4} dir={isRTL ? "rtl" : "ltr"}>
-        <Container maxW="full">
-          {/* Page Title */}
-          <Heading 
-            size="xl" 
-            mb={8} 
-            color={headingColor}
-            fontWeight="bold"
-          >
-            {t("dashboard") || "Dashboard"}
-          </Heading>
-
+    <Layout 
+      pageTitle={t("dashboard") || "Dashboard"}
+      pageSubtitle={`Welcome back, ${user?.first_name || ''}`}
+    >
+      <Box minH="100vh" bg={bgGradient} p={6} dir={isRTL ? "rtl" : "ltr"}>
+        <Container maxW="full" px={0}>
           {/* Loading State */}
           {loading && (
             <Flex justify="center" align="center" minH="400px">
@@ -186,7 +181,7 @@ const AdminDashboardPage = () => {
           {!loading && !error && (
             <>
               {/* Stats Cards */}
-              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={{ base: 4, lg: 6 }} mb={{ base: 4, lg: 6 }}>
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} mb={6}>
                 {statsCards.map((stat, index) => (
               <Card
                 key={index}
@@ -194,27 +189,45 @@ const AdminDashboardPage = () => {
                 borderColor={cardBorder}
                 borderWidth="1px"
                 boxShadow={cardShadow}
-                borderRadius="lg"
+                borderRadius="xl"
+                p={6}
+                minH="120px"
                 _hover={{ transform: "translateY(-2px)", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
                 transition="all 0.2s"
               >
-                <CardHeader pb={3}>
+                <CardHeader p={0} pb={3}>
                   <Flex justify="space-between" align="center">
-                    <Text fontSize="sm" fontWeight="medium" color={textColor}>
+                    <Text 
+                      fontSize="sm" 
+                      fontWeight="500" 
+                      color={textColor}
+                      lineHeight="20px"
+                    >
                       {stat.label}
                     </Text>
                     <Icon
                       as={stat.icon}
-                      boxSize={6}
+                      boxSize={5}
                       color={stat.color}
                     />
                   </Flex>
                 </CardHeader>
-                <CardBody pt={0}>
-                  <Text fontSize="3xl" fontWeight="bold" color={primaryGreen} mb={1}>
+                <CardBody p={0}>
+                  <Text 
+                    fontSize="2xl" 
+                    fontWeight="600" 
+                    color={primaryGreen} 
+                    mb={2}
+                    lineHeight="28px"
+                  >
                     {stat.value}
                   </Text>
-                  <Text fontSize="xs" color={textColor}>
+                  <Text 
+                    fontSize="sm" 
+                    fontWeight="400"
+                    color={textColor}
+                    lineHeight="20px"
+                  >
                     {stat.change}
                   </Text>
                 </CardBody>
@@ -223,18 +236,37 @@ const AdminDashboardPage = () => {
           </SimpleGrid>
 
           {/* Performance Chart and Recent Matches - Side by Side */}
-          <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 4, lg: 6 }}>
+          <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
             {/* Performance Ratings Chart */}
-            <Card bg={cardBg} borderColor={cardBorder} borderWidth="1px" boxShadow={cardShadow} borderRadius="lg">
-              <CardHeader py={5}>
-                <Heading size="md" color={titleColor} mb={1} fontWeight="bold">
+            <Card 
+              bg={cardBg} 
+              borderColor={cardBorder} 
+              borderWidth="1px" 
+              boxShadow={cardShadow} 
+              borderRadius="xl"
+              p={6}
+              minH="360px"
+            >
+              <CardHeader p={0} pb={4}>
+                <Heading 
+                  fontSize="lg" 
+                  fontWeight="600" 
+                  color={titleColor} 
+                  mb={1}
+                  lineHeight="24px"
+                >
                   {t("performanceRatings") || "Performance Ratings"}
                 </Heading>
-                <Text color={textColor} fontSize="sm">
+                <Text 
+                  color={textColor} 
+                  fontSize="sm"
+                  fontWeight="400"
+                  lineHeight="20px"
+                >
                   {t("averageTeamRatings") || "Average team ratings over time"}
                 </Text>
               </CardHeader>
-              <CardBody>
+              <CardBody p={0}>
                 {performanceData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={350}>
                     <AreaChart data={performanceData}>
@@ -288,12 +320,30 @@ const AdminDashboardPage = () => {
             </Card>
 
             {/* Recent Matches */}
-            <Card bg={cardBg} borderColor={cardBorder} borderWidth="1px" boxShadow={cardShadow} borderRadius="lg">
-              <CardHeader py={5}>
-                <Heading size="md" color={titleColor} mb={1} fontWeight="bold">
+            <Card 
+              bg={cardBg} 
+              borderColor={cardBorder} 
+              borderWidth="1px" 
+              boxShadow={cardShadow} 
+              borderRadius="xl"
+              minH="360px"
+            >
+              <CardHeader p={6} pb={4}>
+                <Heading 
+                  fontSize="lg" 
+                  fontWeight="600" 
+                  color={titleColor} 
+                  mb={1}
+                  lineHeight="24px"
+                >
                   {t("recentMatches") || "Recent Matches"}
                 </Heading>
-                <Text color={textColor} fontSize="sm">
+                <Text 
+                  color={textColor} 
+                  fontSize="sm"
+                  fontWeight="400"
+                  lineHeight="20px"
+                >
                   {t("latestMatchResults") || "Latest match results"}
                 </Text>
               </CardHeader>
@@ -313,26 +363,53 @@ const AdminDashboardPage = () => {
                         <Tr key={match.id}>
                           <Td>
                             <Box>
-                              <Text fontWeight="medium" fontSize="sm" color={titleColor}>
+                              <Text 
+                                fontWeight="500" 
+                                fontSize="sm" 
+                                color={titleColor}
+                                lineHeight="20px"
+                              >
                                 {match.team1}
                               </Text>
-                              <Text fontSize="sm" color={textColor}>
+                              <Text 
+                                fontSize="sm" 
+                                fontWeight="400"
+                                color={textColor}
+                                lineHeight="20px"
+                              >
                                 {match.team2}
                               </Text>
                             </Box>
                           </Td>
-                          <Td fontWeight="medium" fontSize="sm" color={titleColor}>{match.score}</Td>
-                          <Td fontSize="sm" color={textColor}>{match.date}</Td>
+                          <Td 
+                            fontWeight="500" 
+                            fontSize="sm" 
+                            color={titleColor}
+                          >
+                            {match.score}
+                          </Td>
+                          <Td 
+                            fontSize="sm" 
+                            fontWeight="400"
+                            color={textColor}
+                          >
+                            {match.date}
+                          </Td>
                           <Td>
                             <Badge
                               px={3}
                               py={1}
-                              borderRadius="md"
+                              borderRadius="full"
                               minW="70px"
                               textAlign="center"
                               bg={getStatusColor(match.status)}
                               color={getStatusTextColor(match.status)}
-                              fontWeight="medium"
+                              fontWeight="500"
+                              fontSize="xs"
+                              h="24px"
+                              display="inline-flex"
+                              alignItems="center"
+                              justifyContent="center"
                             >
                               {getStatusText(match.status)}
                             </Badge>
