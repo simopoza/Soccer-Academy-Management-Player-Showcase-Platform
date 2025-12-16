@@ -11,22 +11,19 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
-  MdDashboard, 
-  MdPeople, 
-  MdSportsSoccer, 
-  MdGroups, 
-  MdSportsScore, 
-  MdAnalytics,
-  MdPerson,
-  MdBarChart,
-  MdSettings,
-  MdDescription,
-  MdLogout,
-  MdLanguage,
-  MdDarkMode,
-  MdLightMode,
-  MdApps
-} from "react-icons/md";
+  FiHome,
+  FiUsers,
+  FiCalendar,
+  FiBarChart2,
+  FiSettings,
+  FiLogOut,
+  FiUser,
+  FiFileText,
+  FiGlobe,
+  FiMoon,
+  FiGrid
+} from "react-icons/fi";
+import { HiOutlineUserGroup } from "react-icons/hi";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
 import ThemeToggle from "./ThemeToggle";
@@ -40,13 +37,15 @@ const FixedSidebar = () => {
   const { switchLanguage, isArabic } = useLanguageSwitcher();
   const isRTL = i18n.language === "ar";
 
-  // Color mode values
-  const sidebarBg = useColorModeValue("white", "gray.800");
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const activeBg = useColorModeValue("green.50", "green.900");
-  const activeColor = useColorModeValue("green.600", "green.200");
-  const hoverBg = useColorModeValue("gray.50", "gray.700");
-  const textColor = useColorModeValue("gray.700", "gray.200");
+  // Color mode values - Design System
+  const sidebarBg = useColorModeValue("#FFFFFF", "gray.800");
+  const borderColor = useColorModeValue("#E5E7EB", "gray.700");
+  const activeBg = useColorModeValue("#00B050", "#00B050");
+  const activeColor = useColorModeValue("#FFFFFF", "#FFFFFF");
+  const hoverBg = useColorModeValue("#F9FAFB", "gray.700");
+  const textColor = useColorModeValue("#111827", "gray.200");
+  const mutedText = useColorModeValue("#6B7280", "gray.400");
+  const primaryGreen = "#00B050";
 
   // Navigation items based on role
   const getNavigationItems = () => {
@@ -55,28 +54,28 @@ const FixedSidebar = () => {
     switch (user.role) {
       case "admin":
         return [
-          { label: t("dashboard"), path: "/admin/dashboard", icon: MdDashboard },
-          { label: t("menu"), path: "/admin/menu", icon: MdApps },
-          { label: t("users"), path: "/admin/users", icon: MdPeople },
-          { label: t("players"), path: "/admin/players", icon: MdSportsSoccer },
-          { label: t("teams"), path: "/admin/teams", icon: MdGroups },
-          { label: t("matches"), path: "/admin/matches", icon: MdSportsScore },
-          { label: t("analytics"), path: "/admin/analytics", icon: MdAnalytics },
+          { label: t("dashboard"), path: "/admin/dashboard", icon: FiHome },
+          { label: t("menu"), path: "/admin/menu", icon: FiGrid },
+          { label: t("users"), path: "/admin/users", icon: FiUsers },
+          { label: t("players"), path: "/admin/players", icon: FiUsers },
+          { label: t("teams"), path: "/admin/teams", icon: HiOutlineUserGroup },
+          { label: t("matches"), path: "/admin/matches", icon: FiCalendar },
+          { label: t("analytics"), path: "/admin/analytics", icon: FiBarChart2 },
         ];
       case "player":
         return [
-          { label: t("dashboard"), path: "/player-dashboard", icon: MdDashboard },
-          { label: t("myProfile"), path: "/profile", icon: MdPerson },
-          { label: t("myStats"), path: "/stats", icon: MdBarChart },
-          { label: t("myTeam"), path: "/team", icon: MdGroups },
-          { label: t("settings"), path: "/settings", icon: MdSettings },
+          { label: t("dashboard"), path: "/player-dashboard", icon: FiHome },
+          { label: t("myProfile"), path: "/profile", icon: FiUser },
+          { label: t("myStats"), path: "/stats", icon: FiBarChart2 },
+          { label: t("myTeam"), path: "/team", icon: HiOutlineUserGroup },
+          { label: t("settings"), path: "/settings", icon: FiSettings },
         ];
       case "agent":
         return [
-          { label: t("dashboard"), path: "/agent-dashboard", icon: MdDashboard },
-          { label: t("myPlayers"), path: "/my-players", icon: MdSportsSoccer },
-          { label: t("contracts"), path: "/contracts", icon: MdDescription },
-          { label: t("settings"), path: "/settings", icon: MdSettings },
+          { label: t("dashboard"), path: "/agent-dashboard", icon: FiHome },
+          { label: t("myPlayers"), path: "/my-players", icon: FiUsers },
+          { label: t("contracts"), path: "/contracts", icon: FiFileText },
+          { label: t("settings"), path: "/settings", icon: FiSettings },
         ];
       default:
         return [];
@@ -127,10 +126,10 @@ const FixedSidebar = () => {
               <Text fontSize="2xl">⚽</Text>
             </Box>
             <Box>
-              <Text fontSize="md" fontWeight="bold" color={textColor} lineHeight="1.2">
+              <Text fontSize="md" fontWeight="bold" color={primaryGreen} lineHeight="1.2">
                 {t("soccerAcademy")}
               </Text>
-              <Text fontSize="sm" color="gray.500" mt={1}>
+              <Text fontSize="sm" color={mutedText} mt={1}>
                 {user?.role?.toUpperCase()} Portal
               </Text>
             </Box>
@@ -153,10 +152,8 @@ const FixedSidebar = () => {
                 w="100%"
                 dir={isRTL ? "rtl" : "ltr"}
                 leftIcon={<Icon as={item.icon} boxSize={5} />}
-                fontWeight={isActive ? "bold" : "normal"}
-                borderLeft={isActive && !isRTL ? "4px" : "none"}
-                borderRight={isActive && isRTL ? "4px" : "none"}
-                borderColor={isActive ? "green.600" : "transparent"}
+                fontWeight={isActive ? "medium" : "normal"}
+                borderRadius="md"
               >
                 {item.label}
               </Button>
@@ -184,7 +181,7 @@ const FixedSidebar = () => {
             dir={isRTL ? "rtl" : "ltr"}
           >
             <HStack spacing={3}>
-              <Icon as={MdDarkMode} boxSize={5} color={textColor} />
+              <Icon as={FiMoon} boxSize={5} color={textColor} />
               <Text fontSize="sm" color={textColor}>
                 {t("theme")}
               </Text>
@@ -200,7 +197,7 @@ const FixedSidebar = () => {
             _hover={{ bg: hoverBg }}
             onClick={switchLanguage}
             dir={isRTL ? "rtl" : "ltr"}
-            leftIcon={<Icon as={MdLanguage} boxSize={5} />}
+            leftIcon={<Icon as={FiGlobe} boxSize={5} />}
           >
             <Flex justify="space-between" align="center" w="100%">
               <Text fontSize="sm" color={textColor}>
@@ -217,11 +214,11 @@ const FixedSidebar = () => {
             variant="ghost"
             justifyContent="flex-start"
             w="100%"
-            color="red.500"
-            _hover={{ bg: useColorModeValue("red.50", "red.900") }}
+            color="#E11D48"
+            _hover={{ bg: useColorModeValue("#FEE2E2", "red.900") }}
             onClick={handleLogout}
             dir={isRTL ? "rtl" : "ltr"}
-            leftIcon={<Icon as={MdLogout} boxSize={5} />}
+            leftIcon={<Icon as={FiLogOut} boxSize={5} />}
           >
             {t("logout")}
           </Button>

@@ -23,7 +23,7 @@ import {
 } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
-import { FaUsers, FaUserShield, FaFutbol } from "react-icons/fa";
+import { FiUsers, FiAward, FiCalendar } from "react-icons/fi";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Layout from "../components/Layout";
 import axiosInstance from "../services/axiosInstance";
@@ -39,16 +39,19 @@ const AdminDashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Color mode values
+  // Color mode values - Design System Colors
   const bgGradient = useColorModeValue(
-    "linear(to-b, green.50, white)",
+    "white",
     "linear(to-b, gray.900, gray.800)"
   );
-  const headingColor = useColorModeValue("green.700", "green.300");
-  const textColor = useColorModeValue("gray.600", "gray.300");
-  const cardBg = useColorModeValue("white", "gray.700");
-  const cardBorder = useColorModeValue("green.100", "gray.600");
-  const chartGridColor = useColorModeValue("#e5e7eb", "#374151");
+  const headingColor = useColorModeValue("#00B050", "green.300");
+  const textColor = useColorModeValue("#6B7280", "gray.300");
+  const cardBg = useColorModeValue("#FFFFFF", "gray.700");
+  const cardBorder = useColorModeValue("#D1FAE5", "gray.600");
+  const cardShadow = useColorModeValue("0 1px 3px 0 rgba(0, 0, 0, 0.05)", "0 1px 3px 0 rgba(0, 0, 0, 0.3)");
+  const chartGridColor = useColorModeValue("#E5E7EB", "#374151");
+  const primaryGreen = "#00B050";
+  const titleColor = useColorModeValue("#111827", "gray.100");
 
   // Fetch dashboard data
   useEffect(() => {
@@ -92,35 +95,48 @@ const AdminDashboardPage = () => {
       label: t("totalPlayers") || "Total Players",
       value: stats.totalPlayers,
       change: `${stats.playerGrowth} ${t("fromLastMonth") || "from last month"}`,
-      icon: FaUsers,
-      color: "green",
+      icon: FiUsers,
+      color: primaryGreen,
     },
     {
       label: t("activeTeams") || "Active Teams",
       value: stats.activeTeams,
       change: t("acrossAllAgeGroups") || "Across all age groups",
-      icon: FaUserShield,
-      color: "blue",
+      icon: FiAward,
+      color: primaryGreen,
     },
     {
       label: t("matchesPlayed") || "Matches Played",
       value: stats.matchesPlayed,
       change: t("thisSeason") || "This season",
-      icon: FaFutbol,
-      color: "purple",
+      icon: FiCalendar,
+      color: primaryGreen,
     },
   ] : [];
 
   const getStatusColor = (status) => {
     switch (status) {
       case "Won":
-        return "green";
+        return "#00B050";
       case "Draw":
-        return "gray";
+        return "#E5E7EB";
       case "Lost":
-        return "red";
+        return "#E11D48";
       default:
-        return "gray";
+        return "#E5E7EB";
+    }
+  };
+
+  const getStatusTextColor = (status) => {
+    switch (status) {
+      case "Won":
+        return "#FFFFFF";
+      case "Draw":
+        return "#374151";
+      case "Lost":
+        return "#FFFFFF";
+      default:
+        return "#374151";
     }
   };
 
@@ -139,12 +155,22 @@ const AdminDashboardPage = () => {
 
   return (
     <Layout pageTitle={t("adminDashboard") || "Admin Dashboard"}>
-      <Box minH="100vh" bgGradient={bgGradient} py={8} px={4} dir={isRTL ? "rtl" : "ltr"}>
+      <Box minH="100vh" bg={bgGradient} py={8} px={4} dir={isRTL ? "rtl" : "ltr"}>
         <Container maxW="full">
+          {/* Page Title */}
+          <Heading 
+            size="xl" 
+            mb={8} 
+            color={headingColor}
+            fontWeight="bold"
+          >
+            {t("dashboard") || "Dashboard"}
+          </Heading>
+
           {/* Loading State */}
           {loading && (
             <Flex justify="center" align="center" minH="400px">
-              <Spinner size="xl" color="green.500" thickness="4px" />
+              <Spinner size="xl" color={primaryGreen} thickness="4px" />
             </Flex>
           )}
 
@@ -167,27 +193,28 @@ const AdminDashboardPage = () => {
                 bg={cardBg}
                 borderColor={cardBorder}
                 borderWidth="1px"
-                boxShadow="lg"
-                _hover={{ transform: "translateY(-4px)", boxShadow: "xl" }}
-                transition="all 0.3s"
+                boxShadow={cardShadow}
+                borderRadius="lg"
+                _hover={{ transform: "translateY(-2px)", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
+                transition="all 0.2s"
               >
                 <CardHeader pb={3}>
                   <Flex justify="space-between" align="center">
-                    <Text fontSize="md" fontWeight="medium" color={textColor}>
+                    <Text fontSize="sm" fontWeight="medium" color={textColor}>
                       {stat.label}
                     </Text>
                     <Icon
                       as={stat.icon}
-                      boxSize={5}
-                      color={`${stat.color}.600`}
+                      boxSize={6}
+                      color={stat.color}
                     />
                   </Flex>
                 </CardHeader>
                 <CardBody pt={0}>
-                  <Text fontSize="4xl" fontWeight="bold" color={headingColor} mb={2}>
+                  <Text fontSize="3xl" fontWeight="bold" color={primaryGreen} mb={1}>
                     {stat.value}
                   </Text>
-                  <Text fontSize="sm" color={textColor}>
+                  <Text fontSize="xs" color={textColor}>
                     {stat.change}
                   </Text>
                 </CardBody>
@@ -198,9 +225,9 @@ const AdminDashboardPage = () => {
           {/* Performance Chart and Recent Matches - Side by Side */}
           <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 4, lg: 6 }}>
             {/* Performance Ratings Chart */}
-            <Card bg={cardBg} borderColor={cardBorder} borderWidth="1px" boxShadow="lg">
+            <Card bg={cardBg} borderColor={cardBorder} borderWidth="1px" boxShadow={cardShadow} borderRadius="lg">
               <CardHeader py={5}>
-                <Heading size="md" color={headingColor} mb={1}>
+                <Heading size="md" color={titleColor} mb={1} fontWeight="bold">
                   {t("performanceRatings") || "Performance Ratings"}
                 </Heading>
                 <Text color={textColor} fontSize="sm">
@@ -213,8 +240,8 @@ const AdminDashboardPage = () => {
                     <AreaChart data={performanceData}>
                       <defs>
                         <linearGradient id="colorRating" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#00B050" stopOpacity={0.25}/>
+                          <stop offset="95%" stopColor="#00B050" stopOpacity={0.05}/>
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
@@ -233,13 +260,13 @@ const AdminDashboardPage = () => {
                           backgroundColor: cardBg,
                           border: `1px solid ${cardBorder}`,
                           borderRadius: '8px',
-                          color: textColor
+                          color: titleColor
                         }}
                       />
                       <Area 
                         type="monotone" 
                         dataKey="rating" 
-                        stroke="#10b981" 
+                        stroke="#00B050" 
                         strokeWidth={2}
                         fillOpacity={1} 
                         fill="url(#colorRating)" 
@@ -261,9 +288,9 @@ const AdminDashboardPage = () => {
             </Card>
 
             {/* Recent Matches */}
-            <Card bg={cardBg} borderColor={cardBorder} borderWidth="1px" boxShadow="lg">
+            <Card bg={cardBg} borderColor={cardBorder} borderWidth="1px" boxShadow={cardShadow} borderRadius="lg">
               <CardHeader py={5}>
-                <Heading size="md" color={headingColor} mb={1}>
+                <Heading size="md" color={titleColor} mb={1} fontWeight="bold">
                   {t("recentMatches") || "Recent Matches"}
                 </Heading>
                 <Text color={textColor} fontSize="sm">
@@ -286,7 +313,7 @@ const AdminDashboardPage = () => {
                         <Tr key={match.id}>
                           <Td>
                             <Box>
-                              <Text fontWeight="normal" fontSize="sm">
+                              <Text fontWeight="medium" fontSize="sm" color={titleColor}>
                                 {match.team1}
                               </Text>
                               <Text fontSize="sm" color={textColor}>
@@ -294,30 +321,18 @@ const AdminDashboardPage = () => {
                               </Text>
                             </Box>
                           </Td>
-                          <Td fontWeight="normal" fontSize="sm">{match.score}</Td>
+                          <Td fontWeight="medium" fontSize="sm" color={titleColor}>{match.score}</Td>
                           <Td fontSize="sm" color={textColor}>{match.date}</Td>
                           <Td>
                             <Badge
-                              colorScheme={getStatusColor(match.status)}
                               px={3}
                               py={1}
                               borderRadius="md"
                               minW="70px"
                               textAlign="center"
-                              bgGradient={
-                                match.status === "Won" 
-                                  ? "linear(to-r, green.600, green.700)" 
-                                  : match.status === "Lost"
-                                  ? "linear(to-r, red.600, red.700)"
-                                  : match.status === "Draw"
-                                  ? "linear(to-r, gray.500, gray.600)"
-                                  : undefined
-                              }
-                              color={
-                                match.status === "Won" || match.status === "Lost" || match.status === "Draw"
-                                  ? "white" 
-                                  : undefined
-                              }
+                              bg={getStatusColor(match.status)}
+                              color={getStatusTextColor(match.status)}
+                              fontWeight="medium"
                             >
                               {getStatusText(match.status)}
                             </Badge>
