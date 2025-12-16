@@ -19,5 +19,6 @@
   "lost": "Lost",
   "draw": "Draw",
   "dashboard": "Dashboard",
-  "menu": "Menu"
+  "menu": "Menu",
+  "noPerformanceData": "No performance data available yet"
 }

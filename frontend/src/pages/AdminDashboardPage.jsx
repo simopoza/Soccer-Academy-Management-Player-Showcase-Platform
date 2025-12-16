@@ -24,6 +24,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { FaUsers, FaUserShield, FaFutbol } from "react-icons/fa";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Layout from "../components/Layout";
 import axiosInstance from "../services/axiosInstance";
 
@@ -34,6 +35,7 @@ const AdminDashboardPage = () => {
   // State for data
   const [stats, setStats] = useState(null);
   const [recentMatches, setRecentMatches] = useState([]);
+  const [performanceData, setPerformanceData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -46,6 +48,7 @@ const AdminDashboardPage = () => {
   const textColor = useColorModeValue("gray.600", "gray.300");
   const cardBg = useColorModeValue("white", "gray.700");
   const cardBorder = useColorModeValue("green.100", "gray.600");
+  const chartGridColor = useColorModeValue("#e5e7eb", "#374151");
 
   // Fetch dashboard data
   useEffect(() => {
@@ -54,10 +57,11 @@ const AdminDashboardPage = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch stats and recent matches in parallel
-        const [statsResponse, matchesResponse] = await Promise.all([
+        // Fetch stats, matches, and performance ratings in parallel
+        const [statsResponse, matchesResponse, ratingsResponse] = await Promise.all([
           axiosInstance.get('/dashboard/stats'),
           axiosInstance.get('/dashboard/recent-matches?limit=5'),
+          axiosInstance.get('/dashboard/performance-ratings?months=6'),
         ]);
 
         if (statsResponse.data.success) {
@@ -66,6 +70,10 @@ const AdminDashboardPage = () => {
 
         if (matchesResponse.data.success) {
           setRecentMatches(matchesResponse.data.data);
+        }
+
+        if (ratingsResponse.data.success) {
+          setPerformanceData(ratingsResponse.data.data);
         }
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -200,15 +208,55 @@ const AdminDashboardPage = () => {
                 </Text>
               </CardHeader>
               <CardBody>
-                <Flex
-                  align="center"
-                  justify="center"
-                  minH="350px"
-                  color={textColor}
-                  fontSize="lg"
-                >
-                  {t("chartComingSoon") || "Chart coming soon..."}
-                </Flex>
+                {performanceData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={350}>
+                    <AreaChart data={performanceData}>
+                      <defs>
+                        <linearGradient id="colorRating" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
+                      <XAxis 
+                        dataKey="name" 
+                        stroke={textColor}
+                        style={{ fontSize: '12px' }}
+                      />
+                      <YAxis 
+                        stroke={textColor}
+                        style={{ fontSize: '12px' }}
+                        domain={[0, 10]}
+                      />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: cardBg,
+                          border: `1px solid ${cardBorder}`,
+                          borderRadius: '8px',
+                          color: textColor
+                        }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="rating" 
+                        stroke="#10b981" 
+                        strokeWidth={2}
+                        fillOpacity={1} 
+                        fill="url(#colorRating)" 
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Flex
+                    align="center"
+                    justify="center"
+                    minH="350px"
+                    color={textColor}
+                    fontSize="sm"
+                  >
+                    {t("noPerformanceData") || "No performance data available yet"}
+                  </Flex>
+                )}
               </CardBody>
             </Card>
 

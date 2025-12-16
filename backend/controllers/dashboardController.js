@@ -131,7 +131,7 @@ const getPerformanceRatings = async (req, res) => {
     // If no ratings data, return sample structure
     const formattedRatings = ratings.length > 0 ? ratings.map(r => ({
       name: r.name,
-      rating: parseFloat(r.rating.toFixed(2)),
+      rating: parseFloat(Number(r.rating).toFixed(2)),
     })) : [];
 
     res.status(200).json({
