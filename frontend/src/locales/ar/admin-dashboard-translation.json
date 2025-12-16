@@ -1,0 +1,23 @@
+{
+  "adminDashboard": "لوحة تحكم المسؤول",
+  "totalPlayers": "إجمالي اللاعبين",
+  "activeTeams": "الفرق النشطة",
+  "matchesPlayed": "المباريات الملعوبة",
+  "performanceRatings": "تقييمات الأداء",
+  "averageTeamRatings": "متوسط تقييمات الفريق مع مرور الوقت",
+  "recentMatches": "المباريات الأخيرة",
+  "latestMatchResults": "نتائج آخر المباريات",
+  "teams": "الفرق",
+  "score": "النتيجة",
+  "date": "التاريخ",
+  "result": "النتيجة",
+  "chartComingSoon": "الرسم البياني قريباً...",
+  "fromLastMonth": "من الشهر الماضي",
+  "acrossAllAgeGroups": "عبر جميع الفئات العمرية",
+  "thisSeason": "هذا الموسم",
+  "won": "فوز",
+  "lost": "خسارة",
+  "draw": "تعادل",
+  "dashboard": "لوحة التحكم",
+  "menu": "القائمة"
+}

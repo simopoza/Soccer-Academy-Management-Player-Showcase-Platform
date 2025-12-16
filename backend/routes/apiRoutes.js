@@ -9,6 +9,7 @@ const statsRoutes = require("./stats");
 const userRoutes = require("./user");
 const authRoutes = require("./auth");
 const adminRoutes = require('./admin');
+const dashboardRoutes = require('./dashboard');
 
 router.use("/auth", authRoutes);
 router.use("/users", auth, userRoutes);
@@ -17,5 +18,6 @@ router.use("/teams", auth, teamsRoutes);
 router.use("/admin", auth, adminRoutes);
 router.use("/matches", auth, matchesRoutes);
 router.use("/stats", auth, statsRoutes);
+router.use("/dashboard", auth, dashboardRoutes);
 
 module.exports = router;

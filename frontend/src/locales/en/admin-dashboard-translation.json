@@ -1,0 +1,23 @@
+{
+  "adminDashboard": "Admin Dashboard",
+  "totalPlayers": "Total Players",
+  "activeTeams": "Active Teams",
+  "matchesPlayed": "Matches Played",
+  "performanceRatings": "Performance Ratings",
+  "averageTeamRatings": "Average team ratings over time",
+  "recentMatches": "Recent Matches",
+  "latestMatchResults": "Latest match results",
+  "teams": "Teams",
+  "score": "Score",
+  "date": "Date",
+  "result": "Result",
+  "chartComingSoon": "Chart coming soon...",
+  "fromLastMonth": "from last month",
+  "acrossAllAgeGroups": "Across all age groups",
+  "thisSeason": "This season",
+  "won": "Won",
+  "lost": "Lost",
+  "draw": "Draw",
+  "dashboard": "Dashboard",
+  "menu": "Menu"
+}

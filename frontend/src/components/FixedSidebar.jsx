@@ -24,7 +24,8 @@ import {
   MdLogout,
   MdLanguage,
   MdDarkMode,
-  MdLightMode
+  MdLightMode,
+  MdApps
 } from "react-icons/md";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
@@ -54,12 +55,13 @@ const FixedSidebar = () => {
     switch (user.role) {
       case "admin":
         return [
-          { label: t("dashboard"), path: "/admin-dashboard", icon: MdDashboard },
-          { label: t("users"), path: "/users", icon: MdPeople },
-          { label: t("players"), path: "/players", icon: MdSportsSoccer },
-          { label: t("teams"), path: "/teams", icon: MdGroups },
-          { label: t("matches"), path: "/matches", icon: MdSportsScore },
-          { label: t("analytics"), path: "/analytics", icon: MdAnalytics },
+          { label: t("dashboard"), path: "/admin/dashboard", icon: MdDashboard },
+          { label: t("menu"), path: "/admin/menu", icon: MdApps },
+          { label: t("users"), path: "/admin/users", icon: MdPeople },
+          { label: t("players"), path: "/admin/players", icon: MdSportsSoccer },
+          { label: t("teams"), path: "/admin/teams", icon: MdGroups },
+          { label: t("matches"), path: "/admin/matches", icon: MdSportsScore },
+          { label: t("analytics"), path: "/admin/analytics", icon: MdAnalytics },
         ];
       case "player":
         return [
@@ -151,6 +153,10 @@ const FixedSidebar = () => {
                 w="100%"
                 dir={isRTL ? "rtl" : "ltr"}
                 leftIcon={<Icon as={item.icon} boxSize={5} />}
+                fontWeight={isActive ? "bold" : "normal"}
+                borderLeft={isActive && !isRTL ? "4px" : "none"}
+                borderRight={isActive && isRTL ? "4px" : "none"}
+                borderColor={isActive ? "green.600" : "transparent"}
               >
                 {item.label}
               </Button>

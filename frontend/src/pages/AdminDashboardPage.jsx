@@ -1,12 +1,41 @@
-import { Box, Container, Heading, Text, SimpleGrid, Card, CardHeader, CardBody, Button, useColorModeValue } from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
+import {
+  Box,
+  Container,
+  Heading,
+  Text,
+  SimpleGrid,
+  Card,
+  CardHeader,
+  CardBody,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  Badge,
+  Icon,
+  Flex,
+  useColorModeValue,
+  Spinner,
+  Alert,
+  AlertIcon,
+} from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
+import { useState, useEffect } from "react";
+import { FaUsers, FaUserShield, FaFutbol } from "react-icons/fa";
 import Layout from "../components/Layout";
+import axiosInstance from "../services/axiosInstance";
 
 const AdminDashboardPage = () => {
-  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
+
+  // State for data
+  const [stats, setStats] = useState(null);
+  const [recentMatches, setRecentMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Color mode values
   const bgGradient = useColorModeValue(
@@ -16,100 +45,245 @@ const AdminDashboardPage = () => {
   const headingColor = useColorModeValue("green.700", "green.300");
   const textColor = useColorModeValue("gray.600", "gray.300");
   const cardBg = useColorModeValue("white", "gray.700");
+  const cardBorder = useColorModeValue("green.100", "gray.600");
 
-  const dashboardCards = [
+  // Fetch dashboard data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch stats and recent matches in parallel
+        const [statsResponse, matchesResponse] = await Promise.all([
+          axiosInstance.get('/dashboard/stats'),
+          axiosInstance.get('/dashboard/recent-matches?limit=5'),
+        ]);
+
+        if (statsResponse.data.success) {
+          setStats(statsResponse.data.data);
+        }
+
+        if (matchesResponse.data.success) {
+          setRecentMatches(matchesResponse.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError(err.response?.data?.message || 'Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // Stats card configuration
+  const statsCards = stats ? [
     {
-      title: t("userManagement") || "User Management",
-      description: t("manageUsersDesc") || "Approve or reject pending user registrations",
-      icon: "👥",
-      path: "/admin/users",
+      label: t("totalPlayers") || "Total Players",
+      value: stats.totalPlayers,
+      change: `${stats.playerGrowth} ${t("fromLastMonth") || "from last month"}`,
+      icon: FaUsers,
       color: "green",
     },
     {
-      title: t("playersManagement") || "Players Management",
-      description: t("playersManagementDesc") || "Manage player profiles and information",
-      icon: "⚽",
-      path: "/admin/players",
+      label: t("activeTeams") || "Active Teams",
+      value: stats.activeTeams,
+      change: t("acrossAllAgeGroups") || "Across all age groups",
+      icon: FaUserShield,
       color: "blue",
-      disabled: true,
     },
     {
-      title: t("teamsManagement") || "Teams Management",
-      description: t("teamsManagementDesc") || "Manage teams and their information",
-      icon: "🏆",
-      path: "/admin/teams",
+      label: t("matchesPlayed") || "Matches Played",
+      value: stats.matchesPlayed,
+      change: t("thisSeason") || "This season",
+      icon: FaFutbol,
       color: "purple",
-      disabled: true,
     },
-    {
-      title: t("matchesManagement") || "Matches Management",
-      description: t("matchesManagementDesc") || "Schedule and manage matches",
-      icon: "📅",
-      path: "/admin/matches",
-      color: "orange",
-      disabled: true,
-    },
-    {
-      title: t("analyticsReports") || "Analytics & Reports",
-      description: t("analyticsReportsDesc") || "View performance analytics and detailed reports",
-      icon: "📊",
-      path: "/admin/analytics",
-      color: "teal",
-      // disabled: true,
-    },
-  ];
+  ] : [];
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Won":
+        return "green";
+      case "Draw":
+        return "gray";
+      case "Lost":
+        return "red";
+      default:
+        return "gray";
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case "Won":
+        return t("won") || "Won";
+      case "Draw":
+        return t("draw") || "Draw";
+      case "Lost":
+        return t("lost") || "Lost";
+      default:
+        return status;
+    }
+  };
 
   return (
     <Layout pageTitle={t("adminDashboard") || "Admin Dashboard"}>
-      <Box minH="100vh" bgGradient={bgGradient} py={8} dir={isRTL ? "rtl" : "ltr"}>
-        <Container maxW="container.xl">
-          {/* Header */}
-          <Heading size="xl" color={headingColor} mb={2}>
-            {t("adminDashboard") || "Admin Dashboard"}
-          </Heading>
-          <Text color={textColor} fontSize="lg" mb={8}>
-            {t("welcomeAdmin") || "Welcome! Manage your soccer academy from here."}
-          </Text>
+      <Box minH="100vh" bgGradient={bgGradient} py={8} px={4} dir={isRTL ? "rtl" : "ltr"}>
+        <Container maxW="full">
+          {/* Loading State */}
+          {loading && (
+            <Flex justify="center" align="center" minH="400px">
+              <Spinner size="xl" color="green.500" thickness="4px" />
+            </Flex>
+          )}
 
-          <SimpleGrid columns={{ base: 1, md: 2, lg: 2 }} spacing={6}>
-            {dashboardCards.map((card, index) => (
+          {/* Error State */}
+          {error && !loading && (
+            <Alert status="error" borderRadius="md" mb={4}>
+              <AlertIcon />
+              {error}
+            </Alert>
+          )}
+
+          {/* Dashboard Content */}
+          {!loading && !error && (
+            <>
+              {/* Stats Cards */}
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={{ base: 4, lg: 6 }} mb={{ base: 4, lg: 6 }}>
+                {statsCards.map((stat, index) => (
               <Card
                 key={index}
                 bg={cardBg}
+                borderColor={cardBorder}
+                borderWidth="1px"
                 boxShadow="lg"
-                borderRadius="lg"
-                overflow="hidden"
-                _hover={{ transform: card.disabled ? "none" : "translateY(-4px)", boxShadow: "xl" }}
+                _hover={{ transform: "translateY(-4px)", boxShadow: "xl" }}
                 transition="all 0.3s"
-                opacity={card.disabled ? 0.6 : 1}
-                cursor={card.disabled ? "not-allowed" : "pointer"}
-                onClick={() => !card.disabled && navigate(card.path)}
               >
-                <CardHeader bg={`${card.color}.500`} py={6}>
-                  <Text fontSize="4xl">{card.icon}</Text>
-                  <Heading size="md" color="white" mt={2}>
-                    {card.title}
-                  </Heading>
+                <CardHeader pb={3}>
+                  <Flex justify="space-between" align="center">
+                    <Text fontSize="md" fontWeight="medium" color={textColor}>
+                      {stat.label}
+                    </Text>
+                    <Icon
+                      as={stat.icon}
+                      boxSize={5}
+                      color={`${stat.color}.600`}
+                    />
+                  </Flex>
                 </CardHeader>
-                <CardBody>
-                  <Text color={textColor} mb={4}>
-                    {card.description}
+                <CardBody pt={0}>
+                  <Text fontSize="4xl" fontWeight="bold" color={headingColor} mb={2}>
+                    {stat.value}
                   </Text>
-                  <Button
-                    colorScheme={card.color}
-                    size="sm"
-                    isDisabled={card.disabled}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      !card.disabled && navigate(card.path);
-                    }}
-                  >
-                    {card.disabled ? (t("comingSoon") || "Coming Soon") : (t("manage") || "Manage")}
-                  </Button>
+                  <Text fontSize="sm" color={textColor}>
+                    {stat.change}
+                  </Text>
                 </CardBody>
               </Card>
             ))}
           </SimpleGrid>
+
+          {/* Performance Chart and Recent Matches - Side by Side */}
+          <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 4, lg: 6 }}>
+            {/* Performance Ratings Chart */}
+            <Card bg={cardBg} borderColor={cardBorder} borderWidth="1px" boxShadow="lg">
+              <CardHeader py={5}>
+                <Heading size="md" color={headingColor} mb={1}>
+                  {t("performanceRatings") || "Performance Ratings"}
+                </Heading>
+                <Text color={textColor} fontSize="sm">
+                  {t("averageTeamRatings") || "Average team ratings over time"}
+                </Text>
+              </CardHeader>
+              <CardBody>
+                <Flex
+                  align="center"
+                  justify="center"
+                  minH="350px"
+                  color={textColor}
+                  fontSize="lg"
+                >
+                  {t("chartComingSoon") || "Chart coming soon..."}
+                </Flex>
+              </CardBody>
+            </Card>
+
+            {/* Recent Matches */}
+            <Card bg={cardBg} borderColor={cardBorder} borderWidth="1px" boxShadow="lg">
+              <CardHeader py={5}>
+                <Heading size="md" color={headingColor} mb={1}>
+                  {t("recentMatches") || "Recent Matches"}
+                </Heading>
+                <Text color={textColor} fontSize="sm">
+                  {t("latestMatchResults") || "Latest match results"}
+                </Text>
+              </CardHeader>
+              <CardBody p={0}>
+                <Box overflowX="auto">
+                  <Table variant="simple">
+                    <Thead>
+                      <Tr>
+                        <Th>{t("teams") || "Teams"}</Th>
+                        <Th>{t("score") || "Score"}</Th>
+                        <Th>{t("date") || "Date"}</Th>
+                        <Th>{t("result") || "Result"}</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {recentMatches.map((match) => (
+                        <Tr key={match.id}>
+                          <Td>
+                            <Box>
+                              <Text fontWeight="normal" fontSize="sm">
+                                {match.team1}
+                              </Text>
+                              <Text fontSize="sm" color={textColor}>
+                                {match.team2}
+                              </Text>
+                            </Box>
+                          </Td>
+                          <Td fontWeight="normal" fontSize="sm">{match.score}</Td>
+                          <Td fontSize="sm" color={textColor}>{match.date}</Td>
+                          <Td>
+                            <Badge
+                              colorScheme={getStatusColor(match.status)}
+                              px={3}
+                              py={1}
+                              borderRadius="md"
+                              minW="70px"
+                              textAlign="center"
+                              bgGradient={
+                                match.status === "Won" 
+                                  ? "linear(to-r, green.600, green.700)" 
+                                  : match.status === "Lost"
+                                  ? "linear(to-r, red.600, red.700)"
+                                  : match.status === "Draw"
+                                  ? "linear(to-r, gray.500, gray.600)"
+                                  : undefined
+                              }
+                              color={
+                                match.status === "Won" || match.status === "Lost" || match.status === "Draw"
+                                  ? "white" 
+                                  : undefined
+                              }
+                            >
+                              {getStatusText(match.status)}
+                            </Badge>
+                          </Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
+                  </Table>
+                </Box>
+              </CardBody>
+            </Card>
+          </SimpleGrid>
+            </>
+          )}
         </Container>
       </Box>
     </Layout>

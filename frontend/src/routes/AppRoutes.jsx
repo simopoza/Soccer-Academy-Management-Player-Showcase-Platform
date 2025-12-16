@@ -4,7 +4,8 @@ import LoginPage from "../pages/LoginPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
 import CompleteProfilePage from "../pages/CompleteProfilePage";
-import AdminDashboard from "../pages/AdminDashboardPage";
+import AdminDashboardPage from "../pages/AdminDashboardPage";
+import AdminMenuPage from "../pages/AdminMenuPage";
 import AdminUserManagementPage from "../pages/AdminUserManagementPage";
 import AdminAnalyticsPage from "../pages/AdminAnalyticsPage";
 import PlayerDashboardPage from "../pages/PlayerDashboardPage";
@@ -38,7 +39,15 @@ function AppRoutes() {
         path="/admin/dashboard" 
         element={
           <RoleBasedRoute allowedRoles={["admin"]}>
-            <AdminDashboard />
+            <AdminDashboardPage />
+          </RoleBasedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/menu" 
+        element={
+          <RoleBasedRoute allowedRoles={["admin"]}>
+            <AdminMenuPage />
           </RoleBasedRoute>
         } 
       />
