@@ -65,7 +65,7 @@ const AdminMenuPage = () => {
         <Container maxW="container.xl">
           {/* Header */}
           <Heading size="xl" color={headingColor} mb={2}>
-            {t("adminDashboard") || "Admin Dashboard"}
+            {t("adminMenu") || "Admin Menu"}
           </Heading>
           <Text color={textColor} fontSize="lg" mb={8}>
             {t("welcomeAdmin") || "Welcome! Manage your soccer academy from here."}

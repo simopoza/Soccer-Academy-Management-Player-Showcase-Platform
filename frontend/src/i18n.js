@@ -9,6 +9,7 @@ import enAdmin from "./locales/en/admin-translation.json";
 import enForgotPassword from "./locales/en/forgot-password-translation.json";
 import enResetPassword from "./locales/en/reset-password-translation.json";
 import enAdminDashboard from "./locales/en/admin-dashboard-translation.json";
+import enSettings from "./locales/en/settings-page-translation.json";
 
 // Arabic translations
 import arRegistration from "./locales/ar/registration-page-translation.json";
@@ -18,6 +19,7 @@ import arAdmin from "./locales/ar/admin-translation.json";
 import arForgotPassword from "./locales/ar/forgot-password-translation.json";
 import arResetPassword from "./locales/ar/reset-password-translation.json";
 import arAdminDashboard from "./locales/ar/admin-dashboard-translation.json";
+import arSettings from "./locales/ar/settings-page-translation.json";
 
 i18n
   .use(initReactI18next)
@@ -31,7 +33,8 @@ i18n
           ...enAdmin,
           ...enForgotPassword,
           ...enResetPassword,
-          ...enAdminDashboard
+          ...enAdminDashboard,
+          ...enSettings
         }
       },
       ar: { 
@@ -42,7 +45,8 @@ i18n
           ...arAdmin,
           ...arForgotPassword,
           ...arResetPassword,
-          ...arAdminDashboard
+          ...arAdminDashboard,
+          ...arSettings
         }
       }
     },

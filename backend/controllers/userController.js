@@ -102,7 +102,13 @@ const updateUser = async (req, res) => {
 const resetPassword = async (req, res) => {
   try {
     const { id } = req.params;
-    const { oldPassword, newPassword } = req.body;
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+
+    // Validation is handled by express-validator middleware
+    // but we can add extra check here for safety
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ error: "New password and confirm password do not match" });
+    }
 
     const [ userRows ] = await db.query("SELECT password FROM Users WHERE id = ?", [id]);
 
@@ -135,6 +141,58 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const updateUserProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { first_name, last_name, email } = req.body;
+
+    const [ existingUser ] = await db.query("SELECT * FROM Users WHERE id = ?", [id]);
+
+    if (existingUser.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if email is being changed and if it's already in use by another user
+    if (email && email !== existingUser[0].email) {
+      const [ emailCheck ] = await db.query("SELECT id FROM Users WHERE email = ? AND id != ?", [email, id]);
+      if (emailCheck.length > 0) {
+        return res.status(400).json({ error: "Email already in use" });
+      }
+    }
+
+    const fieldsToUpdate = {};
+    if (first_name !== undefined) fieldsToUpdate.first_name = first_name;
+    if (last_name !== undefined) fieldsToUpdate.last_name = last_name;
+    if (email !== undefined) fieldsToUpdate.email = email;
+
+    if (Object.keys(fieldsToUpdate).length === 0) {
+      return res.status(400).json({ error: "No valid fields provided for update" });
+    }
+
+    const setClause = Object.keys(fieldsToUpdate)
+      .map((field) => `${field} = ?`)
+      .join(", ");
+    
+    const values = Object.values(fieldsToUpdate);
+    values.push(id);
+
+    const sql = `UPDATE Users SET ${setClause} WHERE id = ?`;
+    
+    await db.query(sql, values);
+
+    // Return updated user info
+    const [ updatedUser ] = await db.query("SELECT id, first_name, last_name, email, role FROM Users WHERE id = ?", [id]);
+
+    res.status(200).json({ 
+      message: "Profile updated successfully",
+      user: updatedUser[0]
+    });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 // DELETE user by ID
 const deleteUserById = async (req, res) => {
   const { id } = req.params;
@@ -159,5 +217,6 @@ module.exports = {
   addUser,
   updateUser,
   deleteUserById,
-  resetPassword
+  resetPassword,
+  updateUserProfile
 };

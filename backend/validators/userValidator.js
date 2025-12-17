@@ -92,11 +92,47 @@ const userPasswordUpdateValidationRules = [
     .withMessage(
       "newPassword must contain uppercase, lowercase, number, and special character"
     ),
+
+  check("confirmPassword")
+    .exists().withMessage("confirmPassword is required")
+    .notEmpty().withMessage("confirmPassword cannot be empty")
+    .custom((value, { req }) => {
+      if (value !== req.body.newPassword) {
+        throw new Error('confirmPassword does not match newPassword');
+      }
+      return true;
+    }),
+];
+
+const userProfileUpdateValidationRules = [
+  param('id')
+    .exists().withMessage('User ID is required')
+    .isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
+
+  check('first_name')
+    .optional()
+    .trim()
+    .escape()
+    .notEmpty().withMessage("first_name cannot be empty"),
+
+  check('last_name')
+    .optional()
+    .trim()
+    .escape()
+    .notEmpty().withMessage("last_name cannot be empty"),
+
+  check('email')
+    .optional()
+    .trim()
+    .normalizeEmail()
+    .notEmpty().withMessage('email cannot be empty')
+    .isEmail().withMessage('Must be a valid email address'),
 ];
 
 module.exports = {
   userValidationRules,
   userUpdateValidationRules,
   userIdParamValidation,
-  userPasswordUpdateValidationRules
+  userPasswordUpdateValidationRules,
+  userProfileUpdateValidationRules
 };

@@ -54,6 +54,7 @@ const Sidebar = ({ children }) => {
           { name: t("teamsManagement") || "Teams", icon: "🏆", path: "/admin/teams", disabled: true },
           { name: t("matchesManagement") || "Matches", icon: "📅", path: "/admin/matches", disabled: true },
           { name: t("analyticsReports") || "Analytics", icon: "📊", path: "/admin/analytics" },
+          { name: t("settings") || "Settings", icon: "⚙️", path: "/admin/settings" },
         ];
       case "player":
         return [
@@ -61,14 +62,14 @@ const Sidebar = ({ children }) => {
           { name: t("myProfile") || "My Profile", icon: "👤", path: "/player/profile", disabled: true },
           { name: t("myStats") || "My Stats", icon: "📊", path: "/player/stats", disabled: true },
           { name: t("myTeam") || "My Team", icon: "🏆", path: "/player/team", disabled: true },
-          { name: t("settings") || "Settings", icon: "⚙️", path: "/player/settings", disabled: true },
+          { name: t("settings") || "Settings", icon: "⚙️", path: "/player/settings" },
         ];
       case "agent":
         return [
           { name: t("dashboard") || "Dashboard", icon: "🏠", path: "/agent/dashboard" },
           { name: t("myPlayers") || "My Players", icon: "⚽", path: "/agent/players", disabled: true },
           { name: t("contracts") || "Contracts", icon: "📋", path: "/agent/contracts", disabled: true },
-          { name: t("settings") || "Settings", icon: "⚙️", path: "/agent/settings", disabled: true },
+          { name: t("settings") || "Settings", icon: "⚙️", path: "/agent/settings" },
         ];
       default:
         return [];

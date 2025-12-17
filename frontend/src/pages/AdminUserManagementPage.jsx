@@ -24,12 +24,14 @@ import {
   CardBody,
   Stack,
 } from "@chakra-ui/react";
-import { CheckIcon, CloseIcon } from "@chakra-ui/icons";
+import { CheckIcon, CloseIcon, ArrowBackIcon } from "@chakra-ui/icons";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import adminService from "../services/adminService";
 
 const AdminUserManagementPage = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const toast = useToast();
   const [pendingUsers, setPendingUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -150,14 +152,25 @@ const AdminUserManagementPage = () => {
         <Card boxShadow="lg" borderRadius="lg">
           <CardHeader bg="green.500" borderTopRadius="lg" py={6}>
             <Flex justify="space-between" align="center">
-              <Stack spacing={2}>
-                <Heading size="lg" color="white">
-                  ⚽ {t("userManagement") || "User Management"}
-                </Heading>
-                <Text color="green.50" fontSize="sm">
-                  {t("pendingUsersSubtitle") || "Review and approve pending user registrations"}
-                </Text>
-              </Stack>
+              <HStack spacing={4}>
+                <IconButton
+                  icon={<ArrowBackIcon />}
+                  onClick={() => navigate("/admin/menu")}
+                  aria-label="Back to menu"
+                  variant="ghost"
+                  color="white"
+                  _hover={{ bg: "green.600" }}
+                  size="lg"
+                />
+                <Stack spacing={2}>
+                  <Heading size="lg" color="white">
+                    ⚽ {t("userManagement") || "User Management"}
+                  </Heading>
+                  <Text color="green.50" fontSize="sm">
+                    {t("pendingUsersSubtitle") || "Review and approve pending user registrations"}
+                  </Text>
+                </Stack>
+              </HStack>
               <Badge
                 colorScheme="yellow"
                 fontSize="lg"

@@ -8,8 +8,11 @@ import AdminDashboardPage from "../pages/AdminDashboardPage";
 import AdminMenuPage from "../pages/AdminMenuPage";
 import AdminUserManagementPage from "../pages/AdminUserManagementPage";
 import AdminAnalyticsPage from "../pages/AdminAnalyticsPage";
+import AdminSettingsPage from "../pages/AdminSettingsPage";
 import PlayerDashboardPage from "../pages/PlayerDashboardPage";
+import PlayerSettingsPage from "../pages/PlayerSettingsPage";
 import AgentDashboard from "../pages/AgentDashboardPage";
+import AgentSettingsPage from "../pages/AgentSettingsPage";
 import RoleBasedRoute from "../components/RoleBasedRoute";
 import ProfileCompletionGuard from "../components/ProfileCompletionGuard";
 
@@ -66,6 +69,14 @@ function AppRoutes() {
           </RoleBasedRoute>
         } 
       />
+      <Route 
+        path="/admin/settings" 
+        element={
+          <RoleBasedRoute allowedRoles={["admin"]}>
+            <AdminSettingsPage />
+          </RoleBasedRoute>
+        } 
+      />
       
       {/* Player only routes */}
       <Route 
@@ -76,6 +87,14 @@ function AppRoutes() {
           </RoleBasedRoute>
         } 
       />
+      <Route 
+        path="/player/settings" 
+        element={
+          <RoleBasedRoute allowedRoles={["player"]}>
+            <PlayerSettingsPage />
+          </RoleBasedRoute>
+        } 
+      />
       
       {/* Agent only routes */}
       <Route 
@@ -83,6 +102,14 @@ function AppRoutes() {
         element={
           <RoleBasedRoute allowedRoles={["agent"]}>
             <AgentDashboard />
+          </RoleBasedRoute>
+        } 
+      />
+      <Route 
+        path="/agent/settings" 
+        element={
+          <RoleBasedRoute allowedRoles={["agent"]}>
+            <AgentSettingsPage />
           </RoleBasedRoute>
         } 
       />

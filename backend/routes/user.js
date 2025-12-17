@@ -7,13 +7,15 @@ const {
   addUser, 
   updateUser, 
   deleteUserById,
-  resetPassword
+  resetPassword,
+  updateUserProfile
 } = require("../controllers/userController");
 const {
   userValidationRules,
   userUpdateValidationRules,
   userIdParamValidation,
-  userPasswordUpdateValidationRules
+  userPasswordUpdateValidationRules,
+  userProfileUpdateValidationRules
 } = require("../validators/userValidator");
 const { hasRole } = require("../middlewares/roleMiddleware");
 const { resetPasswordLimiter } = require("../middlewares/rateLimitMiddleware");
@@ -114,6 +116,37 @@ router.put("/:id", hasRole("admin", "player"), userUpdateValidationRules, valida
 
 /**
  * @swagger
+ * /users/{id}/profile:
+ *   put:
+ *     summary: Update user profile (first name, last name, email)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               first_name:
+ *                 type: string
+ *               last_name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ */
+router.put("/:id/profile", hasRole("player", "admin", "agent"), userProfileUpdateValidationRules, validate, updateUserProfile);
+
+/**
+ * @swagger
  * /users/{id}/password:
  *   put:
  *     summary: Reset a user's password by ID
@@ -134,11 +167,13 @@ router.put("/:id", hasRole("admin", "player"), userUpdateValidationRules, valida
  *                 type: string
  *               newPassword:
  *                 type: string
+ *               confirmPassword:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Password reset successfully
  */
-router.put("/:id/password", resetPasswordLimiter, hasRole("player"), userPasswordUpdateValidationRules, validate, resetPassword);
+router.put("/:id/password", resetPasswordLimiter, hasRole("player", "admin", "agent"), userPasswordUpdateValidationRules, validate, resetPassword);
 
 /**
  * @swagger

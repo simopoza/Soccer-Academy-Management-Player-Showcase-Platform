@@ -61,21 +61,22 @@ const FixedSidebar = () => {
           { label: t("teams"), path: "/admin/teams", icon: HiOutlineUserGroup },
           { label: t("matches"), path: "/admin/matches", icon: FiCalendar },
           { label: t("analytics"), path: "/admin/analytics", icon: FiBarChart2 },
+          { label: t("settings"), path: "/admin/settings", icon: FiSettings },
         ];
       case "player":
         return [
-          { label: t("dashboard"), path: "/player-dashboard", icon: FiHome },
+          { label: t("dashboard"), path: "/player/dashboard", icon: FiHome },
           { label: t("myProfile"), path: "/profile", icon: FiUser },
           { label: t("myStats"), path: "/stats", icon: FiBarChart2 },
           { label: t("myTeam"), path: "/team", icon: HiOutlineUserGroup },
-          { label: t("settings"), path: "/settings", icon: FiSettings },
+          { label: t("settings"), path: "/player/settings", icon: FiSettings },
         ];
       case "agent":
         return [
-          { label: t("dashboard"), path: "/agent-dashboard", icon: FiHome },
+          { label: t("dashboard"), path: "/agent/dashboard", icon: FiHome },
           { label: t("myPlayers"), path: "/my-players", icon: FiUsers },
           { label: t("contracts"), path: "/contracts", icon: FiFileText },
-          { label: t("settings"), path: "/settings", icon: FiSettings },
+          { label: t("settings"), path: "/agent/settings", icon: FiSettings },
         ];
       default:
         return [];
