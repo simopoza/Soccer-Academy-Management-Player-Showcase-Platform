@@ -15,29 +15,17 @@ import {
   Td,
   Badge,
   Flex,
-  useColorModeValue,
   Alert,
   AlertIcon,
-  Skeleton,
-  SkeletonText,
 } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
-import { FiUsers, FiAward, FiCalendar } from "react-icons/fi";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Layout from "../components/Layout";
 import StatsCard from "../components/StatsCard";
+import { StatsCardsSkeleton, ChartAndTableSkeleton } from "../components/DashboardSkeleton";
 import { useAdminDashboard } from "../hooks/useAdminDashboard";
-import {
-  PRIMARY_GREEN,
-  CARD_BG_LIGHT,
-  CARD_BG_DARK,
-  CARD_BORDER_LIGHT,
-  CARD_BORDER_DARK,
-  TITLE_COLOR_LIGHT,
-  TITLE_COLOR_DARK,
-  TEXT_COLOR_LIGHT,
-  TEXT_COLOR_DARK,
-} from "../theme/colors";
+import { useDashboardTheme } from "../hooks/useDashboardTheme";
+import { useStatsCards } from "../hooks/useStatsCards";
 import {
   getStatusColor,
   getStatusTextColor,
@@ -50,47 +38,10 @@ const AdminDashboardPage = () => {
   const { user } = useAuth();
   const isRTL = i18n.language === "ar";
 
-  // Use custom hook for data fetching
+  // Custom hooks
   const { stats, recentMatches, performanceData, loading, error, errorMessage } = useAdminDashboard();
-
-  // Color mode values - Design System Colors
-  const bgGradient = useColorModeValue(
-    "white",
-    "linear(to-b, gray.900, gray.800)"
-  );
-  const headingColor = useColorModeValue(PRIMARY_GREEN, "green.300");
-  const textColor = useColorModeValue(TEXT_COLOR_LIGHT, TEXT_COLOR_DARK);
-  const cardBg = useColorModeValue(CARD_BG_LIGHT, CARD_BG_DARK);
-  const cardBorder = useColorModeValue(CARD_BORDER_LIGHT, CARD_BORDER_DARK);
-  const cardShadow = useColorModeValue("0 1px 3px 0 rgba(0, 0, 0, 0.05)", "0 1px 3px 0 rgba(0, 0, 0, 0.3)");
-  const chartGridColor = useColorModeValue("#E5E7EB", "#374151");
-  const primaryGreen = PRIMARY_GREEN;
-  const titleColor = useColorModeValue(TITLE_COLOR_LIGHT, TITLE_COLOR_DARK);
-
-  // Stats card configuration
-  const statsCards = stats ? [
-    {
-      label: t("totalPlayers") || "Total Players",
-      value: stats.totalPlayers,
-      change: `${stats.playerGrowth} ${t("fromLastMonth") || "from last month"}`,
-      icon: FiUsers,
-      color: primaryGreen,
-    },
-    {
-      label: t("activeTeams") || "Active Teams",
-      value: stats.activeTeams,
-      change: t("acrossAllAgeGroups") || "Across all age groups",
-      icon: FiAward,
-      color: primaryGreen,
-    },
-    {
-      label: t("matchesPlayed") || "Matches Played",
-      value: stats.matchesPlayed,
-      change: t("thisSeason") || "This season",
-      icon: FiCalendar,
-      color: primaryGreen,
-    },
-  ] : [];
+  const { bgGradient, textColor, cardBg, cardBorder, cardShadow, chartGridColor, titleColor, primaryGreen } = useDashboardTheme();
+  const statsCards = useStatsCards(stats, t, primaryGreen);
 
 
 
@@ -105,33 +56,8 @@ const AdminDashboardPage = () => {
           {/* Loading State with Skeletons */}
           {loading && (
             <>
-              {/* Skeletons for Stats Cards */}
-              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} mb={6}>
-                {[...Array(3)].map((_, idx) => (
-                  <Box key={idx} p={6} borderRadius="xl" bg={cardBg} borderWidth="1px" borderColor={cardBorder} boxShadow={cardShadow}>
-                    <Skeleton height="20px" width="40%" mb={3} />
-                    <Skeleton height="32px" width="60%" mb={2} />
-                    <Skeleton height="20px" width="50%" />
-                  </Box>
-                ))}
-              </SimpleGrid>
-
-              {/* Skeletons for Chart and Table */}
-              <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
-                {/* Chart Skeleton */}
-                <Box p={6} borderRadius="xl" bg={cardBg} borderWidth="1px" borderColor={cardBorder} boxShadow={cardShadow} minH="360px">
-                  <Skeleton height="24px" width="40%" mb={2} />
-                  <SkeletonText mt="4" noOfLines={10} spacing="4" skeletonHeight="20px" />
-                </Box>
-                {/* Table Skeleton */}
-                <Box p={6} borderRadius="xl" bg={cardBg} borderWidth="1px" borderColor={cardBorder} boxShadow={cardShadow} minH="360px">
-                  <Skeleton height="24px" width="40%" mb={2} />
-                  <Skeleton height="20px" width="60%" mb={4} />
-                  {[...Array(5)].map((_, idx) => (
-                    <Skeleton key={idx} height="20px" mb={3} />
-                  ))}
-                </Box>
-              </SimpleGrid>
+              <StatsCardsSkeleton cardBg={cardBg} cardBorder={cardBorder} cardShadow={cardShadow} />
+              <ChartAndTableSkeleton cardBg={cardBg} cardBorder={cardBorder} cardShadow={cardShadow} />
             </>
           )}
 
