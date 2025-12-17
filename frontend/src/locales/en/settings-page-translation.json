@@ -21,6 +21,7 @@
   "success": "Success",
   "error": "Error",
   "profileUpdated": "Profile updated successfully",
+  "noChanges": "Nothing changed",
   "passwordChanged": "Password changed successfully",
   "passwordMismatch": "Passwords do not match"
 }

@@ -21,6 +21,7 @@
   "success": "نجاح",
   "error": "خطأ",
   "profileUpdated": "تم تحديث الملف الشخصي بنجاح",
+  "noChanges": "لم يتم تغيير أي شيء",
   "passwordChanged": "تم تغيير كلمة المرور بنجاح",
   "passwordMismatch": "كلمات المرور غير متطابقة"
 }

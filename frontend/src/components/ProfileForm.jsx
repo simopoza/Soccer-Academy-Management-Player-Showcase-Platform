@@ -79,7 +79,7 @@ const ProfileForm = ({ user }) => {
 
       toast({
         title: t("success") || "Success",
-        description: response.message || t("profileUpdated") || "Profile updated successfully",
+        description: t("profileUpdated") || response.message || "Profile updated successfully",
         status: "success",
         duration: 3000,
         isClosable: true,
