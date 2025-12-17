@@ -10,7 +10,6 @@ import AdminUserManagementPage from "../pages/AdminUserManagementPage";
 import AdminAnalyticsPage from "../pages/AdminAnalyticsPage";
 import PlayerDashboardPage from "../pages/PlayerDashboardPage";
 import AgentDashboard from "../pages/AgentDashboardPage";
-import ProtectedRoute from "../components/ProtectedRoute";
 import RoleBasedRoute from "../components/RoleBasedRoute";
 import ProfileCompletionGuard from "../components/ProfileCompletionGuard";
 

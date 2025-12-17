@@ -14,19 +14,35 @@ import {
   Th,
   Td,
   Badge,
-  Icon,
   Flex,
   useColorModeValue,
-  Spinner,
   Alert,
   AlertIcon,
+  Skeleton,
+  SkeletonText,
 } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
-import { useState, useEffect } from "react";
 import { FiUsers, FiAward, FiCalendar } from "react-icons/fi";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Layout from "../components/Layout";
-import axiosInstance from "../services/axiosInstance";
+import StatsCard from "../components/StatsCard";
+import { useAdminDashboard } from "../hooks/useAdminDashboard";
+import {
+  PRIMARY_GREEN,
+  CARD_BG_LIGHT,
+  CARD_BG_DARK,
+  CARD_BORDER_LIGHT,
+  CARD_BORDER_DARK,
+  TITLE_COLOR_LIGHT,
+  TITLE_COLOR_DARK,
+  TEXT_COLOR_LIGHT,
+  TEXT_COLOR_DARK,
+} from "../theme/colors";
+import {
+  getStatusColor,
+  getStatusTextColor,
+  getStatusText,
+} from "../utils/dashboardUtils";
 import { useAuth } from "../context/AuthContext";
 
 const AdminDashboardPage = () => {
@@ -34,62 +50,22 @@ const AdminDashboardPage = () => {
   const { user } = useAuth();
   const isRTL = i18n.language === "ar";
 
-  // State for data
-  const [stats, setStats] = useState(null);
-  const [recentMatches, setRecentMatches] = useState([]);
-  const [performanceData, setPerformanceData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // Use custom hook for data fetching
+  const { stats, recentMatches, performanceData, loading, error, errorMessage } = useAdminDashboard();
 
   // Color mode values - Design System Colors
   const bgGradient = useColorModeValue(
     "white",
     "linear(to-b, gray.900, gray.800)"
   );
-  const headingColor = useColorModeValue("#00B050", "green.300");
-  const textColor = useColorModeValue("#6B7280", "gray.300");
-  const cardBg = useColorModeValue("#FFFFFF", "gray.700");
-  const cardBorder = useColorModeValue("#D1FAE5", "gray.600");
+  const headingColor = useColorModeValue(PRIMARY_GREEN, "green.300");
+  const textColor = useColorModeValue(TEXT_COLOR_LIGHT, TEXT_COLOR_DARK);
+  const cardBg = useColorModeValue(CARD_BG_LIGHT, CARD_BG_DARK);
+  const cardBorder = useColorModeValue(CARD_BORDER_LIGHT, CARD_BORDER_DARK);
   const cardShadow = useColorModeValue("0 1px 3px 0 rgba(0, 0, 0, 0.05)", "0 1px 3px 0 rgba(0, 0, 0, 0.3)");
   const chartGridColor = useColorModeValue("#E5E7EB", "#374151");
-  const primaryGreen = "#00B050";
-  const titleColor = useColorModeValue("#111827", "gray.100");
-
-  // Fetch dashboard data
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Fetch stats, matches, and performance ratings in parallel
-        const [statsResponse, matchesResponse, ratingsResponse] = await Promise.all([
-          axiosInstance.get('/dashboard/stats'),
-          axiosInstance.get('/dashboard/recent-matches?limit=5'),
-          axiosInstance.get('/dashboard/performance-ratings?months=6'),
-        ]);
-
-        if (statsResponse.data.success) {
-          setStats(statsResponse.data.data);
-        }
-
-        if (matchesResponse.data.success) {
-          setRecentMatches(matchesResponse.data.data);
-        }
-
-        if (ratingsResponse.data.success) {
-          setPerformanceData(ratingsResponse.data.data);
-        }
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError(err.response?.data?.message || 'Failed to load dashboard data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
+  const primaryGreen = PRIMARY_GREEN;
+  const titleColor = useColorModeValue(TITLE_COLOR_LIGHT, TITLE_COLOR_DARK);
 
   // Stats card configuration
   const statsCards = stats ? [
@@ -116,44 +92,7 @@ const AdminDashboardPage = () => {
     },
   ] : [];
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Won":
-        return "#00B050";
-      case "Draw":
-        return "#E5E7EB";
-      case "Lost":
-        return "#E11D48";
-      default:
-        return "#E5E7EB";
-    }
-  };
 
-  const getStatusTextColor = (status) => {
-    switch (status) {
-      case "Won":
-        return "#FFFFFF";
-      case "Draw":
-        return "#374151";
-      case "Lost":
-        return "#FFFFFF";
-      default:
-        return "#374151";
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case "Won":
-        return t("won") || "Won";
-      case "Draw":
-        return t("draw") || "Draw";
-      case "Lost":
-        return t("lost") || "Lost";
-      default:
-        return status;
-    }
-  };
 
   return (
     <Layout 
@@ -162,18 +101,45 @@ const AdminDashboardPage = () => {
     >
       <Box minH="100vh" bg={bgGradient} p={6} dir={isRTL ? "rtl" : "ltr"}>
         <Container maxW="full" px={0}>
-          {/* Loading State */}
+
+          {/* Loading State with Skeletons */}
           {loading && (
-            <Flex justify="center" align="center" minH="400px">
-              <Spinner size="xl" color={primaryGreen} thickness="4px" />
-            </Flex>
+            <>
+              {/* Skeletons for Stats Cards */}
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} mb={6}>
+                {[...Array(3)].map((_, idx) => (
+                  <Box key={idx} p={6} borderRadius="xl" bg={cardBg} borderWidth="1px" borderColor={cardBorder} boxShadow={cardShadow}>
+                    <Skeleton height="20px" width="40%" mb={3} />
+                    <Skeleton height="32px" width="60%" mb={2} />
+                    <Skeleton height="20px" width="50%" />
+                  </Box>
+                ))}
+              </SimpleGrid>
+
+              {/* Skeletons for Chart and Table */}
+              <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
+                {/* Chart Skeleton */}
+                <Box p={6} borderRadius="xl" bg={cardBg} borderWidth="1px" borderColor={cardBorder} boxShadow={cardShadow} minH="360px">
+                  <Skeleton height="24px" width="40%" mb={2} />
+                  <SkeletonText mt="4" noOfLines={10} spacing="4" skeletonHeight="20px" />
+                </Box>
+                {/* Table Skeleton */}
+                <Box p={6} borderRadius="xl" bg={cardBg} borderWidth="1px" borderColor={cardBorder} boxShadow={cardShadow} minH="360px">
+                  <Skeleton height="24px" width="40%" mb={2} />
+                  <Skeleton height="20px" width="60%" mb={4} />
+                  {[...Array(5)].map((_, idx) => (
+                    <Skeleton key={idx} height="20px" mb={3} />
+                  ))}
+                </Box>
+              </SimpleGrid>
+            </>
           )}
 
           {/* Error State */}
           {error && !loading && (
             <Alert status="error" borderRadius="md" mb={4}>
               <AlertIcon />
-              {error}
+              {errorMessage}
             </Alert>
           )}
 
@@ -183,57 +149,17 @@ const AdminDashboardPage = () => {
               {/* Stats Cards */}
               <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} mb={6}>
                 {statsCards.map((stat, index) => (
-              <Card
-                key={index}
-                bg={cardBg}
-                borderColor={cardBorder}
-                borderWidth="1px"
-                boxShadow={cardShadow}
-                borderRadius="xl"
-                p={6}
-                minH="120px"
-                _hover={{ transform: "translateY(-2px)", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
-                transition="all 0.2s"
-              >
-                <CardHeader p={0} pb={3}>
-                  <Flex justify="space-between" align="center">
-                    <Text 
-                      fontSize="sm" 
-                      fontWeight="500" 
-                      color={textColor}
-                      lineHeight="20px"
-                    >
-                      {stat.label}
-                    </Text>
-                    <Icon
-                      as={stat.icon}
-                      boxSize={5}
-                      color={stat.color}
-                    />
-                  </Flex>
-                </CardHeader>
-                <CardBody p={0}>
-                  <Text 
-                    fontSize="2xl" 
-                    fontWeight="600" 
-                    color={primaryGreen} 
-                    mb={2}
-                    lineHeight="28px"
-                  >
-                    {stat.value}
-                  </Text>
-                  <Text 
-                    fontSize="sm" 
-                    fontWeight="400"
-                    color={textColor}
-                    lineHeight="20px"
-                  >
-                    {stat.change}
-                  </Text>
-                </CardBody>
-              </Card>
-            ))}
-          </SimpleGrid>
+                  <StatsCard
+                    key={index}
+                    stat={stat}
+                    cardBg={cardBg}
+                    cardBorder={cardBorder}
+                    cardShadow={cardShadow}
+                    primaryGreen={primaryGreen}
+                    textColor={textColor}
+                  />
+                ))}
+              </SimpleGrid>
 
           {/* Performance Chart and Recent Matches - Side by Side */}
           <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
@@ -411,7 +337,7 @@ const AdminDashboardPage = () => {
                               alignItems="center"
                               justifyContent="center"
                             >
-                              {getStatusText(match.status)}
+                              {getStatusText(match.status, t)}
                             </Badge>
                           </Td>
                         </Tr>

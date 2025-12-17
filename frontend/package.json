@@ -19,6 +19,7 @@
     "@emotion/styled": "^11.14.1",
     "@fontsource/inter": "^5.2.8",
     "@hookform/resolvers": "^5.2.2",
+    "@tanstack/react-query": "^5.90.12",
     "axios": "^1.13.2",
     "framer-motion": "^7.10.3",
     "i18next": "^25.7.1",
