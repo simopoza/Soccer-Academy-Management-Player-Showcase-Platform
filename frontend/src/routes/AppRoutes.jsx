@@ -1,20 +1,20 @@
 import { Routes, Route } from "react-router-dom";
-import RegisterPage from "../pages/RegisterPage";
-import LoginPage from "../pages/LoginPage";
-import ForgotPasswordPage from "../pages/ForgotPasswordPage";
-import ResetPasswordPage from "../pages/ResetPasswordPage";
-import CompleteProfilePage from "../pages/CompleteProfilePage";
-import AdminDashboardPage from "../pages/AdminDashboardPage";
-import AdminMenuPage from "../pages/AdminMenuPage";
-import AdminUserManagementPage from "../pages/AdminUserManagementPage";
-import AdminAnalyticsPage from "../pages/AdminAnalyticsPage";
-import AdminSettingsPage from "../pages/AdminSettingsPage";
-import PlayerDashboardPage from "../pages/PlayerDashboardPage";
-import PlayerSettingsPage from "../pages/PlayerSettingsPage";
-import AgentDashboard from "../pages/AgentDashboardPage";
-import AgentSettingsPage from "../pages/AgentSettingsPage";
-import RoleBasedRoute from "../components/RoleBasedRoute";
-import ProfileCompletionGuard from "../components/ProfileCompletionGuard";
+import RegisterPage from "../pages/auth/RegisterPage";
+import LoginPage from "../pages/auth/LoginPage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
+import CompleteProfilePage from "../pages/player/CompleteProfilePage";
+import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
+import AdminMenuPage from "../pages/admin/AdminMenuPage";
+import AdminUserManagementPage from "../pages/admin/AdminUserManagementPage";
+import AdminAnalyticsPage from "../pages/admin/AdminAnalyticsPage";
+import AdminSettingsPage from "../pages/admin/AdminSettingsPage";
+import PlayerDashboardPage from "../pages/player/PlayerDashboardPage";
+import PlayerSettingsPage from "../pages/player/PlayerSettingsPage";
+import AgentDashboard from "../pages/agent/AgentDashboardPage";
+import AgentSettingsPage from "../pages/agent/AgentSettingsPage";
+import RoleBasedRoute from "../components/routes/RoleBasedRoute";
+import ProfileCompletionGuard from "../components/guards/ProfileCompletionGuard";
 
 function AppRoutes() {
   return (
@@ -35,7 +35,7 @@ function AppRoutes() {
           </ProfileCompletionGuard>
         } 
       />
-      
+
       {/* Admin only routes */}
       <Route 
         path="/admin/dashboard" 
