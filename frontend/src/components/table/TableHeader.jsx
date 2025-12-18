@@ -1,5 +1,6 @@
 import { Flex, Heading, Text, Button, HStack } from '@chakra-ui/react';
 import { FiPlus } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 const TableHeader = ({ 
   title, 
@@ -9,6 +10,7 @@ const TableHeader = ({
   showAction = true,
   ...props 
 }) => {
+  const { t } = useTranslation();
   return (
     <Flex 
       justify="space-between" 
@@ -22,7 +24,7 @@ const TableHeader = ({
         </Heading>
         {count !== undefined && (
           <Text fontSize="sm" color="gray.500" fontWeight="500">
-            {count} {count === 1 ? 'item' : 'items'} found
+            {count === 1 ? t('table.itemFound', { count }) : t('table.itemsFound', { count })}
           </Text>
         )}
       </HStack>

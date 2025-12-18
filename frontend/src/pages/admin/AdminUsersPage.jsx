@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Flex,
@@ -18,7 +18,9 @@ import {
   Input,
   Select,
   useToast,
+  useColorModeValue,
 } from '@chakra-ui/react';
+import { useTranslation } from 'react-i18next';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, AvatarCircle, ActionButtons, SearchInput, FilterSelect } from '../../components/ui';
@@ -34,30 +36,42 @@ const initialUsers = [
   { id: 8, name: 'Jennifer Taylor', email: 'jennifer.taylor@academy.com', role: 'player', status: 'Active' },
 ];
 
-const roleOptions = [
-  { value: 'all', label: 'All Roles' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'coach', label: 'Coach' },
-  { value: 'player', label: 'Player' },
-  { value: 'agent', label: 'Agent' },
+const roleOptionsStatic = [
+  { value: 'all', labelKey: 'filterAllRoles' },
+  { value: 'admin', labelKey: 'role.admin' },
+  { value: 'coach', labelKey: 'role.coach' },
+  { value: 'player', labelKey: 'role.player' },
+  { value: 'agent', labelKey: 'role.agent' },
 ];
 
 const AdminUsersManagementPage = () => {
+  const { t, i18n } = useTranslation();
+
+  const pageBg = useColorModeValue('gray.50', 'gray.800');
+  const cardBg = useColorModeValue('white', 'gray.700');
+  const cardBorder = useColorModeValue('gray.200', 'gray.600');
+  const nameColor = useColorModeValue('gray.900', 'gray.100');
+  const emailColor = useColorModeValue('gray.500', 'gray.300');
+
+  const isRTL = i18n?.language === 'ar';
+
   const [users, setUsers] = useState(initialUsers);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState({ name: '', email: '', role: 'player' });
-  
+
   const { isOpen: isAddOpen, onOpen: onAddOpen, onClose: onAddClose } = useDisclosure();
   const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
-  
+
   const toast = useToast();
+
+  const roleOptions = roleOptionsStatic.map(o => ({ value: o.value, label: t(o.labelKey) }));
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchQuery.toLowerCase());
+      user.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = roleFilter === 'all' || user.role.toLowerCase() === roleFilter.toLowerCase();
     return matchesSearch && matchesRole;
   });
@@ -70,8 +84,8 @@ const AdminUsersManagementPage = () => {
     };
     setUsers([...users, newUser]);
     toast({
-      title: 'User added',
-      description: `${formData.name} has been added successfully.`,
+      title: t('buttonAdd') || 'User added',
+        description: `${formData.name} ${t('actionAddUser') || 'has been added successfully.'}`,
       status: 'success',
       duration: 3000,
     });
@@ -82,8 +96,8 @@ const AdminUsersManagementPage = () => {
   const handleEdit = () => {
     setUsers(users.map(u => u.id === selectedUser.id ? { ...u, ...formData } : u));
     toast({
-      title: 'User updated',
-      description: `User information has been updated successfully.`,
+      title: t('buttonSave') || 'User updated',
+        description: t('actionAddUser') || 'User information has been updated successfully.',
       status: 'success',
       duration: 3000,
     });
@@ -94,8 +108,8 @@ const AdminUsersManagementPage = () => {
   const handleDelete = () => {
     setUsers(users.filter(u => u.id !== selectedUser.id));
     toast({
-      title: 'User deleted',
-      description: `${selectedUser.name} has been removed.`,
+      title: t('buttonDelete') || 'User deleted',
+        description: `${selectedUser?.name} ${t('buttonDelete') || 'has been removed.'}`,
       status: 'success',
       duration: 3000,
     });
@@ -114,40 +128,41 @@ const AdminUsersManagementPage = () => {
     onDeleteOpen();
   };
 
+  const getRoleLabel = (role) => {
+    const found = roleOptions.find(r => r.value === role);
+    return found ? found.label : role;
+  };
+
   const columns = [
     {
-      header: 'User',
+      header: t('table.user') || 'User',
       accessor: 'name',
       render: (row) => (
         <HStack spacing={3}>
           <AvatarCircle name={row.name} size="sm" />
           <VStack align="start" spacing={0}>
-            <Box fontWeight="600" fontSize="sm">{row.name}</Box>
-            <Box fontSize="xs" color="gray.500">{row.email}</Box>
+            <Box fontWeight="600" fontSize="14px" color={nameColor}>{row.name}</Box>
+            <Box fontSize="13px" color={emailColor}>{row.email}</Box>
           </VStack>
         </HStack>
       ),
     },
     {
-      header: 'Role',
+      header: t('table.role') || 'Role',
       accessor: 'role',
       render: (row) => (
-        <Badge variant="info">
-          {row.role.charAt(0).toUpperCase() + row.role.slice(1)}
-        </Badge>
+        <Badge variant="info">{getRoleLabel(row.role)}</Badge>
       ),
     },
     {
-      header: 'Status',
+      header: t('table.status') || 'Status',
       accessor: 'status',
       render: (row) => (
-        <Badge variant={row.status === 'Active' ? 'success' : 'default'}>
-          {row.status}
-        </Badge>
+        <Badge variant={row.status === 'Active' ? 'success' : 'default'}>{row.status}</Badge>
       ),
     },
     {
-      header: 'Actions',
+      header: t('table.actions') || 'Actions',
       accessor: 'actions',
       render: (row) => (
         <ActionButtons
@@ -159,93 +174,84 @@ const AdminUsersManagementPage = () => {
   ];
 
   return (
-    <Layout pageTitle="Users Management" pageSubtitle="Manage academy users and permissions">
-      <Box
-        bg="white"
-        borderRadius="12px"
-        boxShadow="0 10px 25px rgba(0,0,0,0.05)"
-        border="1px"
-        borderColor="gray.200"
-        p={6}
-      >
-        <TableHeader
-          title="All Users"
-          count={filteredUsers.length}
-          actionLabel="Add User"
-          onAction={onAddOpen}
-        />
+    <Layout pageTitle={t('pageTitle') || 'Users Management'} pageSubtitle={t('pageSubtitle') || 'Manage academy users and permissions'}>
+      <Box bg={pageBg} px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
+        <Box bg={cardBg} borderRadius="12px" borderWidth="1px" borderStyle="solid" borderColor={cardBorder} boxShadow="0 10px 25px rgba(0,0,0,0.05)" p="24px">
 
-        <Flex gap={4} mb={6}>
-          <Box flex={1}>
-            <SearchInput
-              placeholder="Search by name or email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </Box>
-          <Box width="200px">
-            <FilterSelect
-              placeholder="All Roles"
-              options={roleOptions}
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-            />
-          </Box>
-        </Flex>
+          <TableHeader
+            title={t('cardTitle') || 'All Users'}
+            count={filteredUsers.length}
+            actionLabel={t('actionAddUser') || 'Add User'}
+            onAction={onAddOpen}
+          />
 
-        <DataTable
-          columns={columns}
-          data={filteredUsers}
-          emptyMessage="No users found"
-        />
+          <Flex gap={4} mb="24px">
+            <Box flex={1}>
+              <SearchInput
+                placeholder={t('searchPlaceholder') || 'Search by name or email...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </Box>
+            <Box width="200px">
+              <FilterSelect
+                placeholder={t('filterAllRoles') || 'All Roles'}
+                options={roleOptions}
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+              />
+            </Box>
+          </Flex>
+
+          <DataTable
+            columns={columns}
+            data={filteredUsers}
+            emptyMessage={t('emptyMessage') || 'No users found'}
+          />
+        </Box>
       </Box>
 
       {/* Add User Modal */}
       <Modal isOpen={isAddOpen} onClose={onAddClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Add New User</ModalHeader>
+          <ModalHeader>{t('modalAddTitle') || 'Add New User'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
               <FormControl isRequired>
-                <FormLabel>Name</FormLabel>
+                <FormLabel>{t('form.name') || 'Name'}</FormLabel>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter full name"
+                  placeholder={t('form.namePlaceholder') || 'Enter full name'}
                 />
               </FormControl>
               <FormControl isRequired>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>{t('form.email') || 'Email'}</FormLabel>
                 <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="Enter email address"
+                  placeholder={t('form.emailPlaceholder') || 'Enter email address'}
                 />
               </FormControl>
               <FormControl isRequired>
-                <FormLabel>Role</FormLabel>
+                <FormLabel>{t('form.role') || 'Role'}</FormLabel>
                 <Select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 >
-                  <option value="admin">Admin</option>
-                  <option value="coach">Coach</option>
-                  <option value="player">Player</option>
-                  <option value="agent">Agent</option>
+                  {roleOptions.map(r => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
                 </Select>
               </FormControl>
             </VStack>
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onAddClose}>
-              Cancel
-            </Button>
-            <Button colorScheme="green" onClick={handleAdd}>
-              Add User
-            </Button>
+            <Button variant="ghost" mr={3} onClick={onAddClose}>{t('buttonCancel') || 'Cancel'}</Button>
+            <Button colorScheme="green" onClick={handleAdd}>{t('buttonAdd') || 'Add User'}</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -254,19 +260,19 @@ const AdminUsersManagementPage = () => {
       <Modal isOpen={isEditOpen} onClose={onEditClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Edit User</ModalHeader>
+          <ModalHeader>{t('modalEditTitle') || 'Edit User'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
               <FormControl isRequired>
-                <FormLabel>Name</FormLabel>
+                <FormLabel>{t('form.name') || 'Name'}</FormLabel>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
               </FormControl>
               <FormControl isRequired>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>{t('form.email') || 'Email'}</FormLabel>
                 <Input
                   type="email"
                   value={formData.email}
@@ -274,26 +280,21 @@ const AdminUsersManagementPage = () => {
                 />
               </FormControl>
               <FormControl isRequired>
-                <FormLabel>Role</FormLabel>
+                <FormLabel>{t('form.role') || 'Role'}</FormLabel>
                 <Select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 >
-                  <option value="admin">Admin</option>
-                  <option value="coach">Coach</option>
-                  <option value="player">Player</option>
-                  <option value="agent">Agent</option>
+                  {roleOptions.map(r => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
                 </Select>
               </FormControl>
             </VStack>
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onEditClose}>
-              Cancel
-            </Button>
-            <Button colorScheme="green" onClick={handleEdit}>
-              Save Changes
-            </Button>
+            <Button variant="ghost" mr={3} onClick={onEditClose}>{t('buttonCancel') || 'Cancel'}</Button>
+            <Button colorScheme="green" onClick={handleEdit}>{t('buttonSave') || 'Save Changes'}</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -302,23 +303,21 @@ const AdminUsersManagementPage = () => {
       <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Delete User</ModalHeader>
+          <ModalHeader>{t('modalDeleteTitle') || 'Delete User'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            Are you sure you want to delete {selectedUser?.name}? This action cannot be undone.
+            {t('confirmDelete', { name: selectedUser?.name }) || `Are you sure you want to delete ${selectedUser?.name}? This action cannot be undone.`}
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onDeleteClose}>
-              Cancel
-            </Button>
-            <Button colorScheme="red" onClick={handleDelete}>
-              Delete
-            </Button>
+            <Button variant="ghost" mr={3} onClick={onDeleteClose}>{t('buttonCancel') || 'Cancel'}</Button>
+            <Button colorScheme="red" onClick={handleDelete}>{t('buttonDelete') || 'Delete'}</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
+
     </Layout>
   );
 };
 
 export default AdminUsersManagementPage;
+

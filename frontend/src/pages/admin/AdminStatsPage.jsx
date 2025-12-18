@@ -20,7 +20,9 @@ import {
   useToast,
   Text,
   SimpleGrid,
+  useColorModeValue,
 } from '@chakra-ui/react';
+import { useTranslation } from 'react-i18next';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, ActionButtons, SearchInput, FilterSelect, StatsCard } from '../../components/ui';
@@ -38,6 +40,13 @@ const initialStats = [
 ];
 
 const AdminStatsPage = () => {
+  const { t, i18n } = useTranslation();
+
+  const pageBg = useColorModeValue('gray.50', 'gray.800');
+  const cardBg = useColorModeValue('white', 'gray.700');
+  const cardBorder = useColorModeValue('gray.200', 'gray.600');
+  const isRTL = i18n?.language === 'ar';
+
   const [stats, setStats] = useState(initialStats);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
@@ -281,8 +290,9 @@ const AdminStatsPage = () => {
   };
 
   return (
-    <Layout pageTitle="Statistics Management" pageSubtitle="Manage player performance statistics">
-      <SimpleGrid columns={{ base: 1, md: 4 }} spacing={6} mb={6}>
+    <Layout pageTitle={t('statisticsManagement') || 'Statistics Management'} pageSubtitle={t('statsManagementDesc') || 'Manage player performance statistics'}>
+      <Box bg={pageBg} px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
+        <SimpleGrid columns={{ base: 1, md: 4 }} spacing={6} mb={6}>
         <StatsCard
           title="Total Stats"
           value={totalStats}
@@ -308,32 +318,33 @@ const AdminStatsPage = () => {
           color="purple"
         />
       </SimpleGrid>
-      <Box
-        bg="white"
-        borderRadius="12px"
-        boxShadow="0 10px 25px rgba(0,0,0,0.05)"
-        border="1px"
-        borderColor="gray.200"
-        p={6}
-      >
+
+        <Box
+          bg={cardBg}
+          borderRadius="12px"
+          boxShadow="0 10px 25px rgba(0,0,0,0.05)"
+          border="1px"
+          borderColor={cardBorder}
+          p="24px"
+        >
         <TableHeader
-          title="Player Statistics"
+          title={t('cardTitleStats') || 'Player Statistics'}
           count={filteredStats.length}
-          actionLabel="Add Statistics"
+          actionLabel={t('actionAddStats') || 'Add Statistics'}
           onAction={onAddOpen}
         />
 
         <Flex gap={4} mb={6}>
           <Box flex={1}>
             <SearchInput
-              placeholder="Search by player or match..."
+              placeholder={t('searchPlaceholder') || 'Search by player or match...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </Box>
           <Box width="180px">
             <FilterSelect
-              placeholder="Filter Type"
+              placeholder={t('filterType') || 'Filter Type'}
               options={filterTypeOptions}
               value={filterType}
               onChange={(e) => {
@@ -359,6 +370,7 @@ const AdminStatsPage = () => {
           data={filteredStats}
           emptyMessage="No statistics found"
         />
+        </Box>
       </Box>
 
       {/* Add Statistics Modal */}

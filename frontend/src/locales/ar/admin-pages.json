@@ -1,0 +1,20 @@
+{
+  "cardTitleMatches": "جميع المباريات",
+  "actionAddMatch": "إضافة مباراة",
+  "filterAllStatus": "جميع الحالات",
+  "filterAllTypes": "كل الأنواع",
+
+  "cardTitleTeams": "جميع الفرق",
+  "actionAddTeam": "إضافة فريق",
+  "filterAllCategories": "كل الفئات",
+
+  "cardTitlePlayers": "جميع اللاعبين",
+  "actionAddPlayer": "إضافة لاعب",
+  "filterAllTeams": "جميع الفرق",
+
+  "cardTitleStats": "إحصائيات اللاعبين",
+  "actionAddStats": "إضافة إحصائية",
+  "filterType": "نوع الفلتر",
+
+  "searchPlaceholder": "ابحث..."
+}

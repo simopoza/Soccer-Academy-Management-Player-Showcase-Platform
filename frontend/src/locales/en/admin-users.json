@@ -1,0 +1,39 @@
+{
+  "pageTitle": "Users Management",
+  "pageSubtitle": "Manage academy users and permissions",
+  "cardTitle": "All Users",
+  "actionAddUser": "Add User",
+  "searchPlaceholder": "Search by name or email...",
+  "filterAllRoles": "All Roles",
+  "emptyMessage": "No users found",
+  "modalAddTitle": "Add New User",
+  "modalEditTitle": "Edit User",
+  "modalDeleteTitle": "Delete User",
+  "confirmDelete": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+  "buttonCancel": "Cancel",
+  "buttonAdd": "Add User",
+  "buttonSave": "Save Changes",
+  "buttonDelete": "Delete"
+
+  ,"role":{
+    "admin":"Admin",
+    "coach":"Coach",
+    "player":"Player",
+    "agent":"Agent"
+  },
+  "form":{
+    "name":"Name",
+    "namePlaceholder":"Enter full name",
+    "email":"Email",
+    "emailPlaceholder":"Enter email address",
+    "role":"Role"
+  },
+  "table":{
+    "user":"User",
+    "role":"Role",
+    "status":"Status",
+    "actions":"Actions",
+    "itemFound":"{{count}} item found",
+    "itemsFound":"{{count}} items found"
+  }
+}

@@ -20,7 +20,9 @@ import {
   useToast,
   Text,
   Textarea,
+  useColorModeValue,
 } from '@chakra-ui/react';
+import { useTranslation } from 'react-i18next';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, ActionButtons, SearchInput, FilterSelect } from '../../components/ui';
@@ -45,6 +47,13 @@ const categoryOptions = [
 ];
 
 const AdminTeamsPage = () => {
+  const { t, i18n } = useTranslation();
+
+  const pageBg = useColorModeValue('gray.50', 'gray.800');
+  const cardBg = useColorModeValue('white', 'gray.700');
+  const cardBorder = useColorModeValue('gray.200', 'gray.600');
+  const isRTL = i18n?.language === 'ar';
+
   const [teams, setTeams] = useState(initialTeams);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -182,33 +191,34 @@ const AdminTeamsPage = () => {
   ];
 
   return (
-    <Layout pageTitle="Teams Management" pageSubtitle="Manage academy teams">
-      <Box
-        bg="white"
-        borderRadius="12px"
-        boxShadow="0 10px 25px rgba(0,0,0,0.05)"
-        border="1px"
-        borderColor="gray.200"
-        p={6}
-      >
+    <Layout pageTitle={t('teamsManagement') || 'Teams Management'} pageSubtitle={t('teamsManagementDesc') || 'Manage academy teams'}>
+      <Box bg={pageBg} px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
+        <Box
+          bg={cardBg}
+          borderRadius="12px"
+          boxShadow="0 10px 25px rgba(0,0,0,0.05)"
+          border="1px"
+          borderColor={cardBorder}
+          p="24px"
+        >
         <TableHeader
-          title="All Teams"
+          title={t('cardTitleTeams') || 'All Teams'}
           count={filteredTeams.length}
-          actionLabel="Add Team"
+          actionLabel={t('actionAddTeam') || 'Add Team'}
           onAction={onAddOpen}
         />
 
         <Flex gap={4} mb={6}>
           <Box flex={1}>
             <SearchInput
-              placeholder="Search by team name or coach..."
+              placeholder={t('searchPlaceholder') || 'Search by team name or coach...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </Box>
           <Box width="200px">
             <FilterSelect
-              placeholder="All Categories"
+              placeholder={t('filterAllCategories') || 'All Categories'}
               options={categoryOptions}
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
@@ -221,6 +231,7 @@ const AdminTeamsPage = () => {
           data={filteredTeams}
           emptyMessage="No teams found"
         />
+        </Box>
       </Box>
 
       {/* Add Team Modal */}

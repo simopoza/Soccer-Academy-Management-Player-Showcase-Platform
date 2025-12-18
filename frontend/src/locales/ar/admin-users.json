@@ -1,0 +1,39 @@
+{
+  "pageTitle": "إدارة المستخدمين",
+  "pageSubtitle": "إدارة مستخدمي الأكاديمية والصلاحيات",
+  "cardTitle": "جميع المستخدمين",
+  "actionAddUser": "إضافة مستخدم",
+  "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني...",
+  "filterAllRoles": "كل الصلاحيات",
+  "emptyMessage": "لا توجد نتائج",
+  "modalAddTitle": "إضافة مستخدم جديد",
+  "modalEditTitle": "تعديل المستخدم",
+  "modalDeleteTitle": "حذف المستخدم",
+  "confirmDelete": "هل أنت متأكد أنك تريد حذف {{name}}؟ لا يمكن التراجع عن هذا الإجراء.",
+  "buttonCancel": "إلغاء",
+  "buttonAdd": "إضافة مستخدم",
+  "buttonSave": "حفظ التغييرات",
+  "buttonDelete": "حذف"
+
+  ,"role":{
+    "admin":"مدير",
+    "coach":"مدرب",
+    "player":"لاعب",
+    "agent":"وكيل"
+  },
+  "form":{
+    "name":"الاسم",
+    "namePlaceholder":"أدخل الاسم الكامل",
+    "email":"البريد الإلكتروني",
+    "emailPlaceholder":"أدخل البريد الإلكتروني",
+    "role":"الصلاحية"
+  },
+  "table":{
+    "user":"المستخدم",
+    "role":"الصلاحية",
+    "status":"الحالة",
+    "actions":"الإجراءات",
+    "itemFound":"تم العثور على {{count}} عنصر",
+    "itemsFound":"تم العثور على {{count}} عناصر"
+  }
+}

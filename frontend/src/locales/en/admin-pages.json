@@ -1,0 +1,20 @@
+{
+  "cardTitleMatches": "All Matches",
+  "actionAddMatch": "Add Match",
+  "filterAllStatus": "All Status",
+  "filterAllTypes": "All Types",
+
+  "cardTitleTeams": "All Teams",
+  "actionAddTeam": "Add Team",
+  "filterAllCategories": "All Categories",
+
+  "cardTitlePlayers": "All Players",
+  "actionAddPlayer": "Add Player",
+  "filterAllTeams": "All Teams",
+
+  "cardTitleStats": "Player Statistics",
+  "actionAddStats": "Add Statistics",
+  "filterType": "Filter Type",
+
+  "searchPlaceholder": "Search..."
+}

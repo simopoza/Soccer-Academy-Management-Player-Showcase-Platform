@@ -21,11 +21,14 @@ import {
   Text,
   SimpleGrid,
   Textarea,
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { FiCalendar, FiTrendingUp, FiTarget, FiStar } from 'react-icons/fi';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, ActionButtons, SearchInput, FilterSelect, StatsCard } from '../../components/ui';
+
+import { useTranslation } from 'react-i18next';
 
 const initialMatches = [
   { id: 1, team: 'Eagles U16', opponent: 'Lions U16', date: '2025-12-08', time: '15:00', location: 'Academy Stadium A', matchType: 'Home', status: 'Upcoming', competition: 'League', score: null },
@@ -48,6 +51,14 @@ const matchTypeOptions = [
 ];
 
 const AdminMatchesPage = () => {
+  const { t, i18n } = useTranslation();
+
+  const pageBg = useColorModeValue('gray.50', 'gray.800');
+  const cardBg = useColorModeValue('white', 'gray.700');
+  const cardBorder = useColorModeValue('gray.200', 'gray.600');
+
+  const isRTL = i18n?.language === 'ar';
+
   const [matches, setMatches] = useState(initialMatches);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -218,8 +229,9 @@ const AdminMatchesPage = () => {
   ];
 
   return (
-    <Layout pageTitle="Matches Management" pageSubtitle="Manage academy matches and fixtures">
-      <SimpleGrid columns={{ base: 1, md: 4 }} spacing={6} mb={6}>
+    <Layout pageTitle={t('matchesManagement') || 'Matches Management'} pageSubtitle={t('matchesManagementDesc') || 'Manage academy matches and fixtures'}>
+      <Box bg={pageBg} px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
+        <SimpleGrid columns={{ base: 1, md: 4 }} spacing={6} mb={6}>
         <StatsCard
           title="Total Matches"
           value={totalMatches}
@@ -244,34 +256,34 @@ const AdminMatchesPage = () => {
           icon={FiStar}
           color="purple"
         />
-      </SimpleGrid>
+        </SimpleGrid>
 
-      <Box
-        bg="white"
-        borderRadius="12px"
-        boxShadow="0 10px 25px rgba(0,0,0,0.05)"
-        border="1px"
-        borderColor="gray.200"
-        p={6}
-      >
+        <Box
+          bg={cardBg}
+          borderRadius="12px"
+          boxShadow="0 10px 25px rgba(0,0,0,0.05)"
+          border="1px"
+          borderColor={cardBorder}
+          p="24px"
+        >
         <TableHeader
-          title="All Matches"
+          title={t('cardTitleMatches') || 'All Matches'}
           count={filteredMatches.length}
-          actionLabel="Add Match"
+          actionLabel={t('actionAddMatch') || 'Add Match'}
           onAction={onAddOpen}
         />
 
         <Flex gap={4} mb={6}>
           <Box flex={1}>
             <SearchInput
-              placeholder="Search by team or opponent..."
+              placeholder={t('searchPlaceholder') || 'Search by team or opponent...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </Box>
           <Box width="200px">
             <FilterSelect
-              placeholder="All Status"
+              placeholder={t('filterAllStatus') || 'All Status'}
               options={statusOptions}
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -279,7 +291,7 @@ const AdminMatchesPage = () => {
           </Box>
           <Box width="200px">
             <FilterSelect
-              placeholder="All Types"
+              placeholder={t('filterAllTypes') || 'All Types'}
               options={matchTypeOptions}
               value={matchTypeFilter}
               onChange={(e) => setMatchTypeFilter(e.target.value)}
@@ -292,6 +304,7 @@ const AdminMatchesPage = () => {
           data={filteredMatches}
           emptyMessage="No matches found"
         />
+        </Box>
       </Box>
 
       {/* Add Match Modal */}
