@@ -62,10 +62,10 @@ const SidebarDrawer = ({ isOpen, onClose }) => {
         return [
           { label: t("dashboard"), path: "/admin/dashboard", icon: FiHome },
           { label: t("menu"), path: "/admin/menu", icon: FiGrid },
-          { label: t("users"), path: "/admin/users", icon: FiUsers },
-          { label: t("players"), path: "/admin/players", icon: FiUsers },
-          { label: t("teams"), path: "/admin/teams", icon: HiOutlineUserGroup },
-          { label: t("matches"), path: "/admin/matches", icon: FiCalendar },
+          { label: t("users"), path: "/admin/users-management", icon: FiUsers },
+          { label: t("players"), path: "/admin/players-management", icon: FiUsers },
+          { label: t("teams"), path: "/admin/teams-management", icon: HiOutlineUserGroup },
+          { label: t("matches"), path: "/admin/matches-management", icon: FiCalendar },
           { label: t("analytics"), path: "/admin/analytics", icon: FiBarChart2 },
         ];
       case "player":

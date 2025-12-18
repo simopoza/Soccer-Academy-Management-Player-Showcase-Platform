@@ -49,10 +49,10 @@ const Sidebar = ({ children }) => {
 			case "admin":
 				return [
 					{ name: t("dashboard") || "Dashboard", icon: "🏠", path: "/admin/dashboard" },
-					{ name: t("userManagement") || "Users Management", icon: "👥", path: "/admin/users" },
-					{ name: t("playersManagement") || "Players", icon: "⚽", path: "/admin/players", disabled: true },
-					{ name: t("teamsManagement") || "Teams", icon: "🏆", path: "/admin/teams", disabled: true },
-					{ name: t("matchesManagement") || "Matches", icon: "📅", path: "/admin/matches", disabled: true },
+					{ name: t("userManagement") || "Users Management", icon: "👥", path: "/admin/users-management" },
+					{ name: t("playersManagement") || "Players", icon: "⚽", path: "/admin/players-management" },
+					{ name: t("teamsManagement") || "Teams", icon: "🏆", path: "/admin/teams-management" },
+					{ name: t("matchesManagement") || "Matches", icon: "📅", path: "/admin/matches-management" },
 					{ name: t("analyticsReports") || "Analytics", icon: "📊", path: "/admin/analytics" },
 					{ name: t("settings") || "Settings", icon: "⚙️", path: "/admin/settings" },
 				];
