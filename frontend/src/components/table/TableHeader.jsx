@@ -1,5 +1,5 @@
 import { Flex, Heading, Text, Button, HStack } from '@chakra-ui/react';
-import { FiPlus } from 'react-icons/fi';
+import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const TableHeader = ({ 
@@ -31,7 +31,7 @@ const TableHeader = ({
       
       {showAction && onAction && (
         <Button
-          leftIcon={<FiPlus />}
+          leftIcon={<Plus />}
           colorScheme="green"
           size="md"
           onClick={onAction}

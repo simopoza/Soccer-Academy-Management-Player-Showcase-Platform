@@ -19,9 +19,9 @@ import {
   Select,
   useToast,
   Text,
-  useColorModeValue,
 } from '@chakra-ui/react';
 import { useTranslation } from 'react-i18next';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, AvatarCircle, ActionButtons, SearchInput, FilterSelect } from '../../components/ui';
@@ -48,9 +48,8 @@ const teamOptions = [
 const AdminPlayersPage = () => {
   const { t, i18n } = useTranslation();
 
-  const pageBg = useColorModeValue('gray.50', 'gray.800');
-  const cardBg = useColorModeValue('white', 'gray.700');
-  const cardBorder = useColorModeValue('gray.200', 'gray.600');
+  const { bgGradient, cardBg, cardBorder, cardShadow, primaryGreen, textColor } = useDashboardTheme();
+  const pageBg = bgGradient;
   const isRTL = i18n?.language === 'ar';
 
   const [players, setPlayers] = useState(initialPlayers);
@@ -205,7 +204,7 @@ const AdminPlayersPage = () => {
 
   return (
     <Layout pageTitle={t('playersManagement') || 'Players Management'} pageSubtitle={t('playersManagementDesc') || 'Manage academy players'}>
-      <Box bg={pageBg} px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
+      <Box bgGradient="linear(to-b, green.50, white)" px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
         <Box
           bg={cardBg}
           borderRadius="12px"
@@ -243,6 +242,7 @@ const AdminPlayersPage = () => {
           columns={columns}
           data={filteredPlayers}
           emptyMessage="No players found"
+          wrapperBorderColor={cardBorder}
         />
         </Box>
       </Box>

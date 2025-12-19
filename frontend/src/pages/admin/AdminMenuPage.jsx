@@ -61,7 +61,7 @@ const AdminMenuPage = () => {
 
   return (
     <Layout pageTitle={t("adminDashboard") || "Admin Dashboard"}>
-      <Box minH="100vh" bgGradient={bgGradient} py={8} dir={isRTL ? "rtl" : "ltr"}>
+      <Box minH="100vh" bgGradient="linear(to-b, green.50, white)" py={8} dir={isRTL ? "rtl" : "ltr"}>
         <Container maxW="container.xl">
           {/* Header */}
           <Heading size="xl" color={headingColor} mb={2}>

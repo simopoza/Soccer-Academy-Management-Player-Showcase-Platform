@@ -9,10 +9,11 @@ import {
   TITLE_COLOR_DARK,
   TEXT_COLOR_LIGHT,
   TEXT_COLOR_DARK,
+  PAGE_BG_LIGHT,
 } from "../theme/colors";
 
 export const useDashboardTheme = () => {
-  const bgGradient = useColorModeValue("white", "linear(to-b, gray.900, gray.800)");
+  const bgGradient = useColorModeValue("linear(to-b, green.50, white)", "linear(to-b, gray.900, gray.800)");
   const headingColor = useColorModeValue(PRIMARY_GREEN, "green.300");
   const textColor = useColorModeValue(TEXT_COLOR_LIGHT, TEXT_COLOR_DARK);
   const cardBg = useColorModeValue(CARD_BG_LIGHT, CARD_BG_DARK);

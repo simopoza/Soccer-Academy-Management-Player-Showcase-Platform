@@ -1,5 +1,5 @@
 import { Input, InputGroup, InputLeftElement } from '@chakra-ui/react';
-import { FiSearch } from 'react-icons/fi';
+import { Search } from 'lucide-react';
 
 const SearchInput = ({ 
   placeholder = 'Search...', 
@@ -10,16 +10,16 @@ const SearchInput = ({
   return (
     <InputGroup>
       <InputLeftElement pointerEvents="none">
-        <FiSearch color="gray.400" />
+        <Search size={16} color="#94A3B8" />
       </InputLeftElement>
       <Input
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        bg="white"
-        borderColor="gray.200"
-        _hover={{ borderColor: 'gray.300' }}
-        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+        bg="#FFFFFF"
+        borderColor="#E2E8F0"
+        _hover={{ borderColor: '#CBD5E1' }}
+        _focus={{ borderColor: '#2563EB', boxShadow: '0 0 0 1px #2563EB' }}
         height="40px"
         borderRadius="8px"
         {...props}

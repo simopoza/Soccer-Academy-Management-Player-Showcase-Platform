@@ -9,27 +9,35 @@ import {
   Text,
   Flex,
 } from '@chakra-ui/react';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 const DataTable = ({ 
   columns = [], 
   data = [],
   emptyMessage = 'No data available',
+  wrapperBorderColor,
   ...props 
 }) => {
+  const tableProps = { ...props };
+  const { cardBorder, titleColor } = useDashboardTheme();
+
+  const headerBg = wrapperBorderColor || cardBorder || '#D1FAE5';
+
   return (
-    <Box overflowX="auto" borderRadius="8px" border="1px" borderColor="gray.200">
-      <Table variant="simple" {...props}>
-        <Thead bg="gray.50">
+    <Box overflowX="auto" borderRadius="8px" border="1px" borderColor={wrapperBorderColor || cardBorder || '#E2E8F0'}>
+      <Table variant="simple" {...tableProps}>
+        <Thead bg={headerBg}>
           <Tr>
             {columns.map((column, index) => (
               <Th
                 key={index}
-                fontSize="xs"
+                fontSize="13px"
                 fontWeight="600"
-                textTransform="uppercase"
-                letterSpacing="wider"
-                color="gray.600"
-                py={4}
+                textTransform="none"
+                letterSpacing="normal"
+                color={titleColor || '#475569'}
+                borderBottom={`1px solid ${wrapperBorderColor || cardBorder || '#E2E8F0'}`}
+                py="14px"
               >
                 {column.header}
               </Th>
@@ -49,15 +57,15 @@ const DataTable = ({
             data.map((row, rowIndex) => (
               <Tr
                 key={row.id || rowIndex}
-                _hover={{ bg: 'gray.50' }}
-                transition="background-color 0.2s"
+                _hover={{ bg: headerBg, cursor: 'pointer' }}
+                transition="background-color 0.15s ease"
               >
                 {columns.map((column, colIndex) => (
                   <Td
                     key={colIndex}
                     fontSize="sm"
                     color="gray.700"
-                    py={4}
+                    py="14px"
                   >
                     {column.render ? column.render(row) : row[column.accessor]}
                   </Td>

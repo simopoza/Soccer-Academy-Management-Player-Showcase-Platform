@@ -1,6 +1,7 @@
 // Central color constants for dashboard and other components
 
 export const PRIMARY_GREEN = "#00B050";
+export const PAGE_BG_LIGHT = "#F1F5F9";
 export const CARD_BG_LIGHT = "#FFFFFF";
 export const CARD_BG_DARK = "#374151";
 export const CARD_BORDER_LIGHT = "#D1FAE5";

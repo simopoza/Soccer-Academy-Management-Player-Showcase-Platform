@@ -176,7 +176,7 @@ const CompleteProfilePage = () => {
   }
 
   return (
-    <Box minH="100vh" bgGradient={bgGradient} py={8} dir={isRTL ? "rtl" : "ltr"}>
+    <Box minH="100vh" bgGradient="linear(to-b, green.50, white)" py={8} dir={isRTL ? "rtl" : "ltr"}>
       <Container maxW="container.sm">
         <Card boxShadow="xl" borderRadius="lg" overflow="hidden" bg={cardBg}>
           <CardHeader bg={headerBg} textAlign="center" py={6} position="relative">

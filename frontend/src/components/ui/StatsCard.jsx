@@ -5,9 +5,10 @@ import {
   Flex,
   Text,
   Icon,
+  Box,
 } from "@chakra-ui/react";
 
-const StatsCard = ({ stat, title, value, icon, color, change, cardBg, cardBorder, cardShadow, primaryGreen, textColor }) => {
+const StatsCard = ({ stat, title, value, icon, color, change, cardBg, cardBorder, cardShadow, primaryGreen, textColor, iconBg }) => {
   // Support two shapes: either a single `stat` object, or individual props.
   const s = stat || { label: title, value, icon, color, change };
 
@@ -17,6 +18,7 @@ const StatsCard = ({ stat, title, value, icon, color, change, cardBg, cardBorder
   const safeValue = s?.value ?? 0;
   const safeColor = s?.color ?? 'gray.500';
   const safeChange = s?.change ?? '';
+  const safeIconBg = iconBg ?? '#F1F5F9';
 
   return (
     <Card
@@ -41,11 +43,20 @@ const StatsCard = ({ stat, title, value, icon, color, change, cardBg, cardBorder
             {safeLabel}
           </Text>
           {SafeIcon && (
-            <Icon
-              as={SafeIcon}
-              boxSize={5}
-              color={safeColor}
-            />
+            <Box
+              bg={safeIconBg}
+              p="10px"
+              borderRadius="10px"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Icon
+                as={SafeIcon}
+                boxSize={5}
+                color={safeColor}
+              />
+            </Box>
           )}
         </Flex>
       </CardHeader>

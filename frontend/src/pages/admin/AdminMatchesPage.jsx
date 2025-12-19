@@ -5,13 +5,13 @@ import {
   VStack,
   HStack,
   useDisclosure,
+  ModalCloseButton,
   Modal,
   ModalOverlay,
   ModalContent,
   ModalHeader,
   ModalFooter,
   ModalBody,
-  ModalCloseButton,
   Button,
   FormControl,
   FormLabel,
@@ -21,14 +21,14 @@ import {
   Text,
   SimpleGrid,
   Textarea,
-  useColorModeValue,
 } from '@chakra-ui/react';
-import { FiCalendar, FiTrendingUp, FiTarget, FiStar } from 'react-icons/fi';
+import { CalendarDays, Clock, CheckCircle, Trophy } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, ActionButtons, SearchInput, FilterSelect, StatsCard } from '../../components/ui';
 
 import { useTranslation } from 'react-i18next';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 const initialMatches = [
   { id: 1, team: 'Eagles U16', opponent: 'Lions U16', date: '2025-12-08', time: '15:00', location: 'Academy Stadium A', matchType: 'Home', status: 'Upcoming', competition: 'League', score: null },
@@ -53,9 +53,8 @@ const matchTypeOptions = [
 const AdminMatchesPage = () => {
   const { t, i18n } = useTranslation();
 
-  const pageBg = useColorModeValue('gray.50', 'gray.800');
-  const cardBg = useColorModeValue('white', 'gray.700');
-  const cardBorder = useColorModeValue('gray.200', 'gray.600');
+  const { bgGradient, cardBg, cardBorder, cardShadow, primaryGreen, textColor } = useDashboardTheme();
+  const pageBg = bgGradient;
 
   const isRTL = i18n?.language === 'ar';
 
@@ -230,31 +229,51 @@ const AdminMatchesPage = () => {
 
   return (
     <Layout pageTitle={t('matchesManagement') || 'Matches Management'} pageSubtitle={t('matchesManagementDesc') || 'Manage academy matches and fixtures'}>
-      <Box bg={pageBg} px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
+      <Box bgGradient="linear(to-b, green.50, white)" px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
         <SimpleGrid columns={{ base: 1, md: 4 }} spacing={6} mb={6}>
         <StatsCard
           title="Total Matches"
           value={totalMatches}
-          icon={FiCalendar}
+          icon={CalendarDays}
           color="green"
+          primaryGreen={primaryGreen}
+          cardBg={cardBg}
+          cardBorder={cardBorder}
+          cardShadow={cardShadow}
+          textColor={textColor}
         />
         <StatsCard
           title="Upcoming"
           value={upcomingMatches}
-          icon={FiTrendingUp}
+          icon={Clock}
           color="orange"
+          primaryGreen={primaryGreen}
+          cardBg={cardBg}
+          cardBorder={cardBorder}
+          cardShadow={cardShadow}
+          textColor={textColor}
         />
         <StatsCard
           title="Completed"
           value={completedMatches}
-          icon={FiTarget}
+          icon={CheckCircle}
           color="blue"
+          primaryGreen={primaryGreen}
+          cardBg={cardBg}
+          cardBorder={cardBorder}
+          cardShadow={cardShadow}
+          textColor={textColor}
         />
         <StatsCard
           title="Win Rate"
           value={`${winRate}%`}
-          icon={FiStar}
+          icon={Trophy}
           color="purple"
+          primaryGreen={primaryGreen}
+          cardBg={cardBg}
+          cardBorder={cardBorder}
+          cardShadow={cardShadow}
+          textColor={textColor}
         />
         </SimpleGrid>
 
@@ -303,6 +322,7 @@ const AdminMatchesPage = () => {
           columns={columns}
           data={filteredMatches}
           emptyMessage="No matches found"
+          wrapperBorderColor={cardBorder}
         />
         </Box>
       </Box>

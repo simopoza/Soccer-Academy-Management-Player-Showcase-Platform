@@ -50,7 +50,7 @@ const AdminDashboardPage = () => {
       pageTitle={t("dashboard") || "Dashboard"}
       pageSubtitle={`Welcome back, ${user?.first_name || ''}`}
     >
-      <Box minH="100vh" bg={bgGradient} p={6} dir={isRTL ? "rtl" : "ltr"}>
+      <Box minH="100vh" bgGradient="linear(to-b, green.50, white)" p={6} dir={isRTL ? "rtl" : "ltr"}>
         <Container maxW="full" px={0}>
 
           {/* Loading State with Skeletons */}

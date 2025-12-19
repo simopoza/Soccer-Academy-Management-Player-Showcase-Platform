@@ -1,5 +1,5 @@
 import { HStack, IconButton, Tooltip } from '@chakra-ui/react';
-import { FiEye, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { Eye, Pencil, Trash2 } from 'lucide-react';
 
 const ActionButtons = ({ 
   onView, 
@@ -17,7 +17,7 @@ const ActionButtons = ({
         <Tooltip label="View" fontSize="xs">
           <IconButton
             aria-label="View"
-            icon={<FiEye />}
+            icon={<Eye />}
             size={size}
             variant="ghost"
             colorScheme="blue"
@@ -30,7 +30,7 @@ const ActionButtons = ({
         <Tooltip label="Edit" fontSize="xs">
           <IconButton
             aria-label="Edit"
-            icon={<FiEdit2 />}
+            icon={<Pencil />}
             size={size}
             variant="ghost"
             colorScheme="green"
@@ -43,7 +43,7 @@ const ActionButtons = ({
         <Tooltip label="Delete" fontSize="xs">
           <IconButton
             aria-label="Delete"
-            icon={<FiTrash2 />}
+            icon={<Trash2 />}
             size={size}
             variant="ghost"
             colorScheme="red"

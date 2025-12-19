@@ -19,7 +19,7 @@ const AgentDashboardPage = () => {
 
   return (
     <Layout pageTitle={t("agentDashboard") || "Agent Dashboard"}>
-      <Box minH="100vh" bgGradient={bgGradient} py={8} dir={isRTL ? "rtl" : "ltr"}>
+      <Box minH="100vh" bgGradient="linear(to-b, green.50, white)" py={8} dir={isRTL ? "rtl" : "ltr"}>
         <Container maxW="container.xl">
           <Card bg={cardBg} boxShadow="lg" borderRadius="lg" p={8}>
             <CardBody>

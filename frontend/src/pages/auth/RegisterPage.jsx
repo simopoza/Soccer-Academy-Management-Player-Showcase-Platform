@@ -111,7 +111,7 @@ const RegisterPage = () => {
   ];
 
   return (
-    <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bgGradient={bgGradient} py={8}>
+    <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bgGradient="linear(to-b, green.50, white)" py={8}>
       <AuthCard title={t("joinAcademy")} subtitle={t("createAccount")}>
         <AuthForm
           fields={fields}

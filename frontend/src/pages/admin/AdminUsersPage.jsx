@@ -21,6 +21,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import { useTranslation } from 'react-i18next';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, AvatarCircle, ActionButtons, SearchInput, FilterSelect } from '../../components/ui';
@@ -47,9 +48,8 @@ const roleOptionsStatic = [
 const AdminUsersManagementPage = () => {
   const { t, i18n } = useTranslation();
 
-  const pageBg = useColorModeValue('gray.50', 'gray.800');
-  const cardBg = useColorModeValue('white', 'gray.700');
-  const cardBorder = useColorModeValue('gray.200', 'gray.600');
+  const { bgGradient, cardBg, cardBorder, cardShadow, textColor, primaryGreen } = useDashboardTheme();
+  const pageBg = bgGradient;
   const nameColor = useColorModeValue('gray.900', 'gray.100');
   const emailColor = useColorModeValue('gray.500', 'gray.300');
 
@@ -175,7 +175,7 @@ const AdminUsersManagementPage = () => {
 
   return (
     <Layout pageTitle={t('pageTitle') || 'Users Management'} pageSubtitle={t('pageSubtitle') || 'Manage academy users and permissions'}>
-      <Box bg={pageBg} px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
+      <Box bgGradient="linear(to-b, green.50, white)" px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
         <Box bg={cardBg} borderRadius="12px" borderWidth="1px" borderStyle="solid" borderColor={cardBorder} boxShadow="0 10px 25px rgba(0,0,0,0.05)" p="24px">
 
           <TableHeader
@@ -207,6 +207,7 @@ const AdminUsersManagementPage = () => {
             columns={columns}
             data={filteredUsers}
             emptyMessage={t('emptyMessage') || 'No users found'}
+            wrapperBorderColor={cardBorder}
           />
         </Box>
       </Box>

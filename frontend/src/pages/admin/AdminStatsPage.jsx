@@ -20,13 +20,13 @@ import {
   useToast,
   Text,
   SimpleGrid,
-  useColorModeValue,
 } from '@chakra-ui/react';
 import { useTranslation } from 'react-i18next';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, ActionButtons, SearchInput, FilterSelect, StatsCard } from '../../components/ui';
-import { FiBarChart, FiTarget, FiTrendingUp, FiStar } from 'react-icons/fi';
+import { BarChart3, Target, TrendingUp, Star } from 'lucide-react';
 
 const initialStats = [
   { id: 1, playerName: 'Marcus Johnson', playerNumber: 10, matchName: 'Academy U17 vs Riverside FC', matchDate: '2024-12-05', opponent: 'Riverside FC', goals: 2, assists: 1, minutes: 90, saves: 0, yellowCards: 0, redCards: 0, rating: 9.2 },
@@ -42,9 +42,8 @@ const initialStats = [
 const AdminStatsPage = () => {
   const { t, i18n } = useTranslation();
 
-  const pageBg = useColorModeValue('gray.50', 'gray.800');
-  const cardBg = useColorModeValue('white', 'gray.700');
-  const cardBorder = useColorModeValue('gray.200', 'gray.600');
+  const { bgGradient, cardBg, cardBorder, cardShadow, primaryGreen, textColor } = useDashboardTheme();
+  const pageBg = bgGradient;
   const isRTL = i18n?.language === 'ar';
 
   const [stats, setStats] = useState(initialStats);
@@ -72,6 +71,14 @@ const AdminStatsPage = () => {
 
   const uniquePlayers = Array.from(new Set(stats.map(stat => stat.playerName))).sort();
   const uniqueMatches = Array.from(new Set(stats.map(stat => stat.matchName))).sort();
+  // derive unique teams from matchName like 'Team A vs Team B'
+  const uniqueTeamsSet = new Set();
+  stats.forEach(s => {
+    const parts = (s.matchName || '').split(' vs ');
+    if (parts[0]) uniqueTeamsSet.add(parts[0].trim());
+    if (parts[1]) uniqueTeamsSet.add(parts[1].trim());
+  });
+  const uniqueTeams = Array.from(uniqueTeamsSet).sort();
 
   const filteredStats = stats.filter(stat => {
     const matchesSearch = stat.playerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -291,31 +298,55 @@ const AdminStatsPage = () => {
 
   return (
     <Layout pageTitle={t('statisticsManagement') || 'Statistics Management'} pageSubtitle={t('statsManagementDesc') || 'Manage player performance statistics'}>
-      <Box bg={pageBg} px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
+      <Box bgGradient="linear(to-b, green.50, white)" px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
         <SimpleGrid columns={{ base: 1, md: 4 }} spacing={6} mb={6}>
         <StatsCard
           title="Total Stats"
           value={totalStats}
-          icon={FiBarChart}
-          color="green"
+          icon={BarChart3}
+          color="#0F172A"
+          iconBg="#F1F5F9"
+          primaryGreen={primaryGreen}
+          cardBg={cardBg}
+          cardBorder={cardBorder}
+          cardShadow={cardShadow}
+          textColor={textColor}
         />
         <StatsCard
           title="Total Goals"
           value={totalGoals}
-          icon={FiTarget}
-          color="orange"
+          icon={Target}
+          color="#0F172A"
+          iconBg="#F1F5F9"
+          primaryGreen={primaryGreen}
+          cardBg={cardBg}
+          cardBorder={cardBorder}
+          cardShadow={cardShadow}
+          textColor={textColor}
         />
         <StatsCard
           title="Total Assists"
           value={totalAssists}
-          icon={FiTrendingUp}
-          color="blue"
+          icon={TrendingUp}
+          color="#0F172A"
+          iconBg="#F1F5F9"
+          primaryGreen={primaryGreen}
+          cardBg={cardBg}
+          cardBorder={cardBorder}
+          cardShadow={cardShadow}
+          textColor={textColor}
         />
         <StatsCard
           title="Avg Rating"
           value={avgRating}
-          icon={FiStar}
-          color="purple"
+          icon={Star}
+          color="#0F172A"
+          iconBg="#F1F5F9"
+          primaryGreen={primaryGreen}
+          cardBg={cardBg}
+          cardBorder={cardBorder}
+          cardShadow={cardShadow}
+          textColor={textColor}
         />
       </SimpleGrid>
 
@@ -369,6 +400,7 @@ const AdminStatsPage = () => {
           columns={columns}
           data={filteredStats}
           emptyMessage="No statistics found"
+          wrapperBorderColor={cardBorder}
         />
         </Box>
       </Box>
