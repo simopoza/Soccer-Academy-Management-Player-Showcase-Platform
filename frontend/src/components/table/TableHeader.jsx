@@ -18,7 +18,7 @@ const TableHeader = ({
       mb={6}
       {...props}
     >
-      <HStack spacing={3}>
+      <Flex direction="column" align="flex-start">
         <Heading size="md" fontWeight="600" color="gray.800">
           {title}
         </Heading>
@@ -27,7 +27,7 @@ const TableHeader = ({
             {count === 1 ? t('table.itemFound', { count }) : t('table.itemsFound', { count })}
           </Text>
         )}
-      </HStack>
+      </Flex>
       
       {showAction && onAction && (
         <Button

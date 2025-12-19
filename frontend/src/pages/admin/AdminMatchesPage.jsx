@@ -22,7 +22,7 @@ import {
   SimpleGrid,
   Textarea,
 } from '@chakra-ui/react';
-import { CalendarDays, Clock, CheckCircle, Trophy } from 'lucide-react';
+import { CalendarDays, Clock, CheckCircle, Trophy, MapPin } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, ActionButtons, SearchInput, FilterSelect, StatsCard } from '../../components/ui';
@@ -162,8 +162,8 @@ const AdminMatchesPage = () => {
       accessor: 'match',
       render: (row) => (
         <VStack align="start" spacing={0}>
-          <Box fontWeight="600" fontSize="sm">{row.team} vs {row.opponent}</Box>
-          <Box fontSize="xs" color="gray.500">{row.competition}</Box>
+          <Box fontWeight="600" fontSize="sm" color={primaryGreen}>{row.team}</Box>
+          <Box fontSize="sm" color="gray.600">{row.opponent}</Box>
         </VStack>
       ),
     },
@@ -172,8 +172,14 @@ const AdminMatchesPage = () => {
       accessor: 'date',
       render: (row) => (
         <VStack align="start" spacing={0}>
-          <Text fontSize="sm">{row.date}</Text>
-          <Text fontSize="xs" color="gray.500">{row.time}</Text>
+          <HStack spacing={2} align="center">
+            <CalendarDays size={14} color={primaryGreen} />
+            <Text fontSize="sm">{row.date}</Text>
+          </HStack>
+          <HStack spacing={2} align="center">
+            <Clock size={14} color={primaryGreen} />
+            <Text fontSize="xs" color="gray.500">{row.time}</Text>
+          </HStack>
         </VStack>
       ),
     },
@@ -181,7 +187,10 @@ const AdminMatchesPage = () => {
       header: 'Location',
       accessor: 'location',
       render: (row) => (
-        <Text fontSize="sm">{row.location}</Text>
+        <HStack spacing={2} align="center">
+          <MapPin size={14} color={primaryGreen} />
+          <Text fontSize="sm">{row.location}</Text>
+        </HStack>
       ),
     },
     {
@@ -191,6 +200,13 @@ const AdminMatchesPage = () => {
         <Badge variant={row.matchType === 'Home' ? 'success' : 'info'}>
           {row.matchType}
         </Badge>
+      ),
+    },
+    {
+      header: 'Competition',
+      accessor: 'competition',
+      render: (row) => (
+        <Badge variant="default">{row.competition}</Badge>
       ),
     },
     {
@@ -295,7 +311,7 @@ const AdminMatchesPage = () => {
         <Flex gap={4} mb={6}>
           <Box flex={1}>
             <SearchInput
-              placeholder={t('searchPlaceholder') || 'Search by team or opponent...'}
+              placeholder={t('searchPlaceholderMatches') || 'Search by team, opponent, or location...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />

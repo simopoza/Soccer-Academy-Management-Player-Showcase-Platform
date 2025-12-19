@@ -20,7 +20,9 @@ import {
   useToast,
   Text,
   Textarea,
+  Icon,
 } from '@chakra-ui/react';
+import { FiUsers } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import Layout from '../../components/layout/Layout';
@@ -141,10 +143,10 @@ const AdminTeamsPage = () => {
       header: 'Team',
       accessor: 'name',
       render: (row) => (
-        <VStack align="start" spacing={0}>
-          <Box fontWeight="600" fontSize="sm">{row.name} {row.ageCategory}</Box>
-          <Box fontSize="xs" color="gray.500">Founded {row.founded}</Box>
-        </VStack>
+        <HStack align="center" spacing={3}>
+          <Box fontWeight="600" fontSize="sm">{row.name}</Box>
+          <Box fontSize="sm" color="gray.600">{row.ageCategory}</Box>
+        </HStack>
       ),
     },
     {
@@ -165,7 +167,17 @@ const AdminTeamsPage = () => {
       header: 'Players',
       accessor: 'playerCount',
       render: (row) => (
-        <Text fontSize="sm" fontWeight="600" color="green.600">{row.playerCount}</Text>
+        <HStack spacing={2} align="center">
+          <Icon as={FiUsers} boxSize={4} color="gray.500" />
+          <Text fontSize="sm" fontWeight="600" color="green.600">{row.playerCount}</Text>
+        </HStack>
+      ),
+    },
+    {
+      header: 'Founded',
+      accessor: 'founded',
+      render: (row) => (
+        <Text fontSize="sm">{row.founded}</Text>
       ),
     },
     {
@@ -210,7 +222,7 @@ const AdminTeamsPage = () => {
         <Flex gap={4} mb={6}>
           <Box flex={1}>
             <SearchInput
-              placeholder={t('searchPlaceholder') || 'Search by team name or coach...'}
+              placeholder={t('searchPlaceholderTeams') || 'Search by team name, or coach...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />

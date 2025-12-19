@@ -20,6 +20,7 @@ import {
   useToast,
   Text,
 } from '@chakra-ui/react';
+import { Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import Layout from '../../components/layout/Layout';
@@ -149,12 +150,9 @@ const AdminPlayersPage = () => {
       header: 'Player',
       accessor: 'name',
       render: (row) => (
-        <HStack spacing={3}>
+        <HStack spacing={3} align="center">
           <AvatarCircle name={row.name} size="sm" />
-          <VStack align="start" spacing={0}>
-            <Box fontWeight="600" fontSize="sm">{row.name}</Box>
-            <Box fontSize="xs" color="gray.500">#{row.jerseyNumber}</Box>
-          </VStack>
+          <Box fontWeight="600" fontSize="sm">{row.name}</Box>
         </HStack>
       ),
     },
@@ -176,9 +174,12 @@ const AdminPlayersPage = () => {
       header: 'Rating',
       accessor: 'rating',
       render: (row) => (
-        <Badge variant={getRatingColor(row.rating)}>
-          {row.rating.toFixed(1)}
-        </Badge>
+        <HStack spacing={2}>
+          <Star size={14} color="#F59E0B" />
+          <Badge variant={getRatingColor(row.rating)}>
+            {row.rating.toFixed(1)}
+          </Badge>
+        </HStack>
       ),
     },
     {
@@ -223,7 +224,7 @@ const AdminPlayersPage = () => {
         <Flex gap={4} mb={6}>
           <Box flex={1}>
             <SearchInput
-              placeholder={t('searchPlaceholder') || 'Search by player name...'}
+              placeholder={t('searchPlaceholderPlayers') || 'Search by player name...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />

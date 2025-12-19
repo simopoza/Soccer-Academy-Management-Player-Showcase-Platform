@@ -135,16 +135,28 @@ const AdminUsersManagementPage = () => {
 
   const columns = [
     {
-      header: t('table.user') || 'User',
+      header: t('table.user') || 'Name',
       accessor: 'name',
+      render: (row) => {
+        const parts = (row.name || '').split(' ');
+        const first = parts.shift() || '';
+        const last = parts.join(' ') || '';
+        return (
+          <HStack spacing={3} align="center">
+            <AvatarCircle name={row.name} size="sm" />
+            <HStack spacing={2} align="baseline">
+              <Box fontWeight="600" fontSize="14px" color={nameColor}>{first}</Box>
+              <Box fontSize="14px" color={nameColor} opacity={0.9}>{last}</Box>
+            </HStack>
+          </HStack>
+        );
+      },
+    },
+    {
+      header: t('table.email') || 'Email',
+      accessor: 'email',
       render: (row) => (
-        <HStack spacing={3}>
-          <AvatarCircle name={row.name} size="sm" />
-          <VStack align="start" spacing={0}>
-            <Box fontWeight="600" fontSize="14px" color={nameColor}>{row.name}</Box>
-            <Box fontSize="13px" color={emailColor}>{row.email}</Box>
-          </VStack>
-        </HStack>
+        <Box fontSize="14px" color={emailColor}>{row.email}</Box>
       ),
     },
     {
@@ -158,7 +170,7 @@ const AdminUsersManagementPage = () => {
       header: t('table.status') || 'Status',
       accessor: 'status',
       render: (row) => (
-        <Badge variant={row.status === 'Active' ? 'success' : 'default'}>{row.status}</Badge>
+        <Badge variant={row.status === 'Active' ? 'success' : 'default'}>{(row.status || '').toLowerCase()}</Badge>
       ),
     },
     {
@@ -187,19 +199,19 @@ const AdminUsersManagementPage = () => {
 
           <Flex gap={4} mb="24px">
             <Box flex={1}>
-              <SearchInput
-                placeholder={t('searchPlaceholder') || 'Search by name or email...'}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+                  <SearchInput
+                    placeholder={t('searchPlaceholderUsers') || 'Search by name or email...'}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
             </Box>
             <Box width="200px">
               <FilterSelect
-                placeholder={t('filterAllRoles') || 'All Roles'}
-                options={roleOptions}
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-              />
+                  placeholder={t('filterAllRoles') || 'All Roles'}
+                  options={roleOptions}
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                />
             </Box>
           </Flex>
 
