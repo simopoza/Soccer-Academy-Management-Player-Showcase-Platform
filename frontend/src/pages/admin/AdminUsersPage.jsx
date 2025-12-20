@@ -170,7 +170,9 @@ const AdminUsersManagementPage = () => {
       header: t('table.status') || 'Status',
       accessor: 'status',
       render: (row) => (
-        <Badge variant={row.status === 'Active' ? 'success' : 'default'}>{(row.status || '').toLowerCase()}</Badge>
+        <Badge variant={row.status === 'Active' ? 'success' : 'default'}>
+          {t(row.status === 'Active' ? 'statusActive' : 'statusInactive') || row.status}
+        </Badge>
       ),
     },
     {
