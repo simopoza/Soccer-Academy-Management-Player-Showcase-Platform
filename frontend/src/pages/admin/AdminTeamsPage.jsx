@@ -40,12 +40,12 @@ const initialTeams = [
   { id: 8, name: 'Bears', ageCategory: 'U12', playerCount: 17, coach: 'Jennifer Taylor', founded: '2019', status: 'Active' },
 ];
 
-const categoryOptions = [
-  { value: 'all', label: 'All Categories' },
-  { value: 'U12', label: 'U12' },
-  { value: 'U14', label: 'U14' },
-  { value: 'U16', label: 'U16' },
-  { value: 'U18', label: 'U18' },
+const categoryOptions = (t) => [
+  { value: 'all', label: t('filterAllCategories') || 'All Categories' },
+  { value: 'U12', label: t('ageU12') || 'U12' },
+  { value: 'U14', label: t('ageU14') || 'U14' },
+  { value: 'U16', label: t('ageU16') || 'U16' },
+  { value: 'U18', label: t('ageU18') || 'U18' },
 ];
 
 const AdminTeamsPage = () => {
@@ -89,8 +89,8 @@ const AdminTeamsPage = () => {
     };
     setTeams([...teams, newTeam]);
     toast({
-      title: 'Team added',
-      description: `${formData.name} ${formData.ageCategory} has been added successfully.`,
+      title: t('notification.teamAdded') || 'Team added',
+      description: t('notification.teamAddedDesc') || `${formData.name} ${formData.ageCategory} has been added successfully.`,
       status: 'success',
       duration: 3000,
     });
@@ -101,8 +101,8 @@ const AdminTeamsPage = () => {
   const handleEdit = () => {
     setTeams(teams.map(t => t.id === selectedTeam.id ? { ...t, ...formData } : t));
     toast({
-      title: 'Team updated',
-      description: `Team information has been updated successfully.`,
+      title: t('notification.teamUpdated') || 'Team updated',
+      description: t('notification.teamUpdatedDesc') || `Team information has been updated successfully.`,
       status: 'success',
       duration: 3000,
     });
@@ -113,8 +113,8 @@ const AdminTeamsPage = () => {
   const handleDelete = () => {
     setTeams(teams.filter(t => t.id !== selectedTeam.id));
     toast({
-      title: 'Team deleted',
-      description: `${selectedTeam.name} has been removed.`,
+      title: t('notification.teamDeleted') || 'Team deleted',
+      description: t('notification.teamDeletedDesc') || `${selectedTeam.name} has been removed.`,
       status: 'success',
       duration: 3000,
     });
@@ -140,7 +140,7 @@ const AdminTeamsPage = () => {
 
   const columns = [
     {
-      header: 'Team',
+      header: t('table.team') || 'Team',
       accessor: 'name',
       render: (row) => (
         <HStack align="center" spacing={3}>
@@ -150,21 +150,21 @@ const AdminTeamsPage = () => {
       ),
     },
     {
-      header: 'Age Category',
+      header: t('table.ageCategory') || 'Age Category',
       accessor: 'ageCategory',
       render: (row) => (
         <Badge variant="info">{row.ageCategory}</Badge>
       ),
     },
     {
-      header: 'Coach',
+      header: t('table.coach') || 'Coach',
       accessor: 'coach',
       render: (row) => (
         <Text fontSize="sm" fontWeight="500">{row.coach}</Text>
       ),
     },
     {
-      header: 'Players',
+      header: t('table.players') || 'Players',
       accessor: 'playerCount',
       render: (row) => (
         <HStack spacing={2} align="center">
@@ -174,23 +174,23 @@ const AdminTeamsPage = () => {
       ),
     },
     {
-      header: 'Founded',
+      header: t('table.founded') || 'Founded',
       accessor: 'founded',
       render: (row) => (
         <Text fontSize="sm">{row.founded}</Text>
       ),
     },
     {
-      header: 'Status',
+      header: t('table.status') || 'Status',
       accessor: 'status',
       render: (row) => (
         <Badge variant={row.status === 'Active' ? 'success' : 'default'}>
-          {row.status}
+          {t(row.status === 'Active' ? 'statusActive' : 'statusInactive') || row.status}
         </Badge>
       ),
     },
     {
-      header: 'Actions',
+      header: t('table.actions') || 'Actions',
       accessor: 'actions',
       render: (row) => (
         <ActionButtons
@@ -230,7 +230,7 @@ const AdminTeamsPage = () => {
           <Box width="200px">
             <FilterSelect
               placeholder={t('filterAllCategories') || 'All Categories'}
-              options={categoryOptions}
+              options={categoryOptions(t)}
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
             />
@@ -240,7 +240,7 @@ const AdminTeamsPage = () => {
         <DataTable
           columns={columns}
           data={filteredTeams}
-          emptyMessage="No teams found"
+          emptyMessage={t('emptyTeams') || 'No teams found'}
           wrapperBorderColor={cardBorder}
         />
         </Box>
@@ -250,44 +250,44 @@ const AdminTeamsPage = () => {
       <Modal isOpen={isAddOpen} onClose={onAddClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Add New Team</ModalHeader>
+          <ModalHeader>{t('modal.addTeam') || 'Add New Team'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
               <FormControl isRequired>
-                <FormLabel>Team Name</FormLabel>
+                <FormLabel>{t('teamName') || 'Team Name'}</FormLabel>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter team name"
+                  placeholder={t('teamNamePlaceholder') || 'Enter team name'}
                 />
               </FormControl>
               <FormControl isRequired>
-                <FormLabel>Age Category</FormLabel>
+                <FormLabel>{t('ageCategory') || 'Age Category'}</FormLabel>
                 <Select
                   value={formData.ageCategory}
                   onChange={(e) => setFormData({ ...formData, ageCategory: e.target.value })}
                 >
-                  <option value="U12">U12</option>
-                  <option value="U14">U14</option>
-                  <option value="U16">U16</option>
-                  <option value="U18">U18</option>
+                  <option value="U12">{t('ageU12') || 'U12'}</option>
+                  <option value="U14">{t('ageU14') || 'U14'}</option>
+                  <option value="U16">{t('ageU16') || 'U16'}</option>
+                  <option value="U18">{t('ageU18') || 'U18'}</option>
                 </Select>
               </FormControl>
               <FormControl isRequired>
-                <FormLabel>Coach</FormLabel>
+                <FormLabel>{t('coach') || 'Coach'}</FormLabel>
                 <Input
                   value={formData.coach}
                   onChange={(e) => setFormData({ ...formData, coach: e.target.value })}
-                  placeholder="Enter coach name"
+                  placeholder={t('coachPlaceholder') || 'Enter coach name'}
                 />
               </FormControl>
               <FormControl>
-                <FormLabel>Description</FormLabel>
+                <FormLabel>{t('description') || 'Description'}</FormLabel>
                 <Textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Enter team description (optional)"
+                  placeholder={t('descriptionPlaceholder') || 'Enter team description (optional)'}
                   rows={3}
                 />
               </FormControl>
@@ -295,10 +295,10 @@ const AdminTeamsPage = () => {
           </ModalBody>
           <ModalFooter>
             <Button variant="ghost" mr={3} onClick={onAddClose}>
-              Cancel
+              {t('cancel') || 'Cancel'}
             </Button>
             <Button colorScheme="green" onClick={handleAdd}>
-              Add Team
+              {t('actionAddTeam') || 'Add Team'}
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -308,42 +308,42 @@ const AdminTeamsPage = () => {
       <Modal isOpen={isEditOpen} onClose={onEditClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Edit Team</ModalHeader>
+          <ModalHeader>{t('modal.editTeam') || 'Edit Team'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
               <FormControl isRequired>
-                <FormLabel>Team Name</FormLabel>
+                <FormLabel>{t('teamName') || 'Team Name'}</FormLabel>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
               </FormControl>
               <FormControl isRequired>
-                <FormLabel>Age Category</FormLabel>
+                <FormLabel>{t('ageCategory') || 'Age Category'}</FormLabel>
                 <Select
                   value={formData.ageCategory}
                   onChange={(e) => setFormData({ ...formData, ageCategory: e.target.value })}
                 >
-                  <option value="U12">U12</option>
-                  <option value="U14">U14</option>
-                  <option value="U16">U16</option>
-                  <option value="U18">U18</option>
+                  <option value="U12">{t('ageU12') || 'U12'}</option>
+                  <option value="U14">{t('ageU14') || 'U14'}</option>
+                  <option value="U16">{t('ageU16') || 'U16'}</option>
+                  <option value="U18">{t('ageU18') || 'U18'}</option>
                 </Select>
               </FormControl>
               <FormControl isRequired>
-                <FormLabel>Coach</FormLabel>
+                <FormLabel>{t('coach') || 'Coach'}</FormLabel>
                 <Input
                   value={formData.coach}
                   onChange={(e) => setFormData({ ...formData, coach: e.target.value })}
                 />
               </FormControl>
               <FormControl>
-                <FormLabel>Description</FormLabel>
+                <FormLabel>{t('description') || 'Description'}</FormLabel>
                 <Textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Enter team description (optional)"
+                  placeholder={t('descriptionPlaceholder') || 'Enter team description (optional)'}
                   rows={3}
                 />
               </FormControl>
@@ -351,10 +351,10 @@ const AdminTeamsPage = () => {
           </ModalBody>
           <ModalFooter>
             <Button variant="ghost" mr={3} onClick={onEditClose}>
-              Cancel
+              {t('cancel') || 'Cancel'}
             </Button>
             <Button colorScheme="green" onClick={handleEdit}>
-              Save Changes
+              {t('saveChanges') || 'Save Changes'}
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -364,17 +364,17 @@ const AdminTeamsPage = () => {
       <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Delete Team</ModalHeader>
+          <ModalHeader>{t('modal.deleteTeam') || 'Delete Team'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            Are you sure you want to delete {selectedTeam?.name} {selectedTeam?.ageCategory}? This action cannot be undone.
+            {t('confirmDeleteTeam') || `Are you sure you want to delete ${selectedTeam?.name} ${selectedTeam?.ageCategory}? This action cannot be undone.`}
           </ModalBody>
           <ModalFooter>
             <Button variant="ghost" mr={3} onClick={onDeleteClose}>
-              Cancel
+              {t('cancel') || 'Cancel'}
             </Button>
             <Button colorScheme="red" onClick={handleDelete}>
-              Delete
+              {t('delete') || 'Delete'}
             </Button>
           </ModalFooter>
         </ModalContent>
