@@ -38,16 +38,16 @@ const initialMatches = [
   { id: 5, team: 'Hawks U18', opponent: 'Bears U18', date: '2025-11-28', time: '16:00', location: 'Academy Stadium B', matchType: 'Home', status: 'Completed', competition: 'Cup', score: '2-3', result: 'Lost' },
 ];
 
-const statusOptions = [
-  { value: 'all', label: 'All Status' },
-  { value: 'Upcoming', label: 'Upcoming' },
-  { value: 'Completed', label: 'Completed' },
+const statusOptions = (t) => [
+  { value: 'all', label: t('filterAllStatus') || 'All Status' },
+  { value: 'Upcoming', label: t('statusUpcoming') || 'Upcoming' },
+  { value: 'Completed', label: t('statusCompleted') || 'Completed' },
 ];
 
-const matchTypeOptions = [
-  { value: 'all', label: 'All Types' },
-  { value: 'Home', label: 'Home' },
-  { value: 'Away', label: 'Away' },
+const matchTypeOptions = (t) => [
+  { value: 'all', label: t('filterAllTypes') || 'All Types' },
+  { value: 'Home', label: t('matchTypeHome') || 'Home' },
+  { value: 'Away', label: t('matchTypeAway') || 'Away' },
 ];
 
 const AdminMatchesPage = () => {
@@ -103,8 +103,8 @@ const AdminMatchesPage = () => {
     };
     setMatches([...matches, newMatch]);
     toast({
-      title: 'Match added',
-      description: `Match has been scheduled successfully.`,
+      title: t('notification.matchAdded') || 'Match added',
+      description: t('notification.matchAddedDesc') || `Match has been scheduled successfully.`,
       status: 'success',
       duration: 3000,
     });
@@ -115,8 +115,8 @@ const AdminMatchesPage = () => {
   const handleEdit = () => {
     setMatches(matches.map(m => m.id === selectedMatch.id ? { ...m, ...formData } : m));
     toast({
-      title: 'Match updated',
-      description: `Match information has been updated successfully.`,
+      title: t('notification.matchUpdated') || 'Match updated',
+      description: t('notification.matchUpdatedDesc') || `Match information has been updated successfully.`,
       status: 'success',
       duration: 3000,
     });
@@ -127,8 +127,8 @@ const AdminMatchesPage = () => {
   const handleDelete = () => {
     setMatches(matches.filter(m => m.id !== selectedMatch.id));
     toast({
-      title: 'Match deleted',
-      description: `Match has been removed.`,
+      title: t('notification.matchDeleted') || 'Match deleted',
+      description: t('notification.matchDeletedDesc') || `Match has been removed.`,
       status: 'success',
       duration: 3000,
     });
@@ -158,7 +158,7 @@ const AdminMatchesPage = () => {
 
   const columns = [
     {
-      header: 'Match',
+      header: t('table.match') || 'Match',
       accessor: 'match',
       render: (row) => (
         <VStack align="start" spacing={0}>
@@ -168,23 +168,37 @@ const AdminMatchesPage = () => {
       ),
     },
     {
-      header: 'Date & Time',
+      header: t('table.dateTime') || 'Date & Time',
       accessor: 'date',
-      render: (row) => (
-        <VStack align="start" spacing={0}>
-          <HStack spacing={2} align="center">
-            <CalendarDays size={14} color={primaryGreen} />
-            <Text fontSize="sm">{row.date}</Text>
-          </HStack>
-          <HStack spacing={2} align="center">
-            <Clock size={14} color={primaryGreen} />
-            <Text fontSize="xs" color="gray.500">{row.time}</Text>
-          </HStack>
-        </VStack>
-      ),
+      render: (row) => {
+        // format date/time according to current locale
+        const locale = i18n?.language || 'en';
+        let formattedDate = row.date;
+        let formattedTime = row.time;
+        try {
+          const dt = new Date(`${row.date}T${row.time}`);
+          formattedDate = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'short', day: 'numeric' }).format(dt);
+          formattedTime = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hour12: false }).format(dt);
+        } catch (e) {
+          // keep raw values if parsing fails
+        }
+
+        return (
+          <VStack align="start" spacing={0}>
+            <HStack spacing={2} align="center">
+              <CalendarDays size={14} color={primaryGreen} />
+              <Text fontSize="sm">{formattedDate}</Text>
+            </HStack>
+            <HStack spacing={2} align="center">
+              <Clock size={14} color={primaryGreen} />
+              <Text fontSize="xs" color="gray.500">{formattedTime}</Text>
+            </HStack>
+          </VStack>
+        );
+      },
     },
     {
-      header: 'Location',
+      header: t('table.location') || 'Location',
       accessor: 'location',
       render: (row) => (
         <HStack spacing={2} align="center">
@@ -194,32 +208,40 @@ const AdminMatchesPage = () => {
       ),
     },
     {
-      header: 'Type',
+      header: t('table.type') || 'Type',
       accessor: 'matchType',
       render: (row) => (
         <Badge variant={row.matchType === 'Home' ? 'success' : 'info'}>
-          {row.matchType}
+          {t(row.matchType === 'Home' ? 'matchTypeHome' : 'matchTypeAway') || row.matchType}
         </Badge>
       ),
     },
     {
-      header: 'Competition',
+      header: t('table.competition') || 'Competition',
       accessor: 'competition',
       render: (row) => (
-        <Badge variant="default">{row.competition}</Badge>
+        <Badge variant="default">
+          {t(
+            row.competition === 'League'
+              ? 'competitionLeague'
+              : row.competition === 'Cup'
+              ? 'competitionCup'
+              : 'competitionFriendly'
+          ) || row.competition}
+        </Badge>
       ),
     },
     {
-      header: 'Status',
+      header: t('table.status') || 'Status',
       accessor: 'status',
       render: (row) => (
         <Badge variant={row.status === 'Upcoming' ? 'warning' : 'success'}>
-          {row.status}
+          {t(row.status === 'Upcoming' ? 'statusUpcoming' : 'statusCompleted') || row.status}
         </Badge>
       ),
     },
     {
-      header: 'Score',
+      header: t('table.score') || 'Score',
       accessor: 'score',
       render: (row) => (
         row.score ? (
@@ -232,7 +254,7 @@ const AdminMatchesPage = () => {
       ),
     },
     {
-      header: 'Actions',
+      header: t('table.actions') || 'Actions',
       accessor: 'actions',
       render: (row) => (
         <ActionButtons
@@ -248,7 +270,7 @@ const AdminMatchesPage = () => {
       <Box bgGradient="linear(to-b, green.50, white)" px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
         <SimpleGrid columns={{ base: 1, md: 4 }} spacing={6} mb={6}>
         <StatsCard
-          title="Total Matches"
+          title={t('cardTotalMatches') || 'Total Matches'}
           value={totalMatches}
           icon={CalendarDays}
           color="green"
@@ -259,7 +281,7 @@ const AdminMatchesPage = () => {
           textColor={textColor}
         />
         <StatsCard
-          title="Upcoming"
+          title={t('cardUpcoming') || 'Upcoming'}
           value={upcomingMatches}
           icon={Clock}
           color="orange"
@@ -270,7 +292,7 @@ const AdminMatchesPage = () => {
           textColor={textColor}
         />
         <StatsCard
-          title="Completed"
+          title={t('cardCompleted') || 'Completed'}
           value={completedMatches}
           icon={CheckCircle}
           color="blue"
@@ -281,7 +303,7 @@ const AdminMatchesPage = () => {
           textColor={textColor}
         />
         <StatsCard
-          title="Win Rate"
+          title={t('cardWinRate') || 'Win Rate'}
           value={`${winRate}%`}
           icon={Trophy}
           color="purple"
@@ -319,7 +341,7 @@ const AdminMatchesPage = () => {
           <Box width="200px">
             <FilterSelect
               placeholder={t('filterAllStatus') || 'All Status'}
-              options={statusOptions}
+              options={statusOptions(t)}
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             />
@@ -327,7 +349,7 @@ const AdminMatchesPage = () => {
           <Box width="200px">
             <FilterSelect
               placeholder={t('filterAllTypes') || 'All Types'}
-              options={matchTypeOptions}
+              options={matchTypeOptions(t)}
               value={matchTypeFilter}
               onChange={(e) => setMatchTypeFilter(e.target.value)}
             />
@@ -337,7 +359,7 @@ const AdminMatchesPage = () => {
         <DataTable
           columns={columns}
           data={filteredMatches}
-          emptyMessage="No matches found"
+          emptyMessage={t('emptyMatches') || 'No matches found'}
           wrapperBorderColor={cardBorder}
         />
         </Box>
@@ -347,31 +369,31 @@ const AdminMatchesPage = () => {
       <Modal isOpen={isAddOpen} onClose={onAddClose} size="lg">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Add New Match</ModalHeader>
+          <ModalHeader>{t('modal.addMatch') || 'Add New Match'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
               <HStack spacing={4} width="100%">
                 <FormControl isRequired flex={1}>
-                  <FormLabel>Team</FormLabel>
+                  <FormLabel>{t('team') || 'Team'}</FormLabel>
                   <Input
                     value={formData.team}
                     onChange={(e) => setFormData({ ...formData, team: e.target.value })}
-                    placeholder="Enter team name"
+                    placeholder={t('team') || 'Enter team name'}
                   />
                 </FormControl>
                 <FormControl isRequired flex={1}>
-                  <FormLabel>Opponent</FormLabel>
+                  <FormLabel>{t('opponent') || 'Opponent'}</FormLabel>
                   <Input
                     value={formData.opponent}
                     onChange={(e) => setFormData({ ...formData, opponent: e.target.value })}
-                    placeholder="Enter opponent"
+                    placeholder={t('opponent') || 'Enter opponent'}
                   />
                 </FormControl>
               </HStack>
               <HStack spacing={4} width="100%">
                 <FormControl isRequired flex={1}>
-                  <FormLabel>Date</FormLabel>
+                  <FormLabel>{t('date') || 'Date'}</FormLabel>
                   <Input
                     type="date"
                     value={formData.date}
@@ -379,7 +401,7 @@ const AdminMatchesPage = () => {
                   />
                 </FormControl>
                 <FormControl isRequired flex={1}>
-                  <FormLabel>Time</FormLabel>
+                  <FormLabel>{t('time') || 'Time'}</FormLabel>
                   <Input
                     type="time"
                     value={formData.time}
@@ -388,42 +410,42 @@ const AdminMatchesPage = () => {
                 </FormControl>
               </HStack>
               <FormControl isRequired>
-                <FormLabel>Location</FormLabel>
+                <FormLabel>{t('location') || 'Location'}</FormLabel>
                 <Input
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="Enter match location"
+                  placeholder={t('location') || 'Enter match location'}
                 />
               </FormControl>
               <HStack spacing={4} width="100%">
                 <FormControl isRequired flex={1}>
-                  <FormLabel>Match Type</FormLabel>
+                  <FormLabel>{t('matchType') || 'Match Type'}</FormLabel>
                   <Select
                     value={formData.matchType}
                     onChange={(e) => setFormData({ ...formData, matchType: e.target.value })}
                   >
-                    <option value="Home">Home</option>
-                    <option value="Away">Away</option>
+                    <option value="Home">{t('matchTypeHome') || 'Home'}</option>
+                    <option value="Away">{t('matchTypeAway') || 'Away'}</option>
                   </Select>
                 </FormControl>
                 <FormControl isRequired flex={1}>
-                  <FormLabel>Competition</FormLabel>
+                  <FormLabel>{t('competition') || 'Competition'}</FormLabel>
                   <Select
                     value={formData.competition}
                     onChange={(e) => setFormData({ ...formData, competition: e.target.value })}
                   >
-                    <option value="League">League</option>
-                    <option value="Cup">Cup</option>
-                    <option value="Friendly">Friendly</option>
+                    <option value="League">{t('competitionLeague') || 'League'}</option>
+                    <option value="Cup">{t('competitionCup') || 'Cup'}</option>
+                    <option value="Friendly">{t('competitionFriendly') || 'Friendly'}</option>
                   </Select>
                 </FormControl>
               </HStack>
               <FormControl>
-                <FormLabel>Notes</FormLabel>
+                <FormLabel>{t('notes') || 'Notes'}</FormLabel>
                 <Textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Additional notes (optional)"
+                  placeholder={t('notes') || 'Additional notes (optional)'}
                   rows={3}
                 />
               </FormControl>
@@ -431,10 +453,10 @@ const AdminMatchesPage = () => {
           </ModalBody>
           <ModalFooter>
             <Button variant="ghost" mr={3} onClick={onAddClose}>
-              Cancel
+              {t('cancel') || 'Cancel'}
             </Button>
             <Button colorScheme="green" onClick={handleAdd}>
-              Add Match
+              {t('actionAddMatch') || 'Add Match'}
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -444,20 +466,20 @@ const AdminMatchesPage = () => {
       <Modal isOpen={isEditOpen} onClose={onEditClose} size="lg">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Edit Match</ModalHeader>
+          <ModalHeader>{t('modal.editMatch') || 'Edit Match'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
               <HStack spacing={4} width="100%">
                 <FormControl isRequired flex={1}>
-                  <FormLabel>Team</FormLabel>
+                  <FormLabel>{t('team') || 'Team'}</FormLabel>
                   <Input
                     value={formData.team}
                     onChange={(e) => setFormData({ ...formData, team: e.target.value })}
                   />
                 </FormControl>
                 <FormControl isRequired flex={1}>
-                  <FormLabel>Opponent</FormLabel>
+                  <FormLabel>{t('opponent') || 'Opponent'}</FormLabel>
                   <Input
                     value={formData.opponent}
                     onChange={(e) => setFormData({ ...formData, opponent: e.target.value })}
@@ -466,7 +488,7 @@ const AdminMatchesPage = () => {
               </HStack>
               <HStack spacing={4} width="100%">
                 <FormControl isRequired flex={1}>
-                  <FormLabel>Date</FormLabel>
+                  <FormLabel>{t('date') || 'Date'}</FormLabel>
                   <Input
                     type="date"
                     value={formData.date}
@@ -474,7 +496,7 @@ const AdminMatchesPage = () => {
                   />
                 </FormControl>
                 <FormControl isRequired flex={1}>
-                  <FormLabel>Time</FormLabel>
+                  <FormLabel>{t('time') || 'Time'}</FormLabel>
                   <Input
                     type="time"
                     value={formData.time}
@@ -483,7 +505,7 @@ const AdminMatchesPage = () => {
                 </FormControl>
               </HStack>
               <FormControl isRequired>
-                <FormLabel>Location</FormLabel>
+                <FormLabel>{t('location') || 'Location'}</FormLabel>
                 <Input
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
@@ -491,24 +513,24 @@ const AdminMatchesPage = () => {
               </FormControl>
               <HStack spacing={4} width="100%">
                 <FormControl isRequired flex={1}>
-                  <FormLabel>Match Type</FormLabel>
+                  <FormLabel>{t('matchType') || 'Match Type'}</FormLabel>
                   <Select
                     value={formData.matchType}
                     onChange={(e) => setFormData({ ...formData, matchType: e.target.value })}
                   >
-                    <option value="Home">Home</option>
-                    <option value="Away">Away</option>
+                    <option value="Home">{t('matchTypeHome') || 'Home'}</option>
+                    <option value="Away">{t('matchTypeAway') || 'Away'}</option>
                   </Select>
                 </FormControl>
                 <FormControl isRequired flex={1}>
-                  <FormLabel>Competition</FormLabel>
+                  <FormLabel>{t('competition') || 'Competition'}</FormLabel>
                   <Select
                     value={formData.competition}
                     onChange={(e) => setFormData({ ...formData, competition: e.target.value })}
                   >
-                    <option value="League">League</option>
-                    <option value="Cup">Cup</option>
-                    <option value="Friendly">Friendly</option>
+                    <option value="League">{t('competitionLeague') || 'League'}</option>
+                    <option value="Cup">{t('competitionCup') || 'Cup'}</option>
+                    <option value="Friendly">{t('competitionFriendly') || 'Friendly'}</option>
                   </Select>
                 </FormControl>
               </HStack>
@@ -516,10 +538,10 @@ const AdminMatchesPage = () => {
           </ModalBody>
           <ModalFooter>
             <Button variant="ghost" mr={3} onClick={onEditClose}>
-              Cancel
+              {t('cancel') || 'Cancel'}
             </Button>
             <Button colorScheme="green" onClick={handleEdit}>
-              Save Changes
+              {t('saveChanges') || 'Save Changes'}
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -529,17 +551,17 @@ const AdminMatchesPage = () => {
       <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Delete Match</ModalHeader>
+          <ModalHeader>{t('modal.deleteMatch') || 'Delete Match'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            Are you sure you want to delete this match? This action cannot be undone.
+            {t('confirmDeleteMatch') || 'Are you sure you want to delete this match? This action cannot be undone.'}
           </ModalBody>
           <ModalFooter>
             <Button variant="ghost" mr={3} onClick={onDeleteClose}>
-              Cancel
+              {t('cancel') || 'Cancel'}
             </Button>
             <Button colorScheme="red" onClick={handleDelete}>
-              Delete
+              {t('delete') || 'Delete'}
             </Button>
           </ModalFooter>
         </ModalContent>
