@@ -1,6 +1,7 @@
-import { Flex, Heading, Text, Button, HStack } from '@chakra-ui/react';
+import { Flex, Heading, Text, Button, HStack, useColorModeValue } from '@chakra-ui/react';
 import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 const TableHeader = ({ 
   title, 
@@ -11,6 +12,9 @@ const TableHeader = ({
   ...props 
 }) => {
   const { t } = useTranslation();
+  const { titleColor, textColor, primaryGreen } = useDashboardTheme();
+  const headerTitleColor = useColorModeValue(primaryGreen || titleColor || 'green.600', 'whiteAlpha.900');
+  const countColor = useColorModeValue(textColor || 'gray.600', 'gray.300');
   return (
     <Flex 
       justify="space-between" 
@@ -19,11 +23,11 @@ const TableHeader = ({
       {...props}
     >
       <Flex direction="column" align="flex-start">
-        <Heading size="md" fontWeight="600" color="gray.800">
+        <Heading size="md" fontWeight="600" color={headerTitleColor}>
           {title}
         </Heading>
         {count !== undefined && (
-          <Text fontSize="sm" color="gray.500" fontWeight="500">
+          <Text fontSize="sm" color={countColor} fontWeight="500">
             {count === 1 ? t('table.itemFound', { count }) : t('table.itemsFound', { count })}
           </Text>
         )}
@@ -38,6 +42,8 @@ const TableHeader = ({
           height="40px"
           borderRadius="8px"
           fontWeight="500"
+          bg={primaryGreen}
+          _hover={{ opacity: 0.95 }}
         >
           {actionLabel || 'Add New'}
         </Button>

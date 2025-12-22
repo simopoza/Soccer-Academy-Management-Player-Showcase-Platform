@@ -1,12 +1,14 @@
 import { Box, Container, Heading, Text, Stack, Card, CardBody } from "@chakra-ui/react";
+import { useDashboardTheme } from "../../hooks/useDashboardTheme";
 import { useTranslation } from "react-i18next";
 
 const AdminAnalyticsPage = () => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
+  const { bgGradient } = useDashboardTheme();
 
   return (
-    <Box minH="100vh" bgGradient="linear(to-b, green.50, white)" py={8} dir={isRTL ? "rtl" : "ltr"}>
+    <Box minH="100vh" bgGradient={bgGradient} py={8} dir={isRTL ? "rtl" : "ltr"}>
       <Container maxW="container.xl">
         <Card boxShadow="lg" borderRadius="lg" p={8}>
           <CardBody>

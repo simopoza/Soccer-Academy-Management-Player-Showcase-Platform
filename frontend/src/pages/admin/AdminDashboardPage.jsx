@@ -17,6 +17,7 @@ import {
   Flex,
   Alert,
   AlertIcon,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -41,6 +42,12 @@ const AdminDashboardPage = () => {
   // Custom hooks
   const { stats, recentMatches, performanceData, loading, error, errorMessage } = useAdminDashboard();
   const { bgGradient, textColor, cardBg, cardBorder, cardShadow, chartGridColor, titleColor, primaryGreen } = useDashboardTheme();
+  // Axis stroke should be readable in dark mode (strong white) and use textColor in light mode
+  const axisStroke = useColorModeValue(textColor || '#0F172A', 'white');
+  // Header title color for tables: green in light, white in dark
+  const headerColor = useColorModeValue(primaryGreen || titleColor || '#0F172A', 'white');
+  // Header background color: same as DataTable - light green tint in light mode, dark blue-gray in dark mode
+  const headerBg = cardBorder || useColorModeValue('#ECFDF5', '#0B1220');
   const statsCards = useStatsCards(stats, t, primaryGreen);
 
 
@@ -50,7 +57,7 @@ const AdminDashboardPage = () => {
       pageTitle={t("dashboard") || "Dashboard"}
       pageSubtitle={`Welcome back, ${user?.first_name || ''}`}
     >
-      <Box minH="100vh" bgGradient="linear(to-b, green.50, white)" p={6} dir={isRTL ? "rtl" : "ltr"}>
+      <Box minH="100vh" bgGradient={bgGradient} p={6} dir={isRTL ? "rtl" : "ltr"}>
         <Container maxW="full" px={0}>
 
           {/* Loading State with Skeletons */}
@@ -129,14 +136,14 @@ const AdminDashboardPage = () => {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
-                      <XAxis 
-                        dataKey="name" 
-                        stroke={textColor}
-                        style={{ fontSize: '12px' }}
+                      <XAxis
+                        dataKey="name"
+                        stroke={axisStroke}
+                        tick={{ fill: axisStroke, fontSize: 12 }}
                       />
-                      <YAxis 
-                        stroke={textColor}
-                        style={{ fontSize: '12px' }}
+                      <YAxis
+                        stroke={axisStroke}
+                        tick={{ fill: axisStroke, fontSize: 12 }}
                         domain={[0, 10]}
                       />
                       <Tooltip 
@@ -202,12 +209,12 @@ const AdminDashboardPage = () => {
               <CardBody p={0}>
                 <Box overflowX="auto">
                   <Table variant="simple">
-                    <Thead>
+                    <Thead bg={headerBg}>
                       <Tr>
-                        <Th>{t("teams") || "Teams"}</Th>
-                        <Th>{t("score") || "Score"}</Th>
-                        <Th>{t("date") || "Date"}</Th>
-                        <Th>{t("result") || "Result"}</Th>
+                        <Th sx={{ color: `${headerColor} !important`, fontWeight: 600 }}>{t('teams') || 'Teams'}</Th>
+                        <Th sx={{ color: `${headerColor} !important`, fontWeight: 600 }}>{t('score') || 'Score'}</Th>
+                        <Th sx={{ color: `${headerColor} !important`, fontWeight: 600 }}>{t('date') || 'Date'}</Th>
+                        <Th sx={{ color: `${headerColor} !important`, fontWeight: 600 }}>{t('result') || 'Result'}</Th>
                       </Tr>
                     </Thead>
                     <Tbody>

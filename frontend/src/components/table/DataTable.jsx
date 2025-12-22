@@ -8,6 +8,7 @@ import {
   Box,
   Text,
   Flex,
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
@@ -19,9 +20,14 @@ const DataTable = ({
   ...props 
 }) => {
   const tableProps = { ...props };
-  const { cardBorder, titleColor } = useDashboardTheme();
+  const { cardBorder, titleColor, textColor, primaryGreen } = useDashboardTheme();
 
-  const headerBg = wrapperBorderColor || cardBorder || '#D1FAE5';
+  // Header background should contrast with the card background in both modes
+  const headerBg = wrapperBorderColor || cardBorder || useColorModeValue('#ECFDF5', '#0B1220');
+  // Hover background for rows (slightly different from header/card bg)
+  const rowHoverBg = useColorModeValue('#F1F5F9', '#071028');
+  const cellTextColor = textColor || useColorModeValue('#0F172A', '#E6EEF6');
+  const emptyTextColor = useColorModeValue('gray.500', 'gray.400');
 
   return (
     <Box overflowX="auto" borderRadius="8px" border="1px" borderColor={wrapperBorderColor || cardBorder || '#E2E8F0'}>
@@ -35,8 +41,10 @@ const DataTable = ({
                 fontWeight="600"
                 textTransform="none"
                 letterSpacing="normal"
-                color={titleColor || '#475569'}
-                borderBottom={`1px solid ${wrapperBorderColor || cardBorder || '#E2E8F0'}`}
+                color={useColorModeValue(primaryGreen || titleColor || '#0F172A', 'whiteAlpha.900')}
+                _light={{ color: primaryGreen || titleColor || '#0F172A' }}
+                _dark={{ color: 'whiteAlpha.900' }}
+                borderBottom={`1px solid ${wrapperBorderColor || cardBorder || useColorModeValue('#E2E8F0', '#1F2937')}`}
                 py="14px"
               >
                 {column.header}
@@ -57,14 +65,14 @@ const DataTable = ({
             data.map((row, rowIndex) => (
               <Tr
                 key={row.id || rowIndex}
-                _hover={{ bg: headerBg, cursor: 'pointer' }}
+                _hover={{ bg: rowHoverBg, cursor: 'pointer' }}
                 transition="background-color 0.15s ease"
               >
                 {columns.map((column, colIndex) => (
                   <Td
                     key={colIndex}
                     fontSize="sm"
-                    color="gray.700"
+                    color={cellTextColor}
                     py="14px"
                   >
                     {column.render ? column.render(row) : row[column.accessor]}

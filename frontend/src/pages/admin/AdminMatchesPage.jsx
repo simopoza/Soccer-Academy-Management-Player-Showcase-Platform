@@ -21,6 +21,7 @@ import {
   Text,
   SimpleGrid,
   Textarea,
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { CalendarDays, Clock, CheckCircle, Trophy, MapPin } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
@@ -55,6 +56,8 @@ const AdminMatchesPage = () => {
 
   const { bgGradient, cardBg, cardBorder, cardShadow, primaryGreen, textColor } = useDashboardTheme();
   const pageBg = bgGradient;
+
+  const opponentColor = useColorModeValue('gray.600', '#FFFFFF');
 
   const isRTL = i18n?.language === 'ar';
 
@@ -163,7 +166,7 @@ const AdminMatchesPage = () => {
       render: (row) => (
         <VStack align="start" spacing={0}>
           <Box fontWeight="600" fontSize="sm" color={primaryGreen}>{row.team}</Box>
-          <Box fontSize="sm" color="gray.600">{row.opponent}</Box>
+          <Box fontSize="sm" color={opponentColor}>{row.opponent}</Box>
         </VStack>
       ),
     },
@@ -267,7 +270,7 @@ const AdminMatchesPage = () => {
 
   return (
     <Layout pageTitle={t('matchesManagement') || 'Matches Management'} pageSubtitle={t('matchesManagementDesc') || 'Manage academy matches and fixtures'}>
-      <Box bgGradient="linear(to-b, green.50, white)" px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
+      <Box bgGradient={bgGradient} px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
         <SimpleGrid columns={{ base: 1, md: 4 }} spacing={6} mb={6}>
         <StatsCard
           title={t('cardTotalMatches') || 'Total Matches'}

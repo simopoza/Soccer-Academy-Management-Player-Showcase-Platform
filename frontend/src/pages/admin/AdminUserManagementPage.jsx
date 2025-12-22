@@ -26,6 +26,7 @@ import {
 } from "@chakra-ui/react";
 import { CheckIcon, CloseIcon, ArrowBackIcon } from "@chakra-ui/icons";
 import { useTranslation } from "react-i18next";
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import { useNavigate } from "react-router-dom";
 import adminService from "../../services/adminService";
 
@@ -38,6 +39,8 @@ const AdminUserManagementPage = () => {
   const [actionLoading, setActionLoading] = useState({});
 
   const isRTL = i18n.language === "ar";
+
+  const { bgGradient } = useDashboardTheme();
 
   // Fetch pending users on component mount
   useEffect(() => {
@@ -144,7 +147,7 @@ const AdminUserManagementPage = () => {
   return (
     <Box
       minH="100vh"
-      bgGradient="linear(to-b, green.50, white)"
+      bgGradient={bgGradient}
       py={8}
       dir={isRTL ? "rtl" : "ltr"}
     >

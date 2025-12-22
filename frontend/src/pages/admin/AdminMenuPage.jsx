@@ -1,6 +1,7 @@
 import { Box, Container, Heading, Text, SimpleGrid, Card, CardHeader, CardBody, Button, useColorModeValue } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useDashboardTheme } from "../../hooks/useDashboardTheme";
 import Layout from "../../components/layout/Layout";
 
 const AdminMenuPage = () => {
@@ -8,11 +9,8 @@ const AdminMenuPage = () => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
 
+  const { bgGradient } = useDashboardTheme();
   // Color mode values
-  const bgGradient = useColorModeValue(
-    "linear(to-b, green.50, white)",
-    "linear(to-b, gray.900, gray.800)"
-  );
   const headingColor = useColorModeValue("green.700", "green.300");
   const textColor = useColorModeValue("gray.600", "gray.300");
   const cardBg = useColorModeValue("white", "gray.700");
@@ -61,7 +59,7 @@ const AdminMenuPage = () => {
 
   return (
     <Layout pageTitle={t("adminDashboard") || "Admin Dashboard"}>
-      <Box minH="100vh" bgGradient="linear(to-b, green.50, white)" py={8} dir={isRTL ? "rtl" : "ltr"}>
+      <Box minH="100vh" bgGradient={bgGradient} py={8} dir={isRTL ? "rtl" : "ltr"}>
         <Container maxW="container.xl">
           {/* Header */}
           <Heading size="xl" color={headingColor} mb={2}>
