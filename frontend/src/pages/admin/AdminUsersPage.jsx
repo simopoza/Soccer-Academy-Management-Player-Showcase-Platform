@@ -364,13 +364,9 @@ const AdminUsersManagementPage = () => {
                 </Button>
               </>
             )}
-            <Button
-              size="sm"
-              colorScheme="red"
-              onClick={() => openDeleteDialog(row)}
-            >
-              {t('delete') || 'Delete'}
-            </Button>
+            <ActionButtons
+              onDelete={() => openDeleteDialog(row)}
+            />
           </HStack>
         );
       },
