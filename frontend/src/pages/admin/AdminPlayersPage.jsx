@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Flex,
@@ -24,31 +24,17 @@ import { Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import useCrudList from '../../hooks/useCrudList';
-import { teamOptionsFromArray } from '../../utils/adminOptions';
+// teams are loaded from the API; remove static helpers
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, AvatarCircle, ActionButtons, SearchInput, FilterSelect } from '../../components/ui';
+import playerService from '../../services/playerService';
 import CrudFormModal from '../../components/admin/CrudFormModal';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 
-const initialPlayers = [
-  { id: 1, name: 'Emma Wilson', team: 'Eagles U16', position: 'Midfielder', rating: 8.5, jerseyNumber: 10, status: 'Active' },
-  { id: 2, name: 'Michael Chen', team: 'Hawks U18', position: 'Forward', rating: 9.2, jerseyNumber: 9, status: 'Active' },
-  { id: 3, name: 'Sarah Davis', team: 'Eagles U16', position: 'Defender', rating: 7.8, jerseyNumber: 4, status: 'Active' },
-  { id: 4, name: 'James Rodriguez', team: 'Falcons U14', position: 'Goalkeeper', rating: 8.9, jerseyNumber: 1, status: 'Active' },
-  { id: 5, name: 'Olivia Martinez', team: 'Hawks U18', position: 'Winger', rating: 8.1, jerseyNumber: 7, status: 'Active' },
-  { id: 6, name: 'David Thompson', team: 'Eagles U12', position: 'Striker', rating: 7.5, jerseyNumber: 11, status: 'Injured' },
-  { id: 7, name: 'Sofia Garcia', team: 'Falcons U14', position: 'Midfielder', rating: 8.3, jerseyNumber: 8, status: 'Active' },
-  { id: 8, name: 'Lucas Anderson', team: 'Hawks U18', position: 'Defender', rating: 8.7, jerseyNumber: 5, status: 'Active' },
-];
+const initialPlayers = [];
 
-const teamOptionsStatic = [
-  { value: 'all', label: 'All Teams' },
-  { value: 'Eagles U16', label: 'Eagles U16' },
-  { value: 'Hawks U18', label: 'Hawks U18' },
-  { value: 'Falcons U14', label: 'Falcons U14' },
-  { value: 'Eagles U12', label: 'Eagles U12' },
-];
+// teamOptionsStatic removed — teams loaded from backend
 
 const AdminPlayersPage = () => {
   const { t, i18n } = useTranslation();
@@ -82,14 +68,15 @@ const AdminPlayersPage = () => {
     handleDelete,
     openEditDialog,
     openDeleteDialog,
-  } = useCrudList({ initialData: initialPlayers, initialForm: { name: '', team: 'Eagles U16', position: 'Midfielder', jerseyNumber: '' } });
+  } = useCrudList({ initialData: initialPlayers, initialForm: { first_name: '', last_name: '', date_of_birth: '', height: '', weight: '', position: 'Midfielder', strong_foot: 'Right', team_id: '' } });
 
   const toast = useToast();
   const [teamFilter, setTeamFilter] = useState('all');
+  const [teams, setTeams] = useState([]);
 
-  // derive team options from current players list (keeps the list up-to-date)
-  const uniqueTeams = Array.from(new Set(players.map(p => p.team))).sort();
-  const teamOptions = teamOptionsFromArray(t, uniqueTeams);
+  // load team options from API (keeps the list up-to-date)
+  // use `filterAllTeams` i18n key (consistent with other helpers) so translations (e.g. Arabic) show correctly
+  const teamOptions = [{ value: 'all', label: t('filterAllTeams') || 'All Teams' }, ...teams.map(tm => ({ value: String(tm.id), label: tm.name }))];
 
   const filteredPlayers = players.filter(player => {
     const matchesSearch = player.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -98,45 +85,136 @@ const AdminPlayersPage = () => {
   });
 
   const onConfirmAdd = () => {
-    const created = handleAdd({ jerseyNumber: parseInt(formData.jerseyNumber), rating: 7.0, status: 'Active' });
-    toast({
-      title: t('notification.playerAdded') || 'Player added',
-      description: t('notification.playerAddedDesc') || `${created.name} has been added successfully.`,
-      status: 'success',
-      duration: 3000,
-    });
-    onAddClose();
-    setFormData({ name: '', team: 'Eagles U16', position: 'Midfielder', jerseyNumber: '' });
+    (async () => {
+      try {
+        const payload = {
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          date_of_birth: formData.date_of_birth,
+          height: formData.height ? parseFloat(formData.height) : null,
+          weight: formData.weight ? parseFloat(formData.weight) : null,
+          position: formData.position,
+          strong_foot: formData.strong_foot,
+          team_id: formData.team_id ? parseInt(formData.team_id) : null,
+        };
+        const resp = await playerService.addPlayer(payload);
+        const newPlayer = {
+          id: resp.id,
+          name: `${payload.first_name || ''} ${payload.last_name || ''}`.trim(),
+          team: teams.find(ti => ti.id === payload.team_id)?.name || '',
+          position: payload.position,
+          status: 'Active',
+        };
+        setPlayers(prev => [...prev, newPlayer]);
+        toast({ title: t('notification.playerAdded') || 'Player added', description: t('notification.playerAddedDesc') || `${newPlayer.name} has been added successfully.`, status: 'success', duration: 3000 });
+        onAddClose();
+        setFormData({ first_name: '', last_name: '', date_of_birth: '', height: '', weight: '', position: 'Midfielder', strong_foot: 'Right', team_id: '' });
+      } catch (err) {
+        console.error('Error adding player', err);
+        toast({ title: 'Failed to add player', status: 'error', duration: 4000 });
+      }
+    })();
   };
 
   const onConfirmEdit = () => {
-    const updated = handleEdit();
-    toast({
-      title: t('notification.playerUpdated') || 'Player updated',
-      description: t('notification.playerUpdatedDesc') || `Player information has been updated successfully.`,
-      status: 'success',
-      duration: 3000,
-    });
-    onEditClose();
-    setSelectedItem(null);
-    return updated;
+    (async () => {
+      try {
+        if (!selectedItem) return;
+        const id = selectedItem.id;
+        const payload = {
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          date_of_birth: formData.date_of_birth,
+          height: formData.height ? parseFloat(formData.height) : null,
+          weight: formData.weight ? parseFloat(formData.weight) : null,
+          position: formData.position,
+          strong_foot: formData.strong_foot,
+          team_id: formData.team_id ? parseInt(formData.team_id) : null,
+        };
+        await playerService.updatePlayer(id, payload);
+        setPlayers(prev => prev.map(p => p.id === id ? { ...p, name: `${payload.first_name} ${payload.last_name}`.trim(), team: teams.find(ti => ti.id === payload.team_id)?.name || p.team, position: payload.position } : p));
+        toast({ title: t('notification.playerUpdated') || 'Player updated', description: t('notification.playerUpdatedDesc') || `Player information has been updated successfully.`, status: 'success', duration: 3000 });
+        onEditClose();
+        setSelectedItem(null);
+      } catch (err) {
+        console.error('Error updating player', err);
+        toast({ title: 'Failed to update player', status: 'error', duration: 4000 });
+      }
+    })();
   };
 
   const onConfirmDelete = () => {
-    const deleted = handleDelete();
-    toast({
-      title: t('notification.playerDeleted') || 'Player deleted',
-      description: t('notification.playerDeletedDesc') || `${deleted?.name} has been removed.`,
-      status: 'success',
-      duration: 3000,
-    });
-    onDeleteClose();
-    setSelectedItem(null);
-    return deleted;
+    (async () => {
+      try {
+        if (!selectedItem) return;
+        const id = selectedItem.id;
+        await playerService.deletePlayer(id);
+        setPlayers(prev => prev.filter(p => p.id !== id));
+        toast({ title: t('notification.playerDeleted') || 'Player deleted', description: t('notification.playerDeletedDesc') || `${selectedItem?.name} has been removed.`, status: 'success', duration: 3000 });
+        onDeleteClose();
+        setSelectedItem(null);
+      } catch (err) {
+        console.error('Error deleting player', err);
+        toast({ title: 'Failed to delete player', status: 'error', duration: 4000 });
+      }
+    })();
   };
 
-  const onOpenEdit = (player) => openEditDialog(player);
+  const onOpenEdit = async (player) => {
+    try {
+      // Fetch full player details to populate form
+      const fullPlayer = await playerService.getPlayerById(player.id);
+      const editFormData = {
+        first_name: fullPlayer.first_name || '',
+        last_name: fullPlayer.last_name || '',
+        date_of_birth: fullPlayer.date_of_birth ? fullPlayer.date_of_birth.split('T')[0] : '',
+        height: fullPlayer.height || '',
+        weight: fullPlayer.weight || '',
+        position: fullPlayer.position || '',
+        strong_foot: fullPlayer.strong_foot || 'Right',
+        team_id: fullPlayer.team_id ? String(fullPlayer.team_id) : '',
+      };
+      setSelectedItem(player);
+      setFormData(editFormData);
+      onEditOpen();
+    } catch (err) {
+      console.error('Failed to fetch player details', err);
+      toast({ title: 'Failed to load player details', status: 'error', duration: 3000 });
+    }
+  };
   const onOpenDelete = (player) => openDeleteDialog(player);
+
+  // Load players and teams from API on mount
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const resp = await playerService.getPlayers();
+        const list = Array.isArray(resp) ? resp : [];
+        const mapped = list.map(p => ({
+          id: p.id,
+          name: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
+          team: p.team_name || '',
+          position: p.position || '',
+          status: p.status || 'Active',
+        }));
+        if (mounted) setPlayers(mapped);
+      } catch (err) {
+        console.error('Failed to load players', err);
+        toast({ title: 'Failed to load players', status: 'error', duration: 4000 });
+      }
+
+      try {
+        const teamsResp = await playerService.getTeams();
+        if (mounted) setTeams(Array.isArray(teamsResp) ? teamsResp : []);
+      } catch (err) {
+        console.error('Failed to load teams', err);
+      }
+    };
+
+    load();
+    return () => { mounted = false; };
+  }, [setPlayers, toast]);
 
   const getRatingColor = (rating) => {
     if (rating >= 8.5) return 'success';
@@ -165,17 +243,37 @@ const AdminPlayersPage = () => {
     {
       header: t('table.position') || 'Position',
       accessor: 'position',
-        render: (row) => (
-          <Badge variant="info">{t('position' + row.position) ? t('position' + row.position) : (
-            // fallback: try mapped keys
-            row.position === 'Goalkeeper' ? t('positionGoalkeeper') :
-            row.position === 'Defender' ? t('positionDefender') :
-            row.position === 'Midfielder' ? t('positionMidfielder') :
-            row.position === 'Forward' ? t('positionForward') :
-            row.position === 'Winger' ? t('positionWinger') :
-            row.position === 'Striker' ? t('positionStriker') : row.position
-          )}</Badge>
-        ),
+        render: (row) => {
+          // Try direct translation key first (e.g. positionGoalkeeper or positionGK)
+          const rawKey = `position${row.position}`;
+          const direct = t(rawKey);
+          let posLabel = direct;
+
+          // If translation not found (i18n may return the key itself or an object), try mapping abbreviations
+          if (!direct || direct === rawKey || typeof direct !== 'string') {
+            const abbrevMap = {
+              GK: 'Goalkeeper',
+              DF: 'Defender',
+              MF: 'Midfielder',
+              FW: 'Forward',
+              WG: 'Winger',
+              ST: 'Striker',
+            };
+            const mapped = abbrevMap[row.position] || row.position || '';
+            const mappedKey = `position${mapped}`;
+            const mappedTranslated = t(mappedKey);
+            if (mappedTranslated && mappedTranslated !== mappedKey && typeof mappedTranslated === 'string') {
+              posLabel = mappedTranslated;
+            } else {
+              // final fallback: show the mapped English label or raw position
+              posLabel = mapped;
+            }
+          }
+
+          return (
+            <Badge variant="info">{posLabel}</Badge>
+          );
+        },
     },
     {
       header: t('table.rating') || 'Rating',
@@ -183,9 +281,11 @@ const AdminPlayersPage = () => {
       render: (row) => (
         <HStack spacing={2}>
           <Star size={14} color="#F59E0B" />
-          <Badge variant={getRatingColor(row.rating)}>
-            {row.rating.toFixed(1)}
-          </Badge>
+          {typeof row.rating === 'number' && !isNaN(row.rating) ? (
+            <Badge variant={getRatingColor(row.rating)}>{row.rating.toFixed(1)}</Badge>
+          ) : (
+            <Text fontSize="sm" color="gray.400">-</Text>
+          )}
         </HStack>
       ),
     },
@@ -265,8 +365,11 @@ const AdminPlayersPage = () => {
         setFormData={setFormData}
         onConfirm={onConfirmAdd}
         fields={[
-          { name: 'name', label: t('playerName') || 'Name', type: 'text', isRequired: true, placeholder: t('playerNamePlaceholder') || 'Enter player name' },
-          { name: 'team', label: t('team') || 'Team', type: 'select', isRequired: true, options: teamOptions },
+          { name: 'first_name', label: t('firstName') || 'First Name', type: 'text', isRequired: true },
+          { name: 'last_name', label: t('lastName') || 'Last Name', type: 'text', isRequired: true },
+          { name: 'date_of_birth', label: t('dateOfBirth') || 'Date of Birth', type: 'text', inputType: 'date', isRequired: true },
+          { name: 'height', label: t('height') || 'Height (cm)', type: 'number', isRequired: false },
+          { name: 'weight', label: t('weight') || 'Weight (kg)', type: 'number', isRequired: false },
           { name: 'position', label: t('table.position') || 'Position', type: 'select', isRequired: true, options: [
             { value: 'Goalkeeper', label: t('positionGoalkeeper') || 'Goalkeeper' },
             { value: 'Defender', label: t('positionDefender') || 'Defender' },
@@ -275,7 +378,12 @@ const AdminPlayersPage = () => {
             { value: 'Winger', label: t('positionWinger') || 'Winger' },
             { value: 'Striker', label: t('positionStriker') || 'Striker' },
           ] },
-          { name: 'jerseyNumber', label: t('jerseyNumber') || 'Jersey Number', type: 'number', isRequired: true, placeholder: t('jerseyNumberPlaceholder') || 'Enter jersey number' },
+          { name: 'strong_foot', label: t('strongFoot') || 'Strong Foot', type: 'select', isRequired: true, options: [
+            { value: 'Right', label: t('right') || 'Right' },
+            { value: 'Left', label: t('left') || 'Left' },
+            { value: 'Both', label: t('both') || 'Both' },
+          ] },
+          { name: 'team_id', label: t('team') || 'Team', type: 'select', isRequired: false, options: teams.map(tm => ({ value: String(tm.id), label: tm.name })) },
         ]}
       />
 
@@ -289,8 +397,11 @@ const AdminPlayersPage = () => {
         setFormData={setFormData}
         onConfirm={onConfirmEdit}
         fields={[
-          { name: 'name', label: t('playerName') || 'Name', type: 'text', isRequired: true },
-          { name: 'team', label: t('team') || 'Team', type: 'select', isRequired: true, options: teamOptions },
+          { name: 'first_name', label: t('firstName') || 'First Name', type: 'text', isRequired: true },
+          { name: 'last_name', label: t('lastName') || 'Last Name', type: 'text', isRequired: true },
+          { name: 'date_of_birth', label: t('dateOfBirth') || 'Date of Birth', type: 'text', inputType: 'date', isRequired: true },
+          { name: 'height', label: t('height') || 'Height (cm)', type: 'number', isRequired: false },
+          { name: 'weight', label: t('weight') || 'Weight (kg)', type: 'number', isRequired: false },
           { name: 'position', label: t('table.position') || 'Position', type: 'select', isRequired: true, options: [
             { value: 'Goalkeeper', label: t('positionGoalkeeper') || 'Goalkeeper' },
             { value: 'Defender', label: t('positionDefender') || 'Defender' },
@@ -299,7 +410,12 @@ const AdminPlayersPage = () => {
             { value: 'Winger', label: t('positionWinger') || 'Winger' },
             { value: 'Striker', label: t('positionStriker') || 'Striker' },
           ] },
-          { name: 'jerseyNumber', label: t('jerseyNumber') || 'Jersey Number', type: 'number', isRequired: true },
+          { name: 'strong_foot', label: t('strongFoot') || 'Strong Foot', type: 'select', isRequired: true, options: [
+            { value: 'Right', label: t('right') || 'Right' },
+            { value: 'Left', label: t('left') || 'Left' },
+            { value: 'Both', label: t('both') || 'Both' },
+          ] },
+          { name: 'team_id', label: t('team') || 'Team', type: 'select', isRequired: false, options: teams.map(tm => ({ value: String(tm.id), label: tm.name })) },
         ]}
       />
 

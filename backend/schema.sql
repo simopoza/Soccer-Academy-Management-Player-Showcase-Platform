@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS Players (
   position ENUM('GK','CB','LB','RB','CDM','CM','CAM','LW','RW','ST') NULL,
 
   team_id INT NULL,
-  user_id INT NOT NULL UNIQUE,
+  user_id INT NULL UNIQUE,
 
   FOREIGN KEY (team_id) REFERENCES Teams(id)
       ON DELETE SET NULL

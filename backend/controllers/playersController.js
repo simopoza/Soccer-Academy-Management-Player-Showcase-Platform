@@ -5,7 +5,7 @@ const getPlayers = async (req, res) => {
     const [rows] = await db.query(`
       SELECT p.*, t.name AS team_name
       FROM Players p
-      JOIN Teams t ON p.team_id = t.id
+      LEFT JOIN Teams t ON p.team_id = t.id
     `);
     res.status(200).json(rows);
   } catch (err) {
@@ -21,7 +21,7 @@ const getPlayerById = async (req, res) => {
     const [rows] = await db.query(`
       SELECT p.*, t.name AS team_name
       FROM Players p
-      JOIN Teams t ON p.team_id = t.id
+      LEFT JOIN Teams t ON p.team_id = t.id
       WHERE p.id = ?
     `, [id]);
 
@@ -70,9 +70,58 @@ const addPlayer = async (req, res) => {
     user_id
   } = req.body;
 
+  // Normalize position and strong_foot to DB-friendly values
+  const positionMap = {
+    'Goalkeeper': 'GK',
+    'Defender': 'CB',
+    'Midfielder': 'CM',
+    'Forward': 'ST',
+    'Winger': 'LW',
+    'Striker': 'ST',
+    // include lowercase keys
+    'goalkeeper': 'GK',
+    'defender': 'CB',
+    'midfielder': 'CM',
+    'forward': 'ST',
+    'winger': 'LW',
+    'striker': 'ST'
+  };
+
+  const normalizePosition = (pos) => {
+    if (!pos) return null;
+    // If already an allowed abbreviation, return uppercased
+    const abbrevs = ['GK','CB','LB','RB','CDM','CM','CAM','LW','RW','ST'];
+    if (abbrevs.includes(String(pos).toUpperCase())) return String(pos).toUpperCase();
+    return positionMap[pos] || positionMap[String(pos).toLowerCase()] || null;
+  };
+
+  const normalizeStrongFoot = (sf) => {
+    if (!sf) return null;
+    const s = String(sf);
+    if (s === 'Left' || s === 'Right') return s;
+    // map 'Both' to Right (DB only supports Left/Right)
+    if (s === 'Both' || s.toLowerCase() === 'both') return 'Right';
+    return null;
+  };
+
+  const dbPosition = normalizePosition(position);
+  const dbStrongFoot = normalizeStrongFoot(strong_foot);
   try {
-    const query = `INSERT INTO Players (first_name, last_name, date_of_birth, height, weight, position, strong_foot, image_url, team_id, user_id) VALUES (?,?,?,?,?,?,?,?,?,?)`;
-    const values = [first_name, last_name, date_of_birth, height, weight, position, strong_foot, image_url, team_id, user_id];
+    // Build INSERT dynamically so we can omit user_id when not provided
+    const cols = ['first_name','last_name','date_of_birth','height','weight','position','strong_foot','image_url'];
+    const values = [first_name, last_name, date_of_birth, height, weight, dbPosition, dbStrongFoot, image_url];
+
+    if (team_id !== undefined && team_id !== null) {
+      cols.push('team_id');
+      values.push(team_id);
+    }
+    if (user_id !== undefined && user_id !== null) {
+      cols.push('user_id');
+      values.push(user_id);
+    }
+
+    const placeholders = cols.map(() => '?').join(',');
+    const query = `INSERT INTO Players (${cols.join(',')}) VALUES (${placeholders})`;
 
     const [ result ] = await db.query(query, values);
     res.status(201).json({ 
@@ -103,6 +152,34 @@ const updatePlayer = async (req, res) => {
         fieldsToUpdate[field] = req.body[field];
       }
     });
+
+    // Normalize any position / strong_foot values to DB-friendly forms
+    if (fieldsToUpdate.position) {
+      const pos = fieldsToUpdate.position;
+      const positionMap = {
+        'Goalkeeper': 'GK', 'Defender': 'CB', 'Midfielder': 'CM', 'Forward': 'ST', 'Winger': 'LW', 'Striker': 'ST',
+        'goalkeeper': 'GK', 'defender': 'CB', 'midfielder': 'CM', 'forward': 'ST', 'winger': 'LW', 'striker': 'ST'
+      };
+      const abbrevs = ['GK','CB','LB','RB','CDM','CM','CAM','LW','RW','ST'];
+      if (abbrevs.includes(String(pos).toUpperCase())) {
+        fieldsToUpdate.position = String(pos).toUpperCase();
+      } else if (positionMap[pos]) {
+        fieldsToUpdate.position = positionMap[pos];
+      } else if (positionMap[String(pos).toLowerCase()]) {
+        fieldsToUpdate.position = positionMap[String(pos).toLowerCase()];
+      } else {
+        // leave as-is; DB validator will catch invalid values
+      }
+    }
+
+    if (fieldsToUpdate.strong_foot) {
+      const sf = fieldsToUpdate.strong_foot;
+      if (sf === 'Left' || sf === 'Right') {
+        // ok
+      } else if (String(sf).toLowerCase() === 'both') {
+        fieldsToUpdate.strong_foot = 'Right';
+      }
+    }
 
     if (Object.keys(fieldsToUpdate).length === 0) {
       return res.status(400).json({ message: "No fields provided to update "});
@@ -194,6 +271,32 @@ const completeProfile = async (req, res) => {
 
     // Add optional image_url if provided
     if (image_url) fieldsToUpdate.image_url = image_url;
+
+    // Normalize position and strong_foot for DB
+    if (fieldsToUpdate.position) {
+      const pos = fieldsToUpdate.position;
+      const positionMap = {
+        'Goalkeeper': 'GK', 'Defender': 'CB', 'Midfielder': 'CM', 'Forward': 'ST', 'Winger': 'LW', 'Striker': 'ST',
+        'goalkeeper': 'GK', 'defender': 'CB', 'midfielder': 'CM', 'forward': 'ST', 'winger': 'LW', 'striker': 'ST'
+      };
+      const abbrevs = ['GK','CB','LB','RB','CDM','CM','CAM','LW','RW','ST'];
+      if (abbrevs.includes(String(pos).toUpperCase())) {
+        fieldsToUpdate.position = String(pos).toUpperCase();
+      } else if (positionMap[pos]) {
+        fieldsToUpdate.position = positionMap[pos];
+      } else if (positionMap[String(pos).toLowerCase()]) {
+        fieldsToUpdate.position = positionMap[String(pos).toLowerCase()];
+      }
+    }
+
+    if (fieldsToUpdate.strong_foot) {
+      const sf = fieldsToUpdate.strong_foot;
+      if (sf === 'Left' || sf === 'Right') {
+        // ok
+      } else if (String(sf).toLowerCase() === 'both') {
+        fieldsToUpdate.strong_foot = 'Right';
+      }
+    }
 
     const setClause = Object.keys(fieldsToUpdate)
       .map(key => `${key} = ?`)

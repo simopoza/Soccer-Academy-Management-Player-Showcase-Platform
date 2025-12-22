@@ -27,7 +27,19 @@ export const roleOptions = (t) => [
   { value: 'agent', label: t ? t('role.agent') || 'Agent' : 'Agent' },
 ];
 
-export const teamOptionsFromArray = (t, teams = []) => [
-  { value: 'all', label: t ? t('filterAllTeams') || 'All Teams' : 'All Teams' },
-  ...teams.map(name => ({ value: name, label: name })),
-];
+export const teamOptionsFromArray = (t, teams = []) => {
+  // teams may be an array of names or objects { id, name }
+  const options = (Array.isArray(teams) ? teams : []).map((team) => {
+    if (!team) return null;
+    if (typeof team === 'string') return { value: team, label: team };
+    // object shape
+    const id = team.id !== undefined ? String(team.id) : team.value || team.name;
+    const label = team.name || team.label || id;
+    return { value: id, label };
+  }).filter(Boolean);
+
+  return [
+    { value: 'all', label: t ? t('filterAllTeams') || 'All Teams' : 'All Teams' },
+    ...options,
+  ];
+};

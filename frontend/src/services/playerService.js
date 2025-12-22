@@ -15,4 +15,29 @@ const completeProfile = async (playerId, profileData) => {
   return response.data;
 };
 
-export default { getTeams, getCurrentPlayer, completeProfile };
+const getPlayers = async () => {
+  const response = await axiosInstance.get('/players');
+  return response.data;
+};
+
+const getPlayerById = async (playerId) => {
+  const response = await axiosInstance.get(`/players/${playerId}`);
+  return response.data;
+};
+
+const addPlayer = async (playerData) => {
+  const response = await axiosInstance.post('/players', playerData);
+  return response.data;
+};
+
+const updatePlayer = async (playerId, playerData) => {
+  const response = await axiosInstance.put(`/players/${playerId}`, playerData);
+  return response.data;
+};
+
+const deletePlayer = async (playerId) => {
+  const response = await axiosInstance.delete(`/players/${playerId}`);
+  return response.data;
+};
+
+export default { getTeams, getCurrentPlayer, completeProfile, getPlayers, getPlayerById, addPlayer, updatePlayer, deletePlayer };

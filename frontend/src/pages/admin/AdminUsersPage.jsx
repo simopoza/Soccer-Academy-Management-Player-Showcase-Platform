@@ -326,16 +326,30 @@ const AdminUsersManagementPage = () => {
       header: t('table.status') || 'Status',
       accessor: 'status',
       render: (row) => {
+        // normalize incoming status values to handle both backend variants (e.g. 'approved' or 'Active')
+        const rawStatus = String(row.status || '').toLowerCase();
         const statusMap = {
           approved: { variant: 'success', label: 'Active' },
+          active: { variant: 'success', label: 'Active' },
           pending: { variant: 'default', label: 'Pending' },
           rejected: { variant: 'default', label: 'Rejected' },
         };
-        const statusInfo = statusMap[row.status] || { variant: 'default', label: row.status };
+        const statusInfo = statusMap[rawStatus] || { variant: 'default', label: row.status || '' };
+
+        // Prefer translations like 'statusActive' then fallback to 'active' key then raw label
+        const keyStatus = `status${statusInfo.label}`;
+        const translatedStatusKey = t(keyStatus);
+        let statusText = statusInfo.label;
+        if (translatedStatusKey && translatedStatusKey !== keyStatus) {
+          statusText = translatedStatusKey;
+        } else {
+          const altKey = String(statusInfo.label).toLowerCase();
+          const translatedAlt = t(altKey);
+          if (translatedAlt && translatedAlt !== altKey) statusText = translatedAlt;
+        }
+
         return (
-          <Badge variant={statusInfo.variant}>
-            {t(`status${statusInfo.label}`) || statusInfo.label}
-          </Badge>
+          <Badge variant={statusInfo.variant}>{statusText}</Badge>
         );
       },
     },

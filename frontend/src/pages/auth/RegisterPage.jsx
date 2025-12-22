@@ -14,6 +14,14 @@ import useLanguageSwitcher from "../../hooks/useLanguageSwitcher";
 
 const RegisterPage = () => {
   const { t, i18n } = useTranslation();
+  // Use explicit registration namespace for role/player labels to avoid collisions
+  const regNs = 'registration-page-translation';
+  const rawRole = t('role', { ns: regNs });
+  const rawPlayer = t('player', { ns: regNs });
+  const rawAgent = t('agent', { ns: regNs });
+  const roleLabel = typeof rawRole === 'string' ? rawRole : 'Role';
+  const playerLabel = typeof rawPlayer === 'string' ? rawPlayer : 'Player';
+  const agentLabel = typeof rawAgent === 'string' ? rawAgent : 'Agent';
   const toast = useToast();
   const navigate = useNavigate();
   const { switchLanguage, isArabic, currentLang } = useLanguageSwitcher();
@@ -102,10 +110,10 @@ const RegisterPage = () => {
     },
     { name: "email", label: t("email"), placeholder: "john.doe@example.com", register: formRegister("email"), error: errors.email },
     { name: "password", label: t("password"), placeholder: "*********", type: "password", register: formRegister("password"), error: errors.password },
-    { name: "role", label: t("role"), component: "select", placeholder: t("selectRole"), register: formRegister("role"), error: errors.role,
+    { name: "role", label: roleLabel, component: "select", placeholder: t("selectRole") || 'Select role', register: formRegister("role"), error: errors.role,
       options: [
-        { value: "player", label: t("player") },
-        { value: "agent", label: t("agent") },
+        { value: "player", label: playerLabel },
+        { value: "agent", label: agentLabel },
       ],
     },
   ];

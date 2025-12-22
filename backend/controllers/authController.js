@@ -40,8 +40,8 @@ const register = async (req, res) => {
 
     if (role === 'player') {
       await db.query(
-        "INSERT INTO Players (user_id) VALUES (?)",
-        [userId]
+        "INSERT INTO Players (first_name, last_name, user_id) VALUES (?, ?, ?)",
+        [first_name || null, last_name || null, userId]
       );
     };
 

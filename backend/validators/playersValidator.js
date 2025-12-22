@@ -12,21 +12,21 @@ const playersValidationRules = [
     .isString().trim().escape().withMessage("Last_name must be a string"),
 
   check('height')
-    .exists()
+    .optional({ nullable: true })
     .isFloat({ min: 1 }).withMessage("Height must be a positive number"),
 
   check('weight')
-    .exists()
+    .optional({ nullable: true })
     .isFloat({ min: 1 }).withMessage("Weight must be a positive number"),
 
   check('position')
     .exists()
-    .isIn(['GK', 'CB', 'LB', 'RB', 'CDM', 'CM', 'CAM', 'LW', 'RW', 'ST'])
+    .isIn(['GK', 'CB', 'LB', 'RB', 'CDM', 'CM', 'CAM', 'LW', 'RW', 'ST', 'Goalkeeper', 'Defender', 'Midfielder', 'Forward', 'Winger', 'Striker'])
     .withMessage("Invalid position."),
 
   check('strong_foot')
     .exists()
-    .isIn(['Left', 'Right'])
+    .isIn(['Left', 'Right', 'Both'])
     .withMessage("Invalid strong_foot."),
 
   check('image_url')
@@ -61,9 +61,10 @@ const playersValidationRules = [
     }),
 
   check('team_id')
-    .exists().withMessage('team_id is required')
+    .optional({ nullable: true })
     .isInt({ min: 1 }).withMessage('team_id must be a positive integer')
     .custom(async (team_id) => {
+      if (!team_id) return true;
       const { validateTeam } = require('../helpers/validateForeignKeys');
       const exists = await validateTeam(team_id);
       if (!exists) throw new Error('Invalid team_id');
@@ -71,9 +72,10 @@ const playersValidationRules = [
     }),
 
   check('user_id')
-    .exists().withMessage('user_id is required')
+    .optional({ nullable: true })
     .isInt({ min: 1 }).withMessage('user_id must be a positive integer')
     .custom(async (user_id) => {
+      if (!user_id) return true;
       const { validateUser } = require('../helpers/validateForeignKeys');
       const exists = await validateUser(user_id);
       if (!exists) throw new Error('Invalid user_id');
@@ -87,31 +89,31 @@ const playersUpdateValidationRules = [
     .isInt({ min: 1 }).withMessage('id must be a positive integer'),
 
   check('first_name')
-    .optional()
+    .optional({ nullable: true })
     .notEmpty().withMessage("First_name cannot be empty")
     .isString().trim().escape().withMessage("First_name must be a string"),
 
   check('last_name')
-    .optional()
+    .optional({ nullable: true })
     .notEmpty().withMessage("Last_name cannot be empty")
     .isString().trim().escape().withMessage("Last_name must be a string"),
 
   check('height')
-    .optional()
+    .optional({ nullable: true })
     .isFloat({ min: 1 }).withMessage("Height must be a positive number"),
 
   check('weight')
-    .optional()
+    .optional({ nullable: true })
     .isFloat({ min: 1 }).withMessage("Weight must be a positive number"),
 
   check('position')
-    .optional()
-    .isIn(['GK', 'CB', 'LB', 'RB', 'CDM', 'CM', 'CAM', 'LW', 'RW', 'ST'])
+    .optional({ nullable: true })
+    .isIn(['GK', 'CB', 'LB', 'RB', 'CDM', 'CM', 'CAM', 'LW', 'RW', 'ST', 'Goalkeeper', 'Defender', 'Midfielder', 'Forward', 'Winger', 'Striker'])
     .withMessage("Invalid position."),
 
   check('strong_foot')
-    .optional()
-    .isIn(['Left', 'Right'])
+    .optional({ nullable: true })
+    .isIn(['Left', 'Right', 'Both'])
     .withMessage("Invalid strong_foot."),
 
   check('image_url')
@@ -133,7 +135,7 @@ const playersUpdateValidationRules = [
     }),
 
   check('date_of_birth')
-    .optional()
+    .optional({ nullable: true })
     .isISO8601().withMessage('Must be a valid date')
     .toDate()
     .custom((date) => {
@@ -146,9 +148,10 @@ const playersUpdateValidationRules = [
     }),
 
   check('team_id')
-    .optional()
+    .optional({ nullable: true })
     .isInt({ min: 1 }).withMessage('team_id must be a positive integer')
     .custom(async (team_id) => {
+      if (!team_id) return true;
       const { validateTeam } = require('../helpers/validateForeignKeys');
       const exists = await validateTeam(team_id);
       if (!exists) throw new Error('Invalid team_id');
@@ -156,9 +159,10 @@ const playersUpdateValidationRules = [
     }),
 
   check('user_id')
-    .optional()
+    .optional({ nullable: true })
     .isInt({ min: 1 }).withMessage('user_id must be a positive integer')
     .custom(async (user_id) => {
+      if (!user_id) return true;
       const { validateUser } = require('../helpers/validateForeignKeys');
       const exists = await validateUser(user_id);
       if (!exists) throw new Error('Invalid user_id');
@@ -202,7 +206,7 @@ const completeProfileValidationRules = [
 
   check('position')
     .exists().withMessage('position is required')
-    .isIn(['GK', 'CB', 'LB', 'RB', 'CDM', 'CM', 'CAM', 'LW', 'RW', 'ST'])
+    .isIn(['GK', 'CB', 'LB', 'RB', 'CDM', 'CM', 'CAM', 'LW', 'RW', 'ST', 'Goalkeeper', 'Defender', 'Midfielder', 'Forward', 'Winger', 'Striker'])
     .withMessage("Invalid position."),
 
   check('height')
@@ -215,7 +219,7 @@ const completeProfileValidationRules = [
 
   check('strong_foot')
     .exists().withMessage('strong_foot is required')
-    .isIn(['Left', 'Right'])
+    .isIn(['Left', 'Right', 'Both'])
     .withMessage("Invalid strong_foot."),
 
   check('image_url')

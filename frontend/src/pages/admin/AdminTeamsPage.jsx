@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Flex,
@@ -26,22 +26,14 @@ import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import useCrudList from '../../hooks/useCrudList';
 import { categoryOptions } from '../../utils/adminOptions';
+import playerService from '../../services/playerService';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, ActionButtons, SearchInput, FilterSelect } from '../../components/ui';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import CrudFormModal from '../../components/admin/CrudFormModal';
 
-const initialTeams = [
-  { id: 1, name: 'Eagles', ageCategory: 'U16', playerCount: 22, coach: 'John Smith', founded: '2015', status: 'Active' },
-  { id: 2, name: 'Hawks', ageCategory: 'U18', playerCount: 24, coach: 'Sarah Johnson', founded: '2014', status: 'Active' },
-  { id: 3, name: 'Falcons', ageCategory: 'U14', playerCount: 20, coach: 'Mike Davis', founded: '2017', status: 'Active' },
-  { id: 4, name: 'Eagles', ageCategory: 'U12', playerCount: 18, coach: 'Lisa Anderson', founded: '2018', status: 'Active' },
-  { id: 5, name: 'Tigers', ageCategory: 'U16', playerCount: 21, coach: 'David Brown', founded: '2016', status: 'Active' },
-  { id: 6, name: 'Lions', ageCategory: 'U14', playerCount: 19, coach: 'Emma Wilson', founded: '2017', status: 'Inactive' },
-  { id: 7, name: 'Wolves', ageCategory: 'U18', playerCount: 23, coach: 'James Martinez', founded: '2015', status: 'Active' },
-  { id: 8, name: 'Bears', ageCategory: 'U12', playerCount: 17, coach: 'Jennifer Taylor', founded: '2019', status: 'Active' },
-];
+// teams are loaded from backend via API
 
 // use shared `categoryOptions` from utils/adminOptions
 
@@ -77,7 +69,22 @@ const AdminTeamsPage = () => {
     handleDelete,
     openEditDialog,
     openDeleteDialog,
-  } = useCrudList({ initialData: initialTeams, initialForm: { name: '', ageCategory: 'U16', coach: '', description: '' } });
+  } = useCrudList({ initialData: [], initialForm: { name: '', ageCategory: 'U16', coach: '', description: '' } });
+
+  // Load teams from API on mount
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const resp = await playerService.getTeams();
+        if (mounted && Array.isArray(resp)) setTeams(resp);
+      } catch (err) {
+        console.error('Failed to load teams', err);
+      }
+    };
+    load();
+    return () => { mounted = false; };
+  }, [setTeams]);
 
   const toast = useToast();
   const [categoryFilter, setCategoryFilter] = useState('all');

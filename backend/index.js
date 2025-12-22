@@ -68,6 +68,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.use("/api/v1", (req, res, next) => {
   console.log("API v1 route accessed:", req.method, req.url);
+  console.log("Body:", req.body);
   next();
 }, apiRoutes);
 
