@@ -23,10 +23,13 @@ import {
 } from '@chakra-ui/react';
 import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
+import useCrudList from '../../hooks/useCrudList';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, ActionButtons, SearchInput, FilterSelect, StatsCard } from '../../components/ui';
 import { BarChart3, Target, TrendingUp, Star } from 'lucide-react';
+import CrudFormModal from '../../components/admin/CrudFormModal';
+import ConfirmModal from '../../components/admin/ConfirmModal';
 
 const initialStats = [
   { id: 1, playerName: 'Marcus Johnson', playerNumber: 10, matchName: 'Academy U17 vs Riverside FC', matchDate: '2024-12-05', opponent: 'Riverside FC', goals: 2, assists: 1, minutes: 90, saves: 0, yellowCards: 0, redCards: 0, rating: 9.2 },
@@ -46,28 +49,36 @@ const AdminStatsPage = () => {
   const pageBg = bgGradient;
   const isRTL = i18n?.language === 'ar';
 
-  const [stats, setStats] = useState(initialStats);
-  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    items: stats,
+    setItems: setStats,
+    searchQuery,
+    setSearchQuery,
+    selectedItem,
+    setSelectedItem,
+    formData,
+    setFormData,
+
+    isAddOpen,
+    onAddOpen,
+    onAddClose,
+    isEditOpen,
+    onEditOpen,
+    onEditClose,
+    isDeleteOpen,
+    onDeleteOpen,
+    onDeleteClose,
+
+    handleAdd,
+    handleEdit,
+    handleDelete,
+    openEditDialog,
+    openDeleteDialog,
+  } = useCrudList({ initialData: initialStats, initialForm: { playerName: '', matchName: '', goals: '', assists: '', minutes: '', saves: '', yellowCards: '', redCards: '', rating: '' } });
+
+  const toast = useToast();
   const [filterType, setFilterType] = useState('all');
   const [filterValue, setFilterValue] = useState('all');
-  const [selectedStat, setSelectedStat] = useState(null);
-  const [formData, setFormData] = useState({ 
-    playerName: '', 
-    matchName: '', 
-    goals: '',
-    assists: '',
-    minutes: '',
-    saves: '',
-    yellowCards: '',
-    redCards: '',
-    rating: ''
-  });
-  
-  const { isOpen: isAddOpen, onOpen: onAddOpen, onClose: onAddClose } = useDisclosure();
-  const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
-  
-  const toast = useToast();
 
   const uniquePlayers = Array.from(new Set(stats.map(stat => stat.playerName))).sort();
   const uniqueMatches = Array.from(new Set(stats.map(stat => stat.matchName))).sort();
@@ -98,22 +109,8 @@ const AdminStatsPage = () => {
   const totalAssists = stats.reduce((sum, s) => sum + (Number(s.assists) || 0), 0);
   const avgRating = stats.length ? (stats.reduce((sum, s) => sum + (Number(s.rating) || 0), 0) / stats.length).toFixed(2) : '0.00';
 
-  const handleAdd = () => {
-    const newStat = {
-      id: stats.length + 1,
-      ...formData,
-      playerNumber: 0,
-      matchDate: new Date().toISOString().split('T')[0],
-      opponent: formData.matchName.split(' vs ')[1] || '',
-      goals: parseInt(formData.goals) || 0,
-      assists: parseInt(formData.assists) || 0,
-      minutes: parseInt(formData.minutes) || 0,
-      saves: parseInt(formData.saves) || 0,
-      yellowCards: parseInt(formData.yellowCards) || 0,
-      redCards: parseInt(formData.redCards) || 0,
-      rating: parseFloat(formData.rating) || 0,
-    };
-    setStats([...stats, newStat]);
+  const onConfirmAdd = () => {
+    const created = handleAdd({ playerNumber: 0, matchDate: new Date().toISOString().split('T')[0], opponent: formData.matchName.split(' vs ')[1] || '', goals: parseInt(formData.goals) || 0, assists: parseInt(formData.assists) || 0, minutes: parseInt(formData.minutes) || 0, saves: parseInt(formData.saves) || 0, yellowCards: parseInt(formData.yellowCards) || 0, redCards: parseInt(formData.redCards) || 0, rating: parseFloat(formData.rating) || 0 });
     toast({
       title: t('notification.added') || 'Statistics added',
       description: t('notification.addedDesc') || `Player statistics have been recorded successfully.`,
@@ -122,24 +119,11 @@ const AdminStatsPage = () => {
     });
     onAddClose();
     setFormData({ playerName: '', matchName: '', goals: '', assists: '', minutes: '', saves: '', yellowCards: '', redCards: '', rating: '' });
+    return created;
   };
 
-  const handleEdit = () => {
-    setStats(stats.map(s => 
-      s.id === selectedStat.id 
-        ? { 
-            ...s, 
-            ...formData,
-            goals: parseInt(formData.goals) || 0,
-            assists: parseInt(formData.assists) || 0,
-            minutes: parseInt(formData.minutes) || 0,
-            saves: parseInt(formData.saves) || 0,
-            yellowCards: parseInt(formData.yellowCards) || 0,
-            redCards: parseInt(formData.redCards) || 0,
-            rating: parseFloat(formData.rating) || 0,
-          } 
-        : s
-    ));
+  const onConfirmEdit = () => {
+    const updated = handleEdit();
     toast({
       title: t('notification.updated') || 'Statistics updated',
       description: t('notification.updatedDesc') || `Statistics have been updated successfully.`,
@@ -147,11 +131,12 @@ const AdminStatsPage = () => {
       duration: 3000,
     });
     onEditClose();
-    setSelectedStat(null);
+    setSelectedItem(null);
+    return updated;
   };
 
-  const handleDelete = () => {
-    setStats(stats.filter(s => s.id !== selectedStat.id));
+  const onConfirmDelete = () => {
+    const deleted = handleDelete();
     toast({
       title: t('notification.deleted') || 'Statistics deleted',
       description: t('notification.deletedDesc') || `Statistics record has been removed.`,
@@ -159,29 +144,12 @@ const AdminStatsPage = () => {
       duration: 3000,
     });
     onDeleteClose();
-    setSelectedStat(null);
+    setSelectedItem(null);
+    return deleted;
   };
 
-  const openEditDialog = (stat) => {
-    setSelectedStat(stat);
-    setFormData({ 
-      playerName: stat.playerName, 
-      matchName: stat.matchName, 
-      goals: stat.goals.toString(),
-      assists: stat.assists.toString(),
-      minutes: stat.minutes.toString(),
-      saves: stat.saves.toString(),
-      yellowCards: stat.yellowCards.toString(),
-      redCards: stat.redCards.toString(),
-      rating: stat.rating.toString()
-    });
-    onEditOpen();
-  };
-
-  const openDeleteDialog = (stat) => {
-    setSelectedStat(stat);
-    onDeleteOpen();
-  };
+  const onOpenEdit = (stat) => openEditDialog(stat);
+  const onOpenDelete = (stat) => openDeleteDialog(stat);
 
   const getRatingColor = (rating) => {
     if (rating >= 9.0) return 'success';
@@ -412,237 +380,59 @@ const AdminStatsPage = () => {
         </Box>
       </Box>
 
-      {/* Add Statistics Modal */}
-      <Modal isOpen={isAddOpen} onClose={onAddClose} size="lg">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{t('actionAddStats') || 'Add Player Statistics'}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4}>
-              <FormControl isRequired>
-                  <FormLabel>{t('playerName') || 'Player Name'}</FormLabel>
-                <Input
-                  value={formData.playerName}
-                  onChange={(e) => setFormData({ ...formData, playerName: e.target.value })}
-                  placeholder={t('playerNamePlaceholder') || 'Enter player name'}
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('matchName') || 'Match Name'}</FormLabel>
-                <Input
-                  value={formData.matchName}
-                  onChange={(e) => setFormData({ ...formData, matchName: e.target.value })}
-                  placeholder={t('matchNamePlaceholder') || 'e.g., Academy U17 vs Riverside FC'}
-                />
-              </FormControl>
-              <SimpleGrid columns={2} spacing={4} width="100%">
-                <FormControl isRequired>
-                  <FormLabel>{t('goals') || 'Goals'}</FormLabel>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={formData.goals}
-                    onChange={(e) => setFormData({ ...formData, goals: e.target.value })}
-                  />
-                </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>{t('assists') || 'Assists'}</FormLabel>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={formData.assists}
-                    onChange={(e) => setFormData({ ...formData, assists: e.target.value })}
-                  />
-                </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>{t('minutes') || 'Minutes'}</FormLabel>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="120"
-                    value={formData.minutes}
-                    onChange={(e) => setFormData({ ...formData, minutes: e.target.value })}
-                  />
-                </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>{t('saves') || 'Saves'}</FormLabel>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={formData.saves}
-                    onChange={(e) => setFormData({ ...formData, saves: e.target.value })}
-                  />
-                </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>{t('yellowCards') || 'Yellow Cards'}</FormLabel>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="2"
-                    value={formData.yellowCards}
-                    onChange={(e) => setFormData({ ...formData, yellowCards: e.target.value })}
-                  />
-                </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>{t('redCards') || 'Red Cards'}</FormLabel>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="1"
-                    value={formData.redCards}
-                    onChange={(e) => setFormData({ ...formData, redCards: e.target.value })}
-                  />
-                </FormControl>
-              </SimpleGrid>
-                <FormControl isRequired>
-                  <FormLabel>{t('rating') || 'Rating (0-10)'}</FormLabel>
-                <Input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="10"
-                  value={formData.rating}
-                  onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
-                />
-              </FormControl>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onAddClose}>
-              {t('cancel') || 'Cancel'}
-            </Button>
-            <Button colorScheme="green" onClick={handleAdd}>
-              {t('actionAddStats') || 'Add Statistics'}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <CrudFormModal
+        isOpen={isAddOpen}
+        onClose={onAddClose}
+        mode="add"
+        titleAdd={t('actionAddStats') || 'Add Player Statistics'}
+        confirmLabelAdd={t('actionAddStats') || 'Add Statistics'}
+        formData={formData}
+        setFormData={setFormData}
+        onConfirm={onConfirmAdd}
+        fields={[
+          { name: 'playerName', label: t('playerName') || 'Player Name', type: 'text', isRequired: true, placeholder: t('playerNamePlaceholder') || 'Enter player name' },
+          { name: 'matchName', label: t('matchName') || 'Match Name', type: 'text', isRequired: true, placeholder: t('matchNamePlaceholder') || 'e.g., Academy U17 vs Riverside FC' },
+          { name: 'goals', label: t('goals') || 'Goals', type: 'number', isRequired: true },
+          { name: 'assists', label: t('assists') || 'Assists', type: 'number', isRequired: true },
+          { name: 'minutes', label: t('minutes') || 'Minutes', type: 'number', isRequired: true },
+          { name: 'saves', label: t('saves') || 'Saves', type: 'number', isRequired: true },
+          { name: 'yellowCards', label: t('yellowCards') || 'Yellow Cards', type: 'number', isRequired: true },
+          { name: 'redCards', label: t('redCards') || 'Red Cards', type: 'number', isRequired: true },
+          { name: 'rating', label: t('rating') || 'Rating (0-10)', type: 'number', isRequired: true, inputType: 'number' },
+        ]}
+      />
 
-      {/* Edit Statistics Modal */}
-      <Modal isOpen={isEditOpen} onClose={onEditClose} size="lg">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{t('editStatistics') || 'Edit Statistics'}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4}>
-              <FormControl isRequired>
-                <FormLabel>{t('playerName') || 'Player Name'}</FormLabel>
-                <Input
-                  value={formData.playerName}
-                  onChange={(e) => setFormData({ ...formData, playerName: e.target.value })}
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('matchName') || 'Match Name'}</FormLabel>
-                <Input
-                  value={formData.matchName}
-                  onChange={(e) => setFormData({ ...formData, matchName: e.target.value })}
-                />
-              </FormControl>
-              <SimpleGrid columns={2} spacing={4} width="100%">
-                <FormControl isRequired>
-                  <FormLabel>{t('goals') || 'Goals'}</FormLabel>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={formData.goals}
-                    onChange={(e) => setFormData({ ...formData, goals: e.target.value })}
-                  />
-                </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>{t('assists') || 'Assists'}</FormLabel>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={formData.assists}
-                    onChange={(e) => setFormData({ ...formData, assists: e.target.value })}
-                  />
-                </FormControl>
-                <FormControl isRequired>
-                    <FormLabel>{t('minutes') || 'Minutes'}</FormLabel>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="120"
-                      value={formData.minutes}
-                      onChange={(e) => setFormData({ ...formData, minutes: e.target.value })}
-                    />
-                  </FormControl>
-                  <FormControl isRequired>
-                    <FormLabel>{t('saves') || 'Saves'}</FormLabel>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={formData.saves}
-                      onChange={(e) => setFormData({ ...formData, saves: e.target.value })}
-                    />
-                  </FormControl>
-                  <FormControl isRequired>
-                    <FormLabel>{t('yellowCards') || 'Yellow Cards'}</FormLabel>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="2"
-                      value={formData.yellowCards}
-                      onChange={(e) => setFormData({ ...formData, yellowCards: e.target.value })}
-                    />
-                  </FormControl>
-                  <FormControl isRequired>
-                    <FormLabel>{t('redCards') || 'Red Cards'}</FormLabel>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="1"
-                      value={formData.redCards}
-                      onChange={(e) => setFormData({ ...formData, redCards: e.target.value })}
-                    />
-                  </FormControl>
-              </SimpleGrid>
-              <FormControl isRequired>
-                <FormLabel>{t('rating') || 'Rating (0-10)'}</FormLabel>
-                <Input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="10"
-                  value={formData.rating}
-                  onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
-                />
-              </FormControl>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onEditClose}>
-              {t('cancel') || 'Cancel'}
-            </Button>
-            <Button colorScheme="green" onClick={handleEdit}>
-              {t('saveChanges') || 'Save Changes'}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <CrudFormModal
+        isOpen={isEditOpen}
+        onClose={onEditClose}
+        mode="edit"
+        titleEdit={t('editStatistics') || 'Edit Statistics'}
+        confirmLabelEdit={t('saveChanges') || 'Save Changes'}
+        formData={formData}
+        setFormData={setFormData}
+        onConfirm={onConfirmEdit}
+        fields={[
+          { name: 'playerName', label: t('playerName') || 'Player Name', type: 'text', isRequired: true },
+          { name: 'matchName', label: t('matchName') || 'Match Name', type: 'text', isRequired: true },
+          { name: 'goals', label: t('goals') || 'Goals', type: 'number', isRequired: true },
+          { name: 'assists', label: t('assists') || 'Assists', type: 'number', isRequired: true },
+          { name: 'minutes', label: t('minutes') || 'Minutes', type: 'number', isRequired: true },
+          { name: 'saves', label: t('saves') || 'Saves', type: 'number', isRequired: true },
+          { name: 'yellowCards', label: t('yellowCards') || 'Yellow Cards', type: 'number', isRequired: true },
+          { name: 'redCards', label: t('redCards') || 'Red Cards', type: 'number', isRequired: true },
+          { name: 'rating', label: t('rating') || 'Rating (0-10)', type: 'number', isRequired: true, inputType: 'number' },
+        ]}
+      />
 
-      {/* Delete Confirmation Modal */}
-      <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{t('deleteStatistics') || 'Delete Statistics'}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            {t('confirmDeleteStats') || 'Are you sure you want to delete these statistics? This action cannot be undone.'}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onDeleteClose}>
-              {t('cancel') || 'Cancel'}
-            </Button>
-            <Button colorScheme="red" onClick={handleDelete}>
-              {t('delete') || 'Delete'}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <ConfirmModal
+        isOpen={isDeleteOpen}
+        onClose={onDeleteClose}
+        title={t('deleteStatistics') || 'Delete Statistics'}
+        body={t('confirmDeleteStats') || 'Are you sure you want to delete these statistics? This action cannot be undone.'}
+        onConfirm={onConfirmDelete}
+        confirmLabel={t('delete') || 'Delete'}
+        cancelLabel={t('cancel') || 'Cancel'}
+      />
     </Layout>
   );
 };

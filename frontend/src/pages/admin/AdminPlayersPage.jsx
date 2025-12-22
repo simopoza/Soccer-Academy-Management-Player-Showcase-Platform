@@ -23,9 +23,13 @@ import {
 import { Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
+import useCrudList from '../../hooks/useCrudList';
+import { teamOptionsFromArray } from '../../utils/adminOptions';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, AvatarCircle, ActionButtons, SearchInput, FilterSelect } from '../../components/ui';
+import CrudFormModal from '../../components/admin/CrudFormModal';
+import ConfirmModal from '../../components/admin/ConfirmModal';
 
 const initialPlayers = [
   { id: 1, name: 'Emma Wilson', team: 'Eagles U16', position: 'Midfielder', rating: 8.5, jerseyNumber: 10, status: 'Active' },
@@ -53,27 +57,39 @@ const AdminPlayersPage = () => {
   const pageBg = bgGradient;
   const isRTL = i18n?.language === 'ar';
 
-  const [players, setPlayers] = useState(initialPlayers);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [teamFilter, setTeamFilter] = useState('all');
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [formData, setFormData] = useState({ 
-    name: '', 
-    team: 'Eagles U16', 
-    position: 'Midfielder',
-    jerseyNumber: ''
-  });
-  
-  const { isOpen: isAddOpen, onOpen: onAddOpen, onClose: onAddClose } = useDisclosure();
-  const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
-  
-  const toast = useToast();
+  const {
+    items: players,
+    setItems: setPlayers,
+    searchQuery,
+    setSearchQuery,
+    selectedItem,
+    setSelectedItem,
+    formData,
+    setFormData,
 
-  // localize the 'all' label so it changes when language switches
-  const teamOptions = teamOptionsStatic.map(o =>
-    o.value === 'all' ? { ...o, label: t('filterAllTeams') || 'All Teams' } : o
-  );
+    isAddOpen,
+    onAddOpen,
+    onAddClose,
+    isEditOpen,
+    onEditOpen,
+    onEditClose,
+    isDeleteOpen,
+    onDeleteOpen,
+    onDeleteClose,
+
+    handleAdd,
+    handleEdit,
+    handleDelete,
+    openEditDialog,
+    openDeleteDialog,
+  } = useCrudList({ initialData: initialPlayers, initialForm: { name: '', team: 'Eagles U16', position: 'Midfielder', jerseyNumber: '' } });
+
+  const toast = useToast();
+  const [teamFilter, setTeamFilter] = useState('all');
+
+  // derive team options from current players list (keeps the list up-to-date)
+  const uniqueTeams = Array.from(new Set(players.map(p => p.team))).sort();
+  const teamOptions = teamOptionsFromArray(t, uniqueTeams);
 
   const filteredPlayers = players.filter(player => {
     const matchesSearch = player.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -81,18 +97,11 @@ const AdminPlayersPage = () => {
     return matchesSearch && matchesTeam;
   });
 
-  const handleAdd = () => {
-    const newPlayer = {
-      id: players.length + 1,
-      ...formData,
-      jerseyNumber: parseInt(formData.jerseyNumber),
-      rating: 7.0,
-      status: 'Active',
-    };
-    setPlayers([...players, newPlayer]);
+  const onConfirmAdd = () => {
+    const created = handleAdd({ jerseyNumber: parseInt(formData.jerseyNumber), rating: 7.0, status: 'Active' });
     toast({
       title: t('notification.playerAdded') || 'Player added',
-      description: t('notification.playerAddedDesc') || `${formData.name} has been added successfully.`,
+      description: t('notification.playerAddedDesc') || `${created.name} has been added successfully.`,
       status: 'success',
       duration: 3000,
     });
@@ -100,12 +109,8 @@ const AdminPlayersPage = () => {
     setFormData({ name: '', team: 'Eagles U16', position: 'Midfielder', jerseyNumber: '' });
   };
 
-  const handleEdit = () => {
-    setPlayers(players.map(p => 
-      p.id === selectedPlayer.id 
-        ? { ...p, ...formData, jerseyNumber: parseInt(formData.jerseyNumber) } 
-        : p
-    ));
+  const onConfirmEdit = () => {
+    const updated = handleEdit();
     toast({
       title: t('notification.playerUpdated') || 'Player updated',
       description: t('notification.playerUpdatedDesc') || `Player information has been updated successfully.`,
@@ -113,36 +118,25 @@ const AdminPlayersPage = () => {
       duration: 3000,
     });
     onEditClose();
-    setSelectedPlayer(null);
+    setSelectedItem(null);
+    return updated;
   };
 
-  const handleDelete = () => {
-    setPlayers(players.filter(p => p.id !== selectedPlayer.id));
+  const onConfirmDelete = () => {
+    const deleted = handleDelete();
     toast({
       title: t('notification.playerDeleted') || 'Player deleted',
-      description: t('notification.playerDeletedDesc') || `${selectedPlayer.name} has been removed.`,
+      description: t('notification.playerDeletedDesc') || `${deleted?.name} has been removed.`,
       status: 'success',
       duration: 3000,
     });
     onDeleteClose();
-    setSelectedPlayer(null);
+    setSelectedItem(null);
+    return deleted;
   };
 
-  const openEditDialog = (player) => {
-    setSelectedPlayer(player);
-    setFormData({ 
-      name: player.name, 
-      team: player.team, 
-      position: player.position,
-      jerseyNumber: player.jerseyNumber.toString()
-    });
-    onEditOpen();
-  };
-
-  const openDeleteDialog = (player) => {
-    setSelectedPlayer(player);
-    onDeleteOpen();
-  };
+  const onOpenEdit = (player) => openEditDialog(player);
+  const onOpenDelete = (player) => openDeleteDialog(player);
 
   const getRatingColor = (rating) => {
     if (rating >= 8.5) return 'success';
@@ -261,151 +255,63 @@ const AdminPlayersPage = () => {
         </Box>
       </Box>
 
-      {/* Add Player Modal */}
-      <Modal isOpen={isAddOpen} onClose={onAddClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{t('modal.addPlayer') || t('actionAddPlayer') || 'Add New Player'}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4}>
-              <FormControl isRequired>
-                <FormLabel>{t('playerName') || 'Name'}</FormLabel>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder={t('playerNamePlaceholder') || 'Enter player name'}
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('team') || 'Team'}</FormLabel>
-                <Select
-                  value={formData.team}
-                  onChange={(e) => setFormData({ ...formData, team: e.target.value })}
-                >
-                  <option value="Eagles U16">Eagles U16</option>
-                  <option value="Hawks U18">Hawks U18</option>
-                  <option value="Falcons U14">Falcons U14</option>
-                  <option value="Eagles U12">Eagles U12</option>
-                </Select>
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('table.position') || 'Position'}</FormLabel>
-                <Select
-                  value={formData.position}
-                  onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                >
-                  <option value="Goalkeeper">{t('positionGoalkeeper') || 'Goalkeeper'}</option>
-                  <option value="Defender">{t('positionDefender') || 'Defender'}</option>
-                  <option value="Midfielder">{t('positionMidfielder') || 'Midfielder'}</option>
-                  <option value="Forward">{t('positionForward') || 'Forward'}</option>
-                  <option value="Winger">{t('positionWinger') || 'Winger'}</option>
-                  <option value="Striker">{t('positionStriker') || 'Striker'}</option>
-                </Select>
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('jerseyNumber') || 'Jersey Number'}</FormLabel>
-                <Input
-                  type="number"
-                  value={formData.jerseyNumber}
-                  onChange={(e) => setFormData({ ...formData, jerseyNumber: e.target.value })}
-                  placeholder={t('jerseyNumberPlaceholder') || 'Enter jersey number'}
-                />
-              </FormControl>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onAddClose}>
-              {t('cancel') || 'Cancel'}
-            </Button>
-            <Button colorScheme="green" onClick={handleAdd}>
-              {t('actionAddPlayer') || 'Add Player'}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <CrudFormModal
+        isOpen={isAddOpen}
+        onClose={onAddClose}
+        mode="add"
+        titleAdd={t('modal.addPlayer') || t('actionAddPlayer') || 'Add New Player'}
+        confirmLabelAdd={t('actionAddPlayer') || 'Add Player'}
+        formData={formData}
+        setFormData={setFormData}
+        onConfirm={onConfirmAdd}
+        fields={[
+          { name: 'name', label: t('playerName') || 'Name', type: 'text', isRequired: true, placeholder: t('playerNamePlaceholder') || 'Enter player name' },
+          { name: 'team', label: t('team') || 'Team', type: 'select', isRequired: true, options: teamOptions },
+          { name: 'position', label: t('table.position') || 'Position', type: 'select', isRequired: true, options: [
+            { value: 'Goalkeeper', label: t('positionGoalkeeper') || 'Goalkeeper' },
+            { value: 'Defender', label: t('positionDefender') || 'Defender' },
+            { value: 'Midfielder', label: t('positionMidfielder') || 'Midfielder' },
+            { value: 'Forward', label: t('positionForward') || 'Forward' },
+            { value: 'Winger', label: t('positionWinger') || 'Winger' },
+            { value: 'Striker', label: t('positionStriker') || 'Striker' },
+          ] },
+          { name: 'jerseyNumber', label: t('jerseyNumber') || 'Jersey Number', type: 'number', isRequired: true, placeholder: t('jerseyNumberPlaceholder') || 'Enter jersey number' },
+        ]}
+      />
 
-      {/* Edit Player Modal */}
-      <Modal isOpen={isEditOpen} onClose={onEditClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{t('modal.editPlayer') || 'Edit Player'}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4}>
-              <FormControl isRequired>
-                <FormLabel>{t('playerName') || 'Name'}</FormLabel>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('team') || 'Team'}</FormLabel>
-                <Select
-                  value={formData.team}
-                  onChange={(e) => setFormData({ ...formData, team: e.target.value })}
-                >
-                  <option value="Eagles U16">Eagles U16</option>
-                  <option value="Hawks U18">Hawks U18</option>
-                  <option value="Falcons U14">Falcons U14</option>
-                  <option value="Eagles U12">Eagles U12</option>
-                </Select>
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('table.position') || 'Position'}</FormLabel>
-                <Select
-                  value={formData.position}
-                  onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                >
-                  <option value="Goalkeeper">{t('positionGoalkeeper') || 'Goalkeeper'}</option>
-                  <option value="Defender">{t('positionDefender') || 'Defender'}</option>
-                  <option value="Midfielder">{t('positionMidfielder') || 'Midfielder'}</option>
-                  <option value="Forward">{t('positionForward') || 'Forward'}</option>
-                  <option value="Winger">{t('positionWinger') || 'Winger'}</option>
-                  <option value="Striker">{t('positionStriker') || 'Striker'}</option>
-                </Select>
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('jerseyNumber') || 'Jersey Number'}</FormLabel>
-                <Input
-                  type="number"
-                  value={formData.jerseyNumber}
-                  onChange={(e) => setFormData({ ...formData, jerseyNumber: e.target.value })}
-                />
-              </FormControl>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onEditClose}>
-              {t('cancel') || 'Cancel'}
-            </Button>
-            <Button colorScheme="green" onClick={handleEdit}>
-              {t('saveChanges') || 'Save Changes'}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <CrudFormModal
+        isOpen={isEditOpen}
+        onClose={onEditClose}
+        mode="edit"
+        titleEdit={t('modal.editPlayer') || 'Edit Player'}
+        confirmLabelEdit={t('saveChanges') || 'Save Changes'}
+        formData={formData}
+        setFormData={setFormData}
+        onConfirm={onConfirmEdit}
+        fields={[
+          { name: 'name', label: t('playerName') || 'Name', type: 'text', isRequired: true },
+          { name: 'team', label: t('team') || 'Team', type: 'select', isRequired: true, options: teamOptions },
+          { name: 'position', label: t('table.position') || 'Position', type: 'select', isRequired: true, options: [
+            { value: 'Goalkeeper', label: t('positionGoalkeeper') || 'Goalkeeper' },
+            { value: 'Defender', label: t('positionDefender') || 'Defender' },
+            { value: 'Midfielder', label: t('positionMidfielder') || 'Midfielder' },
+            { value: 'Forward', label: t('positionForward') || 'Forward' },
+            { value: 'Winger', label: t('positionWinger') || 'Winger' },
+            { value: 'Striker', label: t('positionStriker') || 'Striker' },
+          ] },
+          { name: 'jerseyNumber', label: t('jerseyNumber') || 'Jersey Number', type: 'number', isRequired: true },
+        ]}
+      />
 
-      {/* Delete Confirmation Modal */}
-      <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{t('modal.deletePlayer') || 'Delete Player'}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            {t('confirmDeletePlayer') || `Are you sure you want to delete ${selectedPlayer?.name}? This action cannot be undone.`}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onDeleteClose}>
-              {t('cancel') || 'Cancel'}
-            </Button>
-            <Button colorScheme="red" onClick={handleDelete}>
-              {t('actionDelete') || 'Delete'}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <ConfirmModal
+        isOpen={isDeleteOpen}
+        onClose={onDeleteClose}
+        title={t('modal.deletePlayer') || 'Delete Player'}
+        body={t('confirmDeletePlayer') || `Are you sure you want to delete ${selectedItem?.name}? This action cannot be undone.`}
+        onConfirm={onConfirmDelete}
+        confirmLabel={t('actionDelete') || 'Delete'}
+        cancelLabel={t('cancel') || 'Cancel'}
+      />
     </Layout>
   );
 };

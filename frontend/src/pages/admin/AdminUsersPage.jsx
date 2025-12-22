@@ -25,6 +25,10 @@ import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, AvatarCircle, ActionButtons, SearchInput, FilterSelect } from '../../components/ui';
+import useCrudList from '../../hooks/useCrudList';
+import { roleOptions } from '../../utils/adminOptions';
+import CrudFormModal from '../../components/admin/CrudFormModal';
+import ConfirmModal from '../../components/admin/ConfirmModal';
 
 const initialUsers = [
   { id: 1, name: 'John Smith', email: 'john.smith@academy.com', role: 'coach', status: 'Active' },
@@ -37,14 +41,6 @@ const initialUsers = [
   { id: 8, name: 'Jennifer Taylor', email: 'jennifer.taylor@academy.com', role: 'player', status: 'Active' },
 ];
 
-const roleOptionsStatic = [
-  { value: 'all', labelKey: 'filterAllRoles' },
-  { value: 'admin', labelKey: 'role.admin' },
-  { value: 'coach', labelKey: 'role.coach' },
-  { value: 'player', labelKey: 'role.player' },
-  { value: 'agent', labelKey: 'role.agent' },
-];
-
 const AdminUsersManagementPage = () => {
   const { t, i18n } = useTranslation();
 
@@ -53,21 +49,41 @@ const AdminUsersManagementPage = () => {
   const nameColor = useColorModeValue('gray.900', 'gray.100');
   const emailColor = useColorModeValue('gray.500', 'gray.300');
 
+
   const isRTL = i18n?.language === 'ar';
 
-  const [users, setUsers] = useState(initialUsers);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [formData, setFormData] = useState({ name: '', email: '', role: 'player' });
+  const {
+    items: users,
+    setItems: setUsers,
+    searchQuery,
+    setSearchQuery,
+    selectedItem,
+    setSelectedItem,
+    formData,
+    setFormData,
 
-  const { isOpen: isAddOpen, onOpen: onAddOpen, onClose: onAddClose } = useDisclosure();
-  const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+    isAddOpen,
+    onAddOpen,
+    onAddClose,
+    isEditOpen,
+    onEditOpen,
+    onEditClose,
+    isDeleteOpen,
+    onDeleteOpen,
+    onDeleteClose,
+
+    handleAdd,
+    handleEdit,
+    handleDelete,
+    openEditDialog,
+    openDeleteDialog,
+  } = useCrudList({ initialData: initialUsers, initialForm: { name: '', email: '', role: 'player' } });
 
   const toast = useToast();
 
-  const roleOptions = roleOptionsStatic.map(o => ({ value: o.value, label: t(o.labelKey) }));
+  const roleOptionsList = roleOptions(t);
+
+  const [roleFilter, setRoleFilter] = React.useState('all');
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -76,16 +92,12 @@ const AdminUsersManagementPage = () => {
     return matchesSearch && matchesRole;
   });
 
-  const handleAdd = () => {
-    const newUser = {
-      id: users.length + 1,
-      ...formData,
-      status: 'Active',
-    };
-    setUsers([...users, newUser]);
+  // CRUD actions use the hook's handlers; show toasts and close modals here
+  const onConfirmAdd = () => {
+    const newUser = handleAdd({ status: 'Active' });
     toast({
       title: t('buttonAdd') || 'User added',
-        description: `${formData.name} ${t('actionAddUser') || 'has been added successfully.'}`,
+      description: `${newUser.name} ${t('actionAddUser') || 'has been added successfully.'}`,
       status: 'success',
       duration: 3000,
     });
@@ -93,43 +105,32 @@ const AdminUsersManagementPage = () => {
     setFormData({ name: '', email: '', role: 'player' });
   };
 
-  const handleEdit = () => {
-    setUsers(users.map(u => u.id === selectedUser.id ? { ...u, ...formData } : u));
+  const onConfirmEdit = () => {
+    const updated = handleEdit();
     toast({
       title: t('buttonSave') || 'User updated',
-        description: t('actionAddUser') || 'User information has been updated successfully.',
+      description: t('actionAddUser') || 'User information has been updated successfully.',
       status: 'success',
       duration: 3000,
     });
     onEditClose();
-    setSelectedUser(null);
+    setSelectedItem(null);
   };
 
-  const handleDelete = () => {
-    setUsers(users.filter(u => u.id !== selectedUser.id));
+  const onConfirmDelete = () => {
+    const deleted = handleDelete();
     toast({
       title: t('buttonDelete') || 'User deleted',
-        description: `${selectedUser?.name} ${t('buttonDelete') || 'has been removed.'}`,
+      description: `${deleted?.name} ${t('buttonDelete') || 'has been removed.'}`,
       status: 'success',
       duration: 3000,
     });
     onDeleteClose();
-    setSelectedUser(null);
-  };
-
-  const openEditDialog = (user) => {
-    setSelectedUser(user);
-    setFormData({ name: user.name, email: user.email, role: user.role });
-    onEditOpen();
-  };
-
-  const openDeleteDialog = (user) => {
-    setSelectedUser(user);
-    onDeleteOpen();
+    setSelectedItem(null);
   };
 
   const getRoleLabel = (role) => {
-    const found = roleOptions.find(r => r.value === role);
+    const found = roleOptionsList.find(r => r.value === role);
     return found ? found.label : role;
   };
 
@@ -201,19 +202,19 @@ const AdminUsersManagementPage = () => {
 
           <Flex gap={4} mb="24px">
             <Box flex={1}>
-                  <SearchInput
-                    placeholder={t('searchPlaceholderUsers') || 'Search by name or email...'}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
+              <SearchInput
+                placeholder={t('searchPlaceholderUsers') || 'Search by name or email...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </Box>
             <Box width="200px">
               <FilterSelect
-                  placeholder={t('filterAllRoles') || 'All Roles'}
-                  options={roleOptions}
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                />
+                placeholder={t('filterAllRoles') || 'All Roles'}
+                options={roleOptionsList}
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+              />
             </Box>
           </Flex>
 
@@ -226,109 +227,47 @@ const AdminUsersManagementPage = () => {
         </Box>
       </Box>
 
-      {/* Add User Modal */}
-      <Modal isOpen={isAddOpen} onClose={onAddClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{t('modalAddTitle') || 'Add New User'}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4}>
-              <FormControl isRequired>
-                <FormLabel>{t('form.name') || 'Name'}</FormLabel>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder={t('form.namePlaceholder') || 'Enter full name'}
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('form.email') || 'Email'}</FormLabel>
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder={t('form.emailPlaceholder') || 'Enter email address'}
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('form.role') || 'Role'}</FormLabel>
-                <Select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                >
-                  {roleOptions.map(r => (
-                    <option key={r.value} value={r.value}>{r.label}</option>
-                  ))}
-                </Select>
-              </FormControl>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onAddClose}>{t('buttonCancel') || 'Cancel'}</Button>
-            <Button colorScheme="green" onClick={handleAdd}>{t('buttonAdd') || 'Add User'}</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <CrudFormModal
+        isOpen={isAddOpen}
+        onClose={onAddClose}
+        mode="add"
+        titleAdd={t('modalAddTitle') || 'Add New User'}
+        confirmLabelAdd={t('buttonAdd') || 'Add User'}
+        formData={formData}
+        setFormData={setFormData}
+        onConfirm={onConfirmAdd}
+        fields={[
+          { name: 'name', label: t('form.name') || 'Name', type: 'text', isRequired: true, placeholder: t('form.namePlaceholder') || 'Enter full name' },
+          { name: 'email', label: t('form.email') || 'Email', type: 'text', isRequired: true, inputType: 'email', placeholder: t('form.emailPlaceholder') || 'Enter email address' },
+          { name: 'role', label: t('form.role') || 'Role', type: 'select', isRequired: true, options: roleOptionsList },
+        ]}
+      />
 
-      {/* Edit User Modal */}
-      <Modal isOpen={isEditOpen} onClose={onEditClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{t('modalEditTitle') || 'Edit User'}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4}>
-              <FormControl isRequired>
-                <FormLabel>{t('form.name') || 'Name'}</FormLabel>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('form.email') || 'Email'}</FormLabel>
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('form.role') || 'Role'}</FormLabel>
-                <Select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                >
-                  {roleOptions.map(r => (
-                    <option key={r.value} value={r.value}>{r.label}</option>
-                  ))}
-                </Select>
-              </FormControl>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onEditClose}>{t('buttonCancel') || 'Cancel'}</Button>
-            <Button colorScheme="green" onClick={handleEdit}>{t('buttonSave') || 'Save Changes'}</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <CrudFormModal
+        isOpen={isEditOpen}
+        onClose={onEditClose}
+        mode="edit"
+        titleEdit={t('modalEditTitle') || 'Edit User'}
+        confirmLabelEdit={t('buttonSave') || 'Save Changes'}
+        formData={formData}
+        setFormData={setFormData}
+        onConfirm={onConfirmEdit}
+        fields={[
+          { name: 'name', label: t('form.name') || 'Name', type: 'text', isRequired: true },
+          { name: 'email', label: t('form.email') || 'Email', type: 'text', isRequired: true, inputType: 'email' },
+          { name: 'role', label: t('form.role') || 'Role', type: 'select', isRequired: true, options: roleOptionsList },
+        ]}
+      />
 
-      {/* Delete Confirmation Modal */}
-      <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{t('modalDeleteTitle') || 'Delete User'}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            {t('confirmDelete', { name: selectedUser?.name }) || `Are you sure you want to delete ${selectedUser?.name}? This action cannot be undone.`}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onDeleteClose}>{t('buttonCancel') || 'Cancel'}</Button>
-            <Button colorScheme="red" onClick={handleDelete}>{t('buttonDelete') || 'Delete'}</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <ConfirmModal
+        isOpen={isDeleteOpen}
+        onClose={onDeleteClose}
+        title={t('modalDeleteTitle') || 'Delete User'}
+        body={t('confirmDelete', { name: selectedItem?.name }) || `Are you sure you want to delete ${selectedItem?.name}? This action cannot be undone.`}
+        onConfirm={onConfirmDelete}
+        confirmLabel={t('buttonDelete') || 'Delete'}
+        cancelLabel={t('buttonCancel') || 'Cancel'}
+      />
 
     </Layout>
   );

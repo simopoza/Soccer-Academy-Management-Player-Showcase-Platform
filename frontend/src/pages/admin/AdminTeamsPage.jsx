@@ -4,7 +4,6 @@ import {
   Flex,
   VStack,
   HStack,
-  useDisclosure,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -25,9 +24,13 @@ import {
 import { FiUsers } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
+import useCrudList from '../../hooks/useCrudList';
+import { categoryOptions } from '../../utils/adminOptions';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, ActionButtons, SearchInput, FilterSelect } from '../../components/ui';
+import ConfirmModal from '../../components/admin/ConfirmModal';
+import CrudFormModal from '../../components/admin/CrudFormModal';
 
 const initialTeams = [
   { id: 1, name: 'Eagles', ageCategory: 'U16', playerCount: 22, coach: 'John Smith', founded: '2015', status: 'Active' },
@@ -40,13 +43,7 @@ const initialTeams = [
   { id: 8, name: 'Bears', ageCategory: 'U12', playerCount: 17, coach: 'Jennifer Taylor', founded: '2019', status: 'Active' },
 ];
 
-const categoryOptions = (t) => [
-  { value: 'all', label: t('filterAllCategories') || 'All Categories' },
-  { value: 'U12', label: t('ageU12') || 'U12' },
-  { value: 'U14', label: t('ageU14') || 'U14' },
-  { value: 'U16', label: t('ageU16') || 'U16' },
-  { value: 'U18', label: t('ageU18') || 'U18' },
-];
+// use shared `categoryOptions` from utils/adminOptions
 
 const AdminTeamsPage = () => {
   const { t, i18n } = useTranslation();
@@ -55,22 +52,35 @@ const AdminTeamsPage = () => {
   const pageBg = bgGradient;
   const isRTL = i18n?.language === 'ar';
 
-  const [teams, setTeams] = useState(initialTeams);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [selectedTeam, setSelectedTeam] = useState(null);
-  const [formData, setFormData] = useState({ 
-    name: '', 
-    ageCategory: 'U16', 
-    coach: '',
-    description: ''
-  });
-  
-  const { isOpen: isAddOpen, onOpen: onAddOpen, onClose: onAddClose } = useDisclosure();
-  const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
-  
+  const {
+    items: teams,
+    setItems: setTeams,
+    searchQuery,
+    setSearchQuery,
+    selectedItem,
+    setSelectedItem,
+    formData,
+    setFormData,
+
+    isAddOpen,
+    onAddOpen,
+    onAddClose,
+    isEditOpen,
+    onEditOpen,
+    onEditClose,
+    isDeleteOpen,
+    onDeleteOpen,
+    onDeleteClose,
+
+    handleAdd,
+    handleEdit,
+    handleDelete,
+    openEditDialog,
+    openDeleteDialog,
+  } = useCrudList({ initialData: initialTeams, initialForm: { name: '', ageCategory: 'U16', coach: '', description: '' } });
+
   const toast = useToast();
+  const [categoryFilter, setCategoryFilter] = useState('all');
 
   const filteredTeams = teams.filter(team => {
     const matchesSearch = team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -79,18 +89,11 @@ const AdminTeamsPage = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const handleAdd = () => {
-    const newTeam = {
-      id: teams.length + 1,
-      ...formData,
-      playerCount: 0,
-      founded: new Date().getFullYear().toString(),
-      status: 'Active',
-    };
-    setTeams([...teams, newTeam]);
+  const onConfirmAdd = () => {
+    const created = handleAdd({ playerCount: 0, founded: new Date().getFullYear().toString(), status: 'Active' });
     toast({
       title: t('notification.teamAdded') || 'Team added',
-      description: t('notification.teamAddedDesc') || `${formData.name} ${formData.ageCategory} has been added successfully.`,
+      description: t('notification.teamAddedDesc') || `${created.name} ${created.ageCategory} has been added successfully.`,
       status: 'success',
       duration: 3000,
     });
@@ -98,8 +101,8 @@ const AdminTeamsPage = () => {
     setFormData({ name: '', ageCategory: 'U16', coach: '', description: '' });
   };
 
-  const handleEdit = () => {
-    setTeams(teams.map(t => t.id === selectedTeam.id ? { ...t, ...formData } : t));
+  const onConfirmEdit = () => {
+    const updated = handleEdit();
     toast({
       title: t('notification.teamUpdated') || 'Team updated',
       description: t('notification.teamUpdatedDesc') || `Team information has been updated successfully.`,
@@ -107,36 +110,25 @@ const AdminTeamsPage = () => {
       duration: 3000,
     });
     onEditClose();
-    setSelectedTeam(null);
+    setSelectedItem(null);
+    return updated;
   };
 
-  const handleDelete = () => {
-    setTeams(teams.filter(t => t.id !== selectedTeam.id));
+  const onConfirmDelete = () => {
+    const deleted = handleDelete();
     toast({
       title: t('notification.teamDeleted') || 'Team deleted',
-      description: t('notification.teamDeletedDesc') || `${selectedTeam.name} has been removed.`,
+      description: t('notification.teamDeletedDesc') || `${deleted?.name} has been removed.`,
       status: 'success',
       duration: 3000,
     });
     onDeleteClose();
-    setSelectedTeam(null);
+    setSelectedItem(null);
+    return deleted;
   };
 
-  const openEditDialog = (team) => {
-    setSelectedTeam(team);
-    setFormData({ 
-      name: team.name, 
-      ageCategory: team.ageCategory, 
-      coach: team.coach,
-      description: ''
-    });
-    onEditOpen();
-  };
-
-  const openDeleteDialog = (team) => {
-    setSelectedTeam(team);
-    onDeleteOpen();
-  };
+  const onOpenEdit = (team) => openEditDialog(team);
+  const onOpenDelete = (team) => openDeleteDialog(team);
 
   const columns = [
     {
@@ -246,139 +238,59 @@ const AdminTeamsPage = () => {
         </Box>
       </Box>
 
-      {/* Add Team Modal */}
-      <Modal isOpen={isAddOpen} onClose={onAddClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{t('modal.addTeam') || 'Add New Team'}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4}>
-              <FormControl isRequired>
-                <FormLabel>{t('teamName') || 'Team Name'}</FormLabel>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder={t('teamNamePlaceholder') || 'Enter team name'}
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('ageCategory') || 'Age Category'}</FormLabel>
-                <Select
-                  value={formData.ageCategory}
-                  onChange={(e) => setFormData({ ...formData, ageCategory: e.target.value })}
-                >
-                  <option value="U12">{t('ageU12') || 'U12'}</option>
-                  <option value="U14">{t('ageU14') || 'U14'}</option>
-                  <option value="U16">{t('ageU16') || 'U16'}</option>
-                  <option value="U18">{t('ageU18') || 'U18'}</option>
-                </Select>
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('coach') || 'Coach'}</FormLabel>
-                <Input
-                  value={formData.coach}
-                  onChange={(e) => setFormData({ ...formData, coach: e.target.value })}
-                  placeholder={t('coachPlaceholder') || 'Enter coach name'}
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel>{t('description') || 'Description'}</FormLabel>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder={t('descriptionPlaceholder') || 'Enter team description (optional)'}
-                  rows={3}
-                />
-              </FormControl>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onAddClose}>
-              {t('cancel') || 'Cancel'}
-            </Button>
-            <Button colorScheme="green" onClick={handleAdd}>
-              {t('actionAddTeam') || 'Add Team'}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <CrudFormModal
+        isOpen={isAddOpen}
+        onClose={onAddClose}
+        mode="add"
+        titleAdd={t('modal.addTeam') || 'Add New Team'}
+        confirmLabelAdd={t('actionAddTeam') || 'Add Team'}
+        formData={formData}
+        setFormData={setFormData}
+        onConfirm={onConfirmAdd}
+        fields={[
+          { name: 'name', label: t('teamName') || 'Team Name', type: 'text', isRequired: true, placeholder: t('teamNamePlaceholder') || 'Enter team name' },
+          { name: 'ageCategory', label: t('ageCategory') || 'Age Category', type: 'select', isRequired: true, options: [
+            { value: 'U12', label: t('ageU12') || 'U12' },
+            { value: 'U14', label: t('ageU14') || 'U14' },
+            { value: 'U16', label: t('ageU16') || 'U16' },
+            { value: 'U18', label: t('ageU18') || 'U18' },
+          ] },
+          { name: 'coach', label: t('coach') || 'Coach', type: 'text', isRequired: true, placeholder: t('coachPlaceholder') || 'Enter coach name' },
+          { name: 'description', label: t('description') || 'Description', type: 'textarea', isRequired: false, rows: 3, placeholder: t('descriptionPlaceholder') || 'Enter team description (optional)' },
+        ]}
+      />
 
-      {/* Edit Team Modal */}
-      <Modal isOpen={isEditOpen} onClose={onEditClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{t('modal.editTeam') || 'Edit Team'}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4}>
-              <FormControl isRequired>
-                <FormLabel>{t('teamName') || 'Team Name'}</FormLabel>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('ageCategory') || 'Age Category'}</FormLabel>
-                <Select
-                  value={formData.ageCategory}
-                  onChange={(e) => setFormData({ ...formData, ageCategory: e.target.value })}
-                >
-                  <option value="U12">{t('ageU12') || 'U12'}</option>
-                  <option value="U14">{t('ageU14') || 'U14'}</option>
-                  <option value="U16">{t('ageU16') || 'U16'}</option>
-                  <option value="U18">{t('ageU18') || 'U18'}</option>
-                </Select>
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>{t('coach') || 'Coach'}</FormLabel>
-                <Input
-                  value={formData.coach}
-                  onChange={(e) => setFormData({ ...formData, coach: e.target.value })}
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel>{t('description') || 'Description'}</FormLabel>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder={t('descriptionPlaceholder') || 'Enter team description (optional)'}
-                  rows={3}
-                />
-              </FormControl>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onEditClose}>
-              {t('cancel') || 'Cancel'}
-            </Button>
-            <Button colorScheme="green" onClick={handleEdit}>
-              {t('saveChanges') || 'Save Changes'}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <CrudFormModal
+        isOpen={isEditOpen}
+        onClose={onEditClose}
+        mode="edit"
+        titleEdit={t('modal.editTeam') || 'Edit Team'}
+        confirmLabelEdit={t('saveChanges') || 'Save Changes'}
+        formData={formData}
+        setFormData={setFormData}
+        onConfirm={onConfirmEdit}
+        fields={[
+          { name: 'name', label: t('teamName') || 'Team Name', type: 'text', isRequired: true },
+          { name: 'ageCategory', label: t('ageCategory') || 'Age Category', type: 'select', isRequired: true, options: [
+            { value: 'U12', label: t('ageU12') || 'U12' },
+            { value: 'U14', label: t('ageU14') || 'U14' },
+            { value: 'U16', label: t('ageU16') || 'U16' },
+            { value: 'U18', label: t('ageU18') || 'U18' },
+          ] },
+          { name: 'coach', label: t('coach') || 'Coach', type: 'text', isRequired: true },
+          { name: 'description', label: t('description') || 'Description', type: 'textarea', isRequired: false, rows: 3 },
+        ]}
+      />
 
-      {/* Delete Confirmation Modal */}
-      <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{t('modal.deleteTeam') || 'Delete Team'}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            {t('confirmDeleteTeam') || `Are you sure you want to delete ${selectedTeam?.name} ${selectedTeam?.ageCategory}? This action cannot be undone.`}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onDeleteClose}>
-              {t('cancel') || 'Cancel'}
-            </Button>
-            <Button colorScheme="red" onClick={handleDelete}>
-              {t('delete') || 'Delete'}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <ConfirmModal
+        isOpen={isDeleteOpen}
+        onClose={onDeleteClose}
+        title={t('modal.deleteTeam') || 'Delete Team'}
+        body={t('confirmDeleteTeam') || `Are you sure you want to delete ${selectedItem?.name} ${selectedItem?.ageCategory}? This action cannot be undone.`}
+        onConfirm={onConfirmDelete}
+        confirmLabel={t('delete') || 'Delete'}
+        cancelLabel={t('cancel') || 'Cancel'}
+      />
     </Layout>
   );
 };

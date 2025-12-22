@@ -30,6 +30,10 @@ import { Badge, ActionButtons, SearchInput, FilterSelect, StatsCard } from '../.
 
 import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
+import useCrudList from '../../hooks/useCrudList';
+import { statusOptions, matchTypeOptions } from '../../utils/adminOptions';
+import CrudFormModal from '../../components/admin/CrudFormModal';
+import ConfirmModal from '../../components/admin/ConfirmModal';
 
 const initialMatches = [
   { id: 1, team: 'Eagles U16', opponent: 'Lions U16', date: '2025-12-08', time: '15:00', location: 'Academy Stadium A', matchType: 'Home', status: 'Upcoming', competition: 'League', score: null },
@@ -39,17 +43,7 @@ const initialMatches = [
   { id: 5, team: 'Hawks U18', opponent: 'Bears U18', date: '2025-11-28', time: '16:00', location: 'Academy Stadium B', matchType: 'Home', status: 'Completed', competition: 'Cup', score: '2-3', result: 'Lost' },
 ];
 
-const statusOptions = (t) => [
-  { value: 'all', label: t('filterAllStatus') || 'All Status' },
-  { value: 'Upcoming', label: t('statusUpcoming') || 'Upcoming' },
-  { value: 'Completed', label: t('statusCompleted') || 'Completed' },
-];
 
-const matchTypeOptions = (t) => [
-  { value: 'all', label: t('filterAllTypes') || 'All Types' },
-  { value: 'Home', label: t('matchTypeHome') || 'Home' },
-  { value: 'Away', label: t('matchTypeAway') || 'Away' },
-];
 
 const AdminMatchesPage = () => {
   const { t, i18n } = useTranslation();
@@ -61,27 +55,36 @@ const AdminMatchesPage = () => {
 
   const isRTL = i18n?.language === 'ar';
 
-  const [matches, setMatches] = useState(initialMatches);
-  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    items: matches,
+    setItems: setMatches,
+    searchQuery,
+    setSearchQuery,
+    selectedItem,
+    setSelectedItem,
+    formData,
+    setFormData,
+
+    isAddOpen,
+    onAddOpen,
+    onAddClose,
+    isEditOpen,
+    onEditOpen,
+    onEditClose,
+    isDeleteOpen,
+    onDeleteOpen,
+    onDeleteClose,
+
+    handleAdd,
+    handleEdit,
+    handleDelete,
+    openEditDialog,
+    openDeleteDialog,
+  } = useCrudList({ initialData: initialMatches, initialForm: { team: '', opponent: '', date: '', time: '', location: '', matchType: 'Home', competition: 'League', notes: '' } });
+
+  const toast = useToast();
   const [statusFilter, setStatusFilter] = useState('all');
   const [matchTypeFilter, setMatchTypeFilter] = useState('all');
-  const [selectedMatch, setSelectedMatch] = useState(null);
-  const [formData, setFormData] = useState({ 
-    team: '', 
-    opponent: '', 
-    date: '',
-    time: '',
-    location: '',
-    matchType: 'Home',
-    competition: 'League',
-    notes: ''
-  });
-  
-  const { isOpen: isAddOpen, onOpen: onAddOpen, onClose: onAddClose } = useDisclosure();
-  const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
-  
-  const toast = useToast();
 
   const filteredMatches = matches.filter(match => {
     const matchesSearch = match.team.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -97,14 +100,8 @@ const AdminMatchesPage = () => {
   const wins = matches.filter(m => m.result === 'Won').length;
   const winRate = completedMatches > 0 ? ((wins / completedMatches) * 100).toFixed(1) : '0.0';
 
-  const handleAdd = () => {
-    const newMatch = {
-      id: matches.length + 1,
-      ...formData,
-      status: 'Upcoming',
-      score: null,
-    };
-    setMatches([...matches, newMatch]);
+  const onConfirmAdd = () => {
+    const created = handleAdd({ status: 'Upcoming', score: null });
     toast({
       title: t('notification.matchAdded') || 'Match added',
       description: t('notification.matchAddedDesc') || `Match has been scheduled successfully.`,
@@ -113,10 +110,11 @@ const AdminMatchesPage = () => {
     });
     onAddClose();
     setFormData({ team: '', opponent: '', date: '', time: '', location: '', matchType: 'Home', competition: 'League', notes: '' });
+    return created;
   };
 
-  const handleEdit = () => {
-    setMatches(matches.map(m => m.id === selectedMatch.id ? { ...m, ...formData } : m));
+  const onConfirmEdit = () => {
+    const updated = handleEdit();
     toast({
       title: t('notification.matchUpdated') || 'Match updated',
       description: t('notification.matchUpdatedDesc') || `Match information has been updated successfully.`,
@@ -124,11 +122,12 @@ const AdminMatchesPage = () => {
       duration: 3000,
     });
     onEditClose();
-    setSelectedMatch(null);
+    setSelectedItem(null);
+    return updated;
   };
 
-  const handleDelete = () => {
-    setMatches(matches.filter(m => m.id !== selectedMatch.id));
+  const onConfirmDelete = () => {
+    const deleted = handleDelete();
     toast({
       title: t('notification.matchDeleted') || 'Match deleted',
       description: t('notification.matchDeletedDesc') || `Match has been removed.`,
@@ -136,28 +135,28 @@ const AdminMatchesPage = () => {
       duration: 3000,
     });
     onDeleteClose();
-    setSelectedMatch(null);
+    setSelectedItem(null);
+    return deleted;
   };
 
-  const openEditDialog = (match) => {
-    setSelectedMatch(match);
-    setFormData({ 
-      team: match.team, 
-      opponent: match.opponent, 
-      date: match.date,
-      time: match.time,
-      location: match.location,
-      matchType: match.matchType,
-      competition: match.competition,
-      notes: ''
-    });
-    onEditOpen();
-  };
+  const onOpenEdit = (match) => openEditDialog(match);
+  const onOpenDelete = (match) => openDeleteDialog(match);
 
-  const openDeleteDialog = (match) => {
-    setSelectedMatch(match);
-    onDeleteOpen();
-  };
+  // field schema for Add/Edit forms (keeps form definition in one place)
+  const matchFields = [
+    { name: 'team', label: t('team') || 'Team', type: 'text', isRequired: true, placeholder: t('team') || 'Enter team name' },
+    { name: 'opponent', label: t('opponent') || 'Opponent', type: 'text', isRequired: true, placeholder: t('opponent') || 'Enter opponent' },
+    { name: 'date', label: t('date') || 'Date', type: 'text', isRequired: true, inputType: 'date' },
+    { name: 'time', label: t('time') || 'Time', type: 'text', isRequired: true, inputType: 'time' },
+    { name: 'location', label: t('location') || 'Location', type: 'text', isRequired: true, placeholder: t('location') || 'Enter match location' },
+    { name: 'matchType', label: t('matchType') || 'Match Type', type: 'select', isRequired: true, options: matchTypeOptions(t) },
+    { name: 'competition', label: t('competition') || 'Competition', type: 'select', isRequired: true, options: [
+      { value: 'League', label: t('competitionLeague') || 'League' },
+      { value: 'Cup', label: t('competitionCup') || 'Cup' },
+      { value: 'Friendly', label: t('competitionFriendly') || 'Friendly' },
+    ] },
+    { name: 'notes', label: t('notes') || 'Notes', type: 'textarea', isRequired: false, rows: 3 },
+  ];
 
   const columns = [
     {
@@ -368,207 +367,43 @@ const AdminMatchesPage = () => {
         </Box>
       </Box>
 
-      {/* Add Match Modal */}
-      <Modal isOpen={isAddOpen} onClose={onAddClose} size="lg">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{t('modal.addMatch') || 'Add New Match'}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4}>
-              <HStack spacing={4} width="100%">
-                <FormControl isRequired flex={1}>
-                  <FormLabel>{t('team') || 'Team'}</FormLabel>
-                  <Input
-                    value={formData.team}
-                    onChange={(e) => setFormData({ ...formData, team: e.target.value })}
-                    placeholder={t('team') || 'Enter team name'}
-                  />
-                </FormControl>
-                <FormControl isRequired flex={1}>
-                  <FormLabel>{t('opponent') || 'Opponent'}</FormLabel>
-                  <Input
-                    value={formData.opponent}
-                    onChange={(e) => setFormData({ ...formData, opponent: e.target.value })}
-                    placeholder={t('opponent') || 'Enter opponent'}
-                  />
-                </FormControl>
-              </HStack>
-              <HStack spacing={4} width="100%">
-                <FormControl isRequired flex={1}>
-                  <FormLabel>{t('date') || 'Date'}</FormLabel>
-                  <Input
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  />
-                </FormControl>
-                <FormControl isRequired flex={1}>
-                  <FormLabel>{t('time') || 'Time'}</FormLabel>
-                  <Input
-                    type="time"
-                    value={formData.time}
-                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                  />
-                </FormControl>
-              </HStack>
-              <FormControl isRequired>
-                <FormLabel>{t('location') || 'Location'}</FormLabel>
-                <Input
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder={t('location') || 'Enter match location'}
-                />
-              </FormControl>
-              <HStack spacing={4} width="100%">
-                <FormControl isRequired flex={1}>
-                  <FormLabel>{t('matchType') || 'Match Type'}</FormLabel>
-                  <Select
-                    value={formData.matchType}
-                    onChange={(e) => setFormData({ ...formData, matchType: e.target.value })}
-                  >
-                    <option value="Home">{t('matchTypeHome') || 'Home'}</option>
-                    <option value="Away">{t('matchTypeAway') || 'Away'}</option>
-                  </Select>
-                </FormControl>
-                <FormControl isRequired flex={1}>
-                  <FormLabel>{t('competition') || 'Competition'}</FormLabel>
-                  <Select
-                    value={formData.competition}
-                    onChange={(e) => setFormData({ ...formData, competition: e.target.value })}
-                  >
-                    <option value="League">{t('competitionLeague') || 'League'}</option>
-                    <option value="Cup">{t('competitionCup') || 'Cup'}</option>
-                    <option value="Friendly">{t('competitionFriendly') || 'Friendly'}</option>
-                  </Select>
-                </FormControl>
-              </HStack>
-              <FormControl>
-                <FormLabel>{t('notes') || 'Notes'}</FormLabel>
-                <Textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder={t('notes') || 'Additional notes (optional)'}
-                  rows={3}
-                />
-              </FormControl>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onAddClose}>
-              {t('cancel') || 'Cancel'}
-            </Button>
-            <Button colorScheme="green" onClick={handleAdd}>
-              {t('actionAddMatch') || 'Add Match'}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <CrudFormModal
+        isOpen={isAddOpen}
+        onClose={onAddClose}
+        mode="add"
+        titleAdd={t('modal.addMatch') || 'Add New Match'}
+        confirmLabelAdd={t('actionAddMatch') || 'Add Match'}
+        formData={formData}
+        setFormData={setFormData}
+        onConfirm={onConfirmAdd}
+        fields={matchFields}
+        layout="grid"
+        columns={2}
+      />
 
-      {/* Edit Match Modal */}
-      <Modal isOpen={isEditOpen} onClose={onEditClose} size="lg">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{t('modal.editMatch') || 'Edit Match'}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4}>
-              <HStack spacing={4} width="100%">
-                <FormControl isRequired flex={1}>
-                  <FormLabel>{t('team') || 'Team'}</FormLabel>
-                  <Input
-                    value={formData.team}
-                    onChange={(e) => setFormData({ ...formData, team: e.target.value })}
-                  />
-                </FormControl>
-                <FormControl isRequired flex={1}>
-                  <FormLabel>{t('opponent') || 'Opponent'}</FormLabel>
-                  <Input
-                    value={formData.opponent}
-                    onChange={(e) => setFormData({ ...formData, opponent: e.target.value })}
-                  />
-                </FormControl>
-              </HStack>
-              <HStack spacing={4} width="100%">
-                <FormControl isRequired flex={1}>
-                  <FormLabel>{t('date') || 'Date'}</FormLabel>
-                  <Input
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  />
-                </FormControl>
-                <FormControl isRequired flex={1}>
-                  <FormLabel>{t('time') || 'Time'}</FormLabel>
-                  <Input
-                    type="time"
-                    value={formData.time}
-                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                  />
-                </FormControl>
-              </HStack>
-              <FormControl isRequired>
-                <FormLabel>{t('location') || 'Location'}</FormLabel>
-                <Input
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                />
-              </FormControl>
-              <HStack spacing={4} width="100%">
-                <FormControl isRequired flex={1}>
-                  <FormLabel>{t('matchType') || 'Match Type'}</FormLabel>
-                  <Select
-                    value={formData.matchType}
-                    onChange={(e) => setFormData({ ...formData, matchType: e.target.value })}
-                  >
-                    <option value="Home">{t('matchTypeHome') || 'Home'}</option>
-                    <option value="Away">{t('matchTypeAway') || 'Away'}</option>
-                  </Select>
-                </FormControl>
-                <FormControl isRequired flex={1}>
-                  <FormLabel>{t('competition') || 'Competition'}</FormLabel>
-                  <Select
-                    value={formData.competition}
-                    onChange={(e) => setFormData({ ...formData, competition: e.target.value })}
-                  >
-                    <option value="League">{t('competitionLeague') || 'League'}</option>
-                    <option value="Cup">{t('competitionCup') || 'Cup'}</option>
-                    <option value="Friendly">{t('competitionFriendly') || 'Friendly'}</option>
-                  </Select>
-                </FormControl>
-              </HStack>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onEditClose}>
-              {t('cancel') || 'Cancel'}
-            </Button>
-            <Button colorScheme="green" onClick={handleEdit}>
-              {t('saveChanges') || 'Save Changes'}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <CrudFormModal
+        isOpen={isEditOpen}
+        onClose={onEditClose}
+        mode="edit"
+        titleEdit={t('modal.editMatch') || 'Edit Match'}
+        confirmLabelEdit={t('saveChanges') || 'Save Changes'}
+        formData={formData}
+        setFormData={setFormData}
+        onConfirm={onConfirmEdit}
+        fields={matchFields}
+        layout="grid"
+        columns={2}
+      />
 
-      {/* Delete Confirmation Modal */}
-      <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{t('modal.deleteMatch') || 'Delete Match'}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            {t('confirmDeleteMatch') || 'Are you sure you want to delete this match? This action cannot be undone.'}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onDeleteClose}>
-              {t('cancel') || 'Cancel'}
-            </Button>
-            <Button colorScheme="red" onClick={handleDelete}>
-              {t('delete') || 'Delete'}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <ConfirmModal
+        isOpen={isDeleteOpen}
+        onClose={onDeleteClose}
+        title={t('modal.deleteMatch') || 'Delete Match'}
+        body={t('confirmDeleteMatch') || 'Are you sure you want to delete this match? This action cannot be undone.'}
+        onConfirm={onConfirmDelete}
+        confirmLabel={t('delete') || 'Delete'}
+        cancelLabel={t('cancel') || 'Cancel'}
+      />
     </Layout>
   );
 };
