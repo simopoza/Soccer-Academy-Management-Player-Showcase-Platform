@@ -1,5 +1,32 @@
 import axiosInstance from "./axiosInstance";
 
+const getAllUsers = async () => {
+  const response = await axiosInstance.get(`/users`);
+  return response.data;
+};
+
+const createUser = async (userData) => {
+  const payload = {
+    first_name: userData.firstName,
+    last_name: userData.lastName,
+    email: userData.email,
+    password: userData.password,
+    role: userData.role,
+  };
+  const response = await axiosInstance.post(`/users`, payload);
+  return response.data;
+};
+
+const updateUserRole = async (userId, role) => {
+  const response = await axiosInstance.put(`/users/${userId}`, { role });
+  return response.data;
+};
+
+const deleteUser = async (userId) => {
+  const response = await axiosInstance.delete(`/users/${userId}`);
+  return response.data;
+};
+
 const updateUserProfile = async (userId, profileData) => {
   const response = await axiosInstance.put(`/users/${userId}/profile`, {
     first_name: profileData.firstName,
@@ -18,4 +45,4 @@ const updateUserPassword = async (userId, passwordData) => {
   return response.data;
 };
 
-export default { updateUserProfile, updateUserPassword };
+export default { getAllUsers, createUser, updateUserRole, deleteUser, updateUserProfile, updateUserPassword };

@@ -4,13 +4,15 @@ const { hashPassword, comparePassword } = require("../helpers/hashPassword");
 // GET all users
 const getAllUsers = async (req, res) => {
   try {
-    const [ users ] = await db.query("SELECT id, first_name, last_name, email FROM Users");
+    const [ users ] = await db.query("SELECT id, first_name, last_name, email, role, status FROM Users");
     
+    // Return an empty array when there are no users so clients can always
+    // safely treat the response as an array (avoids `res.data.map` errors).
     if (users.length === 0) {
-      return res.status(200).json({ error: "Users table is empty" });
+      return res.status(200).json([]);
     }
 
-    res.status(200).json(users);
+    return res.status(200).json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ error: "Internal server error" });

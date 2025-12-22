@@ -26,10 +26,14 @@
     "namePlaceholder":"Enter full name",
     "email":"Email",
     "emailPlaceholder":"Enter email address",
-    "role":"Role"
+    "role":"Role",
+    "selectUser": "Select User"
   },
+  "changeRole": "Change Role",
+  "changeUserRole": "Change User Role",
   "table":{
     "user":"User",
+    "email":"Email",
     "role":"Role",
     "status":"Status",
     "actions":"Actions",

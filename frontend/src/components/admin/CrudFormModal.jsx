@@ -44,6 +44,7 @@ const CrudFormModal = ({
   fields = [],
   layout = 'stack', // 'stack' | 'grid'
   columns = 1,
+  cancelLabel = 'Cancel',
 }) => {
   const title = mode === 'add' ? titleAdd : titleEdit;
   const confirmLabel = mode === 'add' ? confirmLabelAdd : confirmLabelEdit;
@@ -132,7 +133,7 @@ const CrudFormModal = ({
           )}
         </ModalBody>
         <ModalFooter>
-          <Button variant="ghost" mr={3} onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" mr={3} onClick={onClose}>{cancelLabel}</Button>
           <Button colorScheme="green" onClick={onConfirm}>{confirmLabel}</Button>
         </ModalFooter>
       </ModalContent>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Flex,
@@ -27,19 +27,13 @@ import { DataTable, TableHeader } from '../../components/table';
 import { Badge, AvatarCircle, ActionButtons, SearchInput, FilterSelect } from '../../components/ui';
 import useCrudList from '../../hooks/useCrudList';
 import { roleOptions } from '../../utils/adminOptions';
+import userService from '../../services/userService';
+import adminService from '../../services/adminService';
 import CrudFormModal from '../../components/admin/CrudFormModal';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 
-const initialUsers = [
-  { id: 1, name: 'John Smith', email: 'john.smith@academy.com', role: 'coach', status: 'Active' },
-  { id: 2, name: 'Emma Wilson', email: 'emma.wilson@academy.com', role: 'player', status: 'Active' },
-  { id: 3, name: 'Michael Brown', email: 'michael.brown@academy.com', role: 'admin', status: 'Active' },
-  { id: 4, name: 'Sarah Davis', email: 'sarah.davis@academy.com', role: 'player', status: 'Active' },
-  { id: 5, name: 'James Johnson', email: 'james.johnson@academy.com', role: 'coach', status: 'Inactive' },
-  { id: 6, name: 'Lisa Anderson', email: 'lisa.anderson@academy.com', role: 'agent', status: 'Active' },
-  { id: 7, name: 'David Martinez', email: 'david.martinez@academy.com', role: 'player', status: 'Active' },
-  { id: 8, name: 'Jennifer Taylor', email: 'jennifer.taylor@academy.com', role: 'player', status: 'Active' },
-];
+// start with empty list; we'll load from API on mount
+const initialUsers = [];
 
 const AdminUsersManagementPage = () => {
   const { t, i18n } = useTranslation();
@@ -80,6 +74,40 @@ const AdminUsersManagementPage = () => {
   } = useCrudList({ initialData: initialUsers, initialForm: { name: '', email: '', role: 'player' } });
 
   const toast = useToast();
+  const [selectedUserForRoleChange, setSelectedUserForRoleChange] = useState(null);
+  const { isOpen: isRoleChangeOpen, onOpen: onRoleChangeOpen, onClose: onRoleChangeClose } = useDisclosure();
+
+  // Load users from backend on mount
+  useEffect(() => {
+    let mounted = true;
+
+    const loadUsers = async () => {
+      try {
+        const raw = await userService.getAllUsers();
+        if (!Array.isArray(raw)) {
+          console.warn('Unexpected users response:', raw);
+          toast({ title: 'Failed to load users (unauthorized or bad response)', status: 'error', duration: 4000 });
+          if (mounted) setUsers([]);
+          return;
+        }
+
+        const data = raw.map(u => ({
+          id: u.id,
+          name: `${u.first_name || ''} ${u.last_name || ''}`.trim(),
+          email: u.email,
+          role: u.role,
+          status: u.status,
+        }));
+        if (mounted) setUsers(data);
+      } catch (err) {
+        console.error('Failed to load users', err);
+        toast({ title: 'Failed to load users', status: 'error', duration: 4000 });
+      }
+    };
+
+    loadUsers();
+    return () => { mounted = false; };
+  }, [setUsers, toast]);
 
   const roleOptionsList = roleOptions(t);
 
@@ -93,40 +121,167 @@ const AdminUsersManagementPage = () => {
   });
 
   // CRUD actions use the hook's handlers; show toasts and close modals here
-  const onConfirmAdd = () => {
-    const newUser = handleAdd({ status: 'Active' });
-    toast({
-      title: t('buttonAdd') || 'User added',
-      description: `${newUser.name} ${t('actionAddUser') || 'has been added successfully.'}`,
-      status: 'success',
-      duration: 3000,
-    });
-    onAddClose();
-    setFormData({ name: '', email: '', role: 'player' });
+  const onConfirmAdd = async () => {
+    try {
+      const name = formData.name || '';
+      const parts = name.split(' ');
+      const first_name = parts.shift() || '';
+      const last_name = parts.join(' ') || '';
+
+      // generate a temporary password for newly created users
+      const tempPassword = Math.random().toString(36).slice(-10) + 'A1!';
+
+      const createdResp = await userService.createUser({
+        firstName: first_name,
+        lastName: last_name,
+        email: formData.email,
+        password: tempPassword,
+        role: formData.role,
+      });
+
+      const created = createdResp && createdResp.user;
+
+      const newUser = {
+        id: created.userId,
+        name: `${created.first_name || first_name} ${created.last_name || last_name}`.trim(),
+        email: created.email || formData.email,
+        role: created.role || formData.role,
+        status: 'Active',
+      };
+
+      setUsers(prev => [...prev, newUser]);
+
+      toast({
+        title: t('buttonAdd') || 'User added',
+        description: `${newUser.name} ${t('actionAddUser') || 'has been added successfully.'}`,
+        status: 'success',
+        duration: 3000,
+      });
+      onAddClose();
+      setFormData({ name: '', email: '', role: 'player' });
+    } catch (err) {
+      console.error('Error adding user', err);
+      toast({ title: 'Failed to add user', status: 'error', duration: 4000 });
+    }
   };
 
-  const onConfirmEdit = () => {
-    const updated = handleEdit();
-    toast({
-      title: t('buttonSave') || 'User updated',
-      description: t('actionAddUser') || 'User information has been updated successfully.',
-      status: 'success',
-      duration: 3000,
-    });
-    onEditClose();
-    setSelectedItem(null);
+  const onConfirmEdit = async () => {
+    try {
+      if (!selectedItem) return;
+      const id = selectedItem.id;
+      // Only update role (admins edit role only)
+      await userService.updateUserRole(id, formData.role);
+
+      const updated = { ...selectedItem, role: formData.role };
+      setUsers(prev => prev.map(u => (u.id === id ? updated : u)));
+
+      toast({
+        title: t('buttonSave') || 'User updated',
+        description: t('actionAddUser') || 'User information has been updated successfully.',
+        status: 'success',
+        duration: 3000,
+      });
+      onEditClose();
+      setSelectedItem(null);
+    } catch (err) {
+      console.error('Error updating user', err);
+      toast({ title: 'Failed to update user', status: 'error', duration: 4000 });
+    }
   };
 
-  const onConfirmDelete = () => {
-    const deleted = handleDelete();
-    toast({
-      title: t('buttonDelete') || 'User deleted',
-      description: `${deleted?.name} ${t('buttonDelete') || 'has been removed.'}`,
-      status: 'success',
-      duration: 3000,
-    });
-    onDeleteClose();
-    setSelectedItem(null);
+  // Open edit dialog for role-only editing
+  const openRoleEditDialog = (item) => {
+    setSelectedItem(item);
+    setFormData({ role: item.role });
+    onEditOpen();
+  };
+
+  const onConfirmDelete = async () => {
+    try {
+      if (!selectedItem) return;
+      const id = selectedItem.id;
+      await userService.deleteUser(id);
+      setUsers(prev => prev.filter(u => u.id !== id));
+
+      toast({
+        title: t('buttonDelete') || 'User deleted',
+        description: `${selectedItem?.name} ${t('buttonDelete') || 'has been removed.'}`,
+        status: 'success',
+        duration: 3000,
+      });
+      onDeleteClose();
+      setSelectedItem(null);
+    } catch (err) {
+      console.error('Error deleting user', err);
+      toast({ title: 'Failed to delete user', status: 'error', duration: 4000 });
+    }
+  };
+
+  const handleApprove = async (user) => {
+    try {
+      await adminService.approveUser(user.id);
+      // Update user status to approved
+      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: 'Active' } : u));
+      toast({
+        title: t('approved') || 'User approved',
+        description: `${user.name} has been approved successfully`,
+        status: 'success',
+        duration: 3000,
+      });
+    } catch (err) {
+      console.error('Error approving user', err);
+      toast({ title: 'Failed to approve user', status: 'error', duration: 4000 });
+    }
+  };
+
+  const handleReject = async (user) => {
+    try {
+      await adminService.rejectUser(user.id);
+      // Remove rejected user from list
+      setUsers(prev => prev.filter(u => u.id !== user.id));
+      toast({
+        title: t('rejected') || 'User rejected',
+        description: `${user.name} has been rejected and removed`,
+        status: 'warning',
+        duration: 3000,
+      });
+    } catch (err) {
+      console.error('Error rejecting user', err);
+      toast({ title: 'Failed to reject user', status: 'error', duration: 4000 });
+    }
+  };
+
+  const openRoleChangeModal = () => {
+    if (filteredUsers.length === 0) {
+      toast({ title: 'No users to change role', status: 'info', duration: 3000 });
+      return;
+    }
+    // Pre-select the first user or keep it empty
+    setSelectedUserForRoleChange(null);
+    setFormData({ userId: '', role: '' });
+    onRoleChangeOpen();
+  };
+
+  const onConfirmRoleChange = async () => {
+    try {
+      if (!formData.userId || !formData.role) {
+        toast({ title: 'Please select user and role', status: 'warning', duration: 3000 });
+        return;
+      }
+      await userService.updateUserRole(formData.userId, formData.role);
+      setUsers(prev => prev.map(u => (u.id === parseInt(formData.userId) ? { ...u, role: formData.role } : u)));
+      toast({
+        title: t('buttonSave') || 'Role updated',
+        description: 'User role has been updated successfully.',
+        status: 'success',
+        duration: 3000,
+      });
+      onRoleChangeClose();
+      setFormData({ userId: '', role: '' });
+    } catch (err) {
+      console.error('Error updating role', err);
+      toast({ title: 'Failed to update role', status: 'error', duration: 4000 });
+    }
   };
 
   const getRoleLabel = (role) => {
@@ -170,21 +325,55 @@ const AdminUsersManagementPage = () => {
     {
       header: t('table.status') || 'Status',
       accessor: 'status',
-      render: (row) => (
-        <Badge variant={row.status === 'Active' ? 'success' : 'default'}>
-          {t(row.status === 'Active' ? 'statusActive' : 'statusInactive') || row.status}
-        </Badge>
-      ),
+      render: (row) => {
+        const statusMap = {
+          approved: { variant: 'success', label: 'Active' },
+          pending: { variant: 'default', label: 'Pending' },
+          rejected: { variant: 'default', label: 'Rejected' },
+        };
+        const statusInfo = statusMap[row.status] || { variant: 'default', label: row.status };
+        return (
+          <Badge variant={statusInfo.variant}>
+            {t(`status${statusInfo.label}`) || statusInfo.label}
+          </Badge>
+        );
+      },
     },
     {
       header: t('table.actions') || 'Actions',
       accessor: 'actions',
-      render: (row) => (
-        <ActionButtons
-          onEdit={() => openEditDialog(row)}
-          onDelete={() => openDeleteDialog(row)}
-        />
-      ),
+      render: (row) => {
+        const isPending = row.status === 'pending';
+        return (
+          <HStack spacing={2} justify="center">
+            {isPending && (
+              <>
+                <Button
+                  size="sm"
+                  colorScheme="green"
+                  onClick={() => handleApprove(row)}
+                >
+                  {t('approve') || 'Approve'}
+                </Button>
+                <Button
+                  size="sm"
+                  colorScheme="orange"
+                  onClick={() => handleReject(row)}
+                >
+                  {t('reject') || 'Reject'}
+                </Button>
+              </>
+            )}
+            <Button
+              size="sm"
+              colorScheme="red"
+              onClick={() => openDeleteDialog(row)}
+            >
+              {t('delete') || 'Delete'}
+            </Button>
+          </HStack>
+        );
+      },
     },
   ];
 
@@ -196,8 +385,8 @@ const AdminUsersManagementPage = () => {
           <TableHeader
             title={t('cardTitle') || 'All Users'}
             count={filteredUsers.length}
-            actionLabel={t('actionAddUser') || 'Add User'}
-            onAction={onAddOpen}
+            actionLabel={t('changeRole') || 'Change Role'}
+            onAction={openRoleChangeModal}
           />
 
           <Flex gap={4} mb="24px">
@@ -227,35 +416,32 @@ const AdminUsersManagementPage = () => {
         </Box>
       </Box>
 
+      {/* Change Role Modal */}
       <CrudFormModal
-        isOpen={isAddOpen}
-        onClose={onAddClose}
-        mode="add"
-        titleAdd={t('modalAddTitle') || 'Add New User'}
-        confirmLabelAdd={t('buttonAdd') || 'Add User'}
-        formData={formData}
-        setFormData={setFormData}
-        onConfirm={onConfirmAdd}
-        fields={[
-          { name: 'name', label: t('form.name') || 'Name', type: 'text', isRequired: true, placeholder: t('form.namePlaceholder') || 'Enter full name' },
-          { name: 'email', label: t('form.email') || 'Email', type: 'text', isRequired: true, inputType: 'email', placeholder: t('form.emailPlaceholder') || 'Enter email address' },
-          { name: 'role', label: t('form.role') || 'Role', type: 'select', isRequired: true, options: roleOptionsList },
-        ]}
-      />
-
-      <CrudFormModal
-        isOpen={isEditOpen}
-        onClose={onEditClose}
+        isOpen={isRoleChangeOpen}
+        onClose={onRoleChangeClose}
         mode="edit"
-        titleEdit={t('modalEditTitle') || 'Edit User'}
+        titleEdit={t('changeUserRole') || 'Change User Role'}
         confirmLabelEdit={t('buttonSave') || 'Save Changes'}
+        cancelLabel={t('buttonCancel') || 'Cancel'}
         formData={formData}
         setFormData={setFormData}
-        onConfirm={onConfirmEdit}
+        onConfirm={onConfirmRoleChange}
         fields={[
-          { name: 'name', label: t('form.name') || 'Name', type: 'text', isRequired: true },
-          { name: 'email', label: t('form.email') || 'Email', type: 'text', isRequired: true, inputType: 'email' },
-          { name: 'role', label: t('form.role') || 'Role', type: 'select', isRequired: true, options: roleOptionsList },
+          { 
+            name: 'userId', 
+            label: t('form.selectUser') || 'Select User', 
+            type: 'select', 
+            isRequired: true, 
+            options: filteredUsers.filter(u => u.status === 'approved').map(u => ({ value: u.id, label: u.name })) 
+          },
+          { 
+            name: 'role', 
+            label: t('form.role') || 'Role', 
+            type: 'select', 
+            isRequired: true, 
+            options: roleOptionsList 
+          },
         ]}
       />
 
