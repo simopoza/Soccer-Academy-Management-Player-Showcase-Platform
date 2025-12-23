@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const { getPlayers, getPlayerById, addPlayer, updatePlayer, deletePlayer, completeProfile, getCurrentPlayer } = require("../controllers/playersController");
+const { getPlayers, getPlayerById, addPlayer, updatePlayer, deletePlayer, completeProfile, getCurrentPlayer, adminCreatePlayerWithUser } = require("../controllers/playersController");
 const validate = require("../middlewares/validate");
 const { playersValidationRules, playersUpdateValidationRules, playersGetByIdValidatorRules, completeProfileValidationRules } = require('../validators/playersValidator');
+const { adminPlayerValidationRules } = require('../validators/adminPlayerValidator');
 const { hasRole } = require("../middlewares/roleMiddleware");
 
 /**
@@ -81,6 +82,9 @@ router.get("/:id", hasRole("admin", "agent", "player"), playersGetByIdValidatorR
  *         description: Player added successfully
  */
 router.post("/", hasRole("admin"), playersValidationRules, validate, addPlayer);
+
+// Admin endpoint to create a player and create/link a user account if email provided
+router.post('/admin-create', hasRole('admin'), adminPlayerValidationRules, validate, adminCreatePlayerWithUser);
 
 /**
  * @swagger

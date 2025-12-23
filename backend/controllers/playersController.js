@@ -1,4 +1,8 @@
 const db = require("../db");
+const { hashPassword } = require('../helpers/hashPassword');
+const { generateResetToken } = require('../helpers/generateToken');
+const { sendResetEmail } = require('../helpers/emailService');
+const crypto = require('crypto');
 
 const getPlayers = async (req, res) => {
   try {
@@ -328,12 +332,135 @@ const completeProfile = async (req, res) => {
   }
 };
 
+ // admin-only endpoint to create player + user if needed
+  const adminCreatePlayerWithUser = async (req, res) => {
+    const {
+      first_name,
+      last_name,
+      date_of_birth,
+      height,
+      weight,
+      position,
+      strong_foot,
+      image_url,
+      team_id,
+      email,
+      sendInvite
+    } = req.body;
+
+    const normalizePosition = (pos) => {
+      if (!pos) return null;
+      const positionMap = {
+        'Goalkeeper': 'GK', 'Defender': 'CB', 'Midfielder': 'CM', 'Forward': 'ST', 'Winger': 'LW', 'Striker': 'ST',
+        'goalkeeper': 'GK', 'defender': 'CB', 'midfielder': 'CM', 'forward': 'ST', 'winger': 'LW', 'striker': 'ST'
+      };
+      const abbrevs = ['GK','CB','LB','RB','CDM','CM','CAM','LW','RW','ST'];
+      if (abbrevs.includes(String(pos).toUpperCase())) return String(pos).toUpperCase();
+      return positionMap[pos] || positionMap[String(pos).toLowerCase()] || null;
+    };
+
+    const normalizeStrongFoot = (sf) => {
+      if (!sf) return null;
+      const s = String(sf);
+      if (s === 'Left' || s === 'Right') return s;
+      if (s === 'Both' || s.toLowerCase() === 'both') return 'Right';
+      return null;
+    };
+
+    const dbPosition = normalizePosition(position);
+    const dbStrongFoot = normalizeStrongFoot(strong_foot);
+
+    let conn;
+    try {
+      conn = await db.getConnection();
+      await conn.beginTransaction();
+
+      let userId = null;
+      if (email) {
+          // check if user exists
+          const [existing] = await conn.query('SELECT id FROM Users WHERE email = ?', [email]);
+          if (existing && existing.length > 0) {
+            userId = existing[0].id;
+            // Guard: if this user already has a linked player, abort early
+            const [linked] = await conn.query('SELECT id FROM Players WHERE user_id = ?', [userId]);
+            if (linked && linked.length > 0) {
+              await conn.rollback();
+              conn.release();
+              return res.status(409).json({ message: 'User already linked to an existing player', player_id: linked[0].id });
+            }
+          } else {
+          // create user with a random password and then create reset token for invite
+          const tempPassword = crypto.randomBytes(12).toString('hex');
+          const hashed = await hashPassword(tempPassword);
+          const userInsert = 'INSERT INTO Users (email, password, first_name, last_name, role, status, profile_completed) VALUES (?, ?, ?, ?, ?, ?, ?)';
+          const [userRes] = await conn.query(userInsert, [email, hashed, first_name || '', last_name || '', 'player', 'approved', false]);
+          userId = userRes.insertId;
+
+          // create a reset token so player can set their password
+          const token = generateResetToken();
+          const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days
+          await conn.query('INSERT INTO PasswordResets (user_id, token, expires_at) VALUES (?, ?, ?)', [userId, token, expiresAt]);
+
+          // send reset/invite email if requested
+          if (sendInvite) {
+            // fire-and-forget; do not block transaction failure on mail delivery
+            sendResetEmail(email, token).catch(err => console.error('Failed to send invite email:', err));
+          }
+        }
+      }
+
+        // if userId provided, ensure this user isn't already linked to a player
+        if (userId !== undefined && userId !== null) {
+          const [existingPlayerRows] = await conn.query('SELECT id FROM Players WHERE user_id = ?', [userId]);
+          if (existingPlayerRows && existingPlayerRows.length > 0) {
+            // abort: user already has a linked player
+            await conn.rollback();
+            conn.release();
+            return res.status(409).json({ message: 'User already linked to an existing player', player_id: existingPlayerRows[0].id });
+          }
+        }
+
+        // insert player row
+        const cols = ['first_name','last_name','date_of_birth','height','weight','position','strong_foot','image_url'];
+        const values = [first_name, last_name, date_of_birth, height, weight, dbPosition, dbStrongFoot, image_url];
+        if (team_id !== undefined && team_id !== null) { cols.push('team_id'); values.push(team_id); }
+        if (userId !== undefined && userId !== null) { cols.push('user_id'); values.push(userId); }
+        const placeholders = cols.map(() => '?').join(',');
+        const query = `INSERT INTO Players (${cols.join(',')}) VALUES (${placeholders})`;
+        const [playerRes] = await conn.query(query, values);
+
+      await conn.commit();
+      conn.release();
+
+      return res.status(201).json({ message: 'Player created', id: playerRes.insertId, user_id: userId });
+      } catch (err) {
+        if (conn) {
+          try { await conn.rollback(); } catch (e) { console.error('Rollback error', e); }
+          try { conn.release(); } catch (e) {}
+        }
+        // Handle duplicate-key race where another request inserted a player with same user_id
+        if (err && err.code === 'ER_DUP_ENTRY' && /Players\.user_id/.test(err.sql)) {
+          try {
+            const [rows] = await db.query('SELECT id FROM Players WHERE user_id = ?', [userId]);
+            if (rows && rows.length > 0) {
+              return res.status(409).json({ message: 'User already linked to an existing player', player_id: rows[0].id });
+            }
+          } catch (innerErr) {
+            console.error('Error querying existing player after duplicate entry:', innerErr);
+          }
+        }
+        console.error('Error in adminCreatePlayerWithUser:', err);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+  };
+
 module.exports = {
-    getPlayers,
-    getPlayerById,
-    getCurrentPlayer,
-    addPlayer,
-    updatePlayer,
-    deletePlayer,
-    completeProfile,
+  getPlayers,
+  getPlayerById,
+  getCurrentPlayer,
+  addPlayer,
+  updatePlayer,
+  deletePlayer,
+  completeProfile,
+  adminCreatePlayerWithUser
 };
