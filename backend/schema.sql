@@ -31,7 +31,11 @@ CREATE TABLE IF NOT EXISTS Users (
 CREATE TABLE IF NOT EXISTS Teams (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(50) NOT NULL,
-  age_limit INT NOT NULL
+  age_limit INT NOT NULL,
+  coach VARCHAR(100) NULL,
+  founded VARCHAR(20) NULL,
+  status ENUM('Active','Inactive') DEFAULT 'Active',
+  player_count INT DEFAULT 0
 );
 
 -- =====================
