@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS Users (
   approved_by INT NULL,
   approved_at DATETIME NULL,
   profile_completed BOOLEAN DEFAULT FALSE,
+  image_url TEXT NULL,
 
   FOREIGN KEY (approved_by) REFERENCES Users(id) ON DELETE SET NULL ON UPDATE CASCADE
 );

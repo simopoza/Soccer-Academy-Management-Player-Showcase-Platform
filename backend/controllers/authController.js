@@ -89,8 +89,25 @@ const login = async (req, res) => {
       });
     }
 
-    const accessToken = generateAccessToken(existingUser[0]);
-    const refreshToken = generateRefreshToken(existingUser[0]);
+    // Build a richer user object including image_url (prefer Users.image_url, fallback to Players.image_url)
+    const [ userRows ] = await db.query(
+      `SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.profile_completed, u.status, COALESCE(u.image_url, p.image_url) AS image_url
+       FROM Users u
+       LEFT JOIN Players p ON p.user_id = u.id
+       WHERE u.email = ?`,
+      [email]
+    );
+
+    const userObj = userRows[0];
+    // Ensure image_url is absolute
+    if (userObj && userObj.image_url) {
+      if (!String(userObj.image_url).startsWith('http')) {
+        userObj.image_url = `${req.protocol}://${req.get('host')}${userObj.image_url}`;
+      }
+    }
+
+    const accessToken = generateAccessToken(userObj);
+    const refreshToken = generateRefreshToken(userObj);
 
     const isProduction = process.env.NODE_ENV === "production";
 
@@ -111,15 +128,7 @@ const login = async (req, res) => {
     res.status(200).json({
       message: "User logged in successfully",
       token: accessToken,
-      user: {
-        id: existingUser[0].id,
-        first_name: existingUser[0].first_name,
-        last_name: existingUser[0].last_name,
-        email: existingUser[0].email,
-        role: existingUser[0].role,
-        profile_completed: existingUser[0].profile_completed,
-        status: existingUser[0].status
-      },
+      user: userObj,
     });
 
   } catch (error) {
@@ -263,12 +272,20 @@ const getMe = async (req, res) => {
     const userId = req.user.id;
 
     const [users] = await db.query(
-      "SELECT id, first_name, last_name, email, role, profile_completed, status FROM Users WHERE id = ?",
+      `SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.profile_completed, u.status, COALESCE(u.image_url, p.image_url) AS image_url
+       FROM Users u
+       LEFT JOIN Players p ON p.user_id = u.id
+       WHERE u.id = ?`,
       [userId]
     );
 
     if (users.length === 0) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // Ensure image_url is absolute when present
+    if (users[0] && users[0].image_url && !String(users[0].image_url).startsWith('http')) {
+      users[0].image_url = `${req.protocol}://${req.get('host')}${users[0].image_url}`;
     }
 
     res.status(200).json({

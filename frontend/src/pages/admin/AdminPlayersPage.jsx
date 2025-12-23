@@ -214,6 +214,7 @@ const AdminPlayersPage = () => {
           team: p.team_name || '',
           position: p.position || '',
           status: p.status || 'Active',
+          image: p.image_url || null,
         }));
         if (mounted) setPlayers(mapped);
       } catch (err) {
@@ -245,7 +246,7 @@ const AdminPlayersPage = () => {
       accessor: 'name',
       render: (row) => (
         <HStack spacing={3} align="center">
-          <AvatarCircle name={row.name} size="sm" />
+          <AvatarCircle name={row.name} src={row.image} size="sm" />
           <Box fontWeight="600" fontSize="sm">{row.name}</Box>
         </HStack>
       ),

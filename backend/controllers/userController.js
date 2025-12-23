@@ -4,7 +4,18 @@ const { hashPassword, comparePassword } = require("../helpers/hashPassword");
 // GET all users
 const getAllUsers = async (req, res) => {
   try {
-    const [ users ] = await db.query("SELECT id, first_name, last_name, email, role, status FROM Users");
+    const [ users ] = await db.query(
+      `SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.status, COALESCE(u.image_url, p.image_url) AS image_url
+       FROM Users u
+       LEFT JOIN Players p ON p.user_id = u.id`
+    );
+    // Convert relative image paths to absolute URLs
+    const makeAbsolute = (req, url) => {
+      if (!url) return null;
+      if (String(url).startsWith('http')) return url;
+      return `${req.protocol}://${req.get('host')}${url}`;
+    };
+    users.forEach(u => { u.image_url = makeAbsolute(req, u.image_url); });
     
     // Return an empty array when there are no users so clients can always
     // safely treat the response as an array (avoids `res.data.map` errors).
@@ -24,7 +35,25 @@ const getUserById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const [ user  ] = await db.query("SELECT id, first_name, last_name, email FROM Users WHERE id = ?", [id]);
+    // If Users.image_url column exists, include it; otherwise return user and attach player image if present
+    const [colCheck] = await db.query("SHOW COLUMNS FROM Users LIKE 'image_url'");
+    let user;
+    if (colCheck && colCheck.length > 0) {
+      [user] = await db.query("SELECT id, first_name, last_name, email, image_url FROM Users WHERE id = ?", [id]);
+    } else {
+      [user] = await db.query("SELECT id, first_name, last_name, email FROM Users WHERE id = ?", [id]);
+      // try to attach player image if exists
+      const [pRows] = await db.query('SELECT image_url FROM Players WHERE user_id = ?', [id]);
+      if (pRows && pRows.length > 0 && pRows[0].image_url) {
+        user[0].image_url = pRows[0].image_url;
+      }
+    }
+    const makeAbsolute = (req, url) => {
+      if (!url) return null;
+      if (String(url).startsWith('http')) return url;
+      return `${req.protocol}://${req.get('host')}${url}`;
+    };
+    if (user[0] && user[0].image_url) user[0].image_url = makeAbsolute(req, user[0].image_url);
     
     if (user.length === 0) {
       return res.status(404).json({ error: "User not found" });
@@ -146,7 +175,9 @@ const resetPassword = async (req, res) => {
 const updateUserProfile = async (req, res) => {
   try {
     const { id } = req.params;
-    const { first_name, last_name, email } = req.body;
+    // When multipart/form-data is used, multer populates req.body and req.file
+    const { first_name, last_name, email } = req.body || {};
+    const uploadedFile = req.file;
 
     const [ existingUser ] = await db.query("SELECT * FROM Users WHERE id = ?", [id]);
 
@@ -167,6 +198,34 @@ const updateUserProfile = async (req, res) => {
     if (last_name !== undefined) fieldsToUpdate.last_name = last_name;
     if (email !== undefined) fieldsToUpdate.email = email;
 
+    // If an image was uploaded, save it to disk and set image_url (but only update Users.image_url if column exists)
+    let playerImageToUpdate = null;
+    if (uploadedFile) {
+      try {
+        const fs = require('fs');
+        const fsp = require('fs').promises;
+        const path = require('path');
+        const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
+        await fsp.mkdir(uploadsDir, { recursive: true });
+        const ext = uploadedFile.originalname.split('.').pop();
+        const filename = `user_${id}_${Date.now()}.${ext}`;
+        const filepath = path.join(uploadsDir, filename);
+        await fsp.writeFile(filepath, uploadedFile.buffer);
+        // Set image_url to a path the frontend can request
+        const imageUrl = `/public/uploads/${filename}`;
+        // Check whether Users.image_url column exists; if so, update Users, otherwise plan to update Players
+        const [colImgCheck] = await db.query("SHOW COLUMNS FROM Users LIKE 'image_url'");
+        if (colImgCheck && colImgCheck.length > 0) {
+          fieldsToUpdate.image_url = imageUrl;
+        } else {
+          playerImageToUpdate = imageUrl;
+        }
+      } catch (fileErr) {
+        console.error('Error saving uploaded profile image:', fileErr);
+        return res.status(500).json({ error: 'Failed to save profile image' });
+      }
+    }
+
     if (Object.keys(fieldsToUpdate).length === 0) {
       return res.status(400).json({ error: "No valid fields provided for update" });
     }
@@ -182,8 +241,35 @@ const updateUserProfile = async (req, res) => {
     
     await db.query(sql, values);
 
-    // Return updated user info
-    const [ updatedUser ] = await db.query("SELECT id, first_name, last_name, email, role FROM Users WHERE id = ?", [id]);
+    // If the Users table did not have image_url, but we saved an image, write it onto the Players table for that user
+    if (playerImageToUpdate) {
+      try {
+        await db.query('UPDATE Players SET image_url = ? WHERE user_id = ?', [playerImageToUpdate, id]);
+      } catch (pErr) {
+        console.error('Error updating Players.image_url fallback:', pErr);
+        // non-fatal: continue to respond with user info
+      }
+    }
+
+    // Return updated user info (include image_url if present on Users or fallback to Players)
+    const [colCheck2] = await db.query("SHOW COLUMNS FROM Users LIKE 'image_url'");
+    let updatedUser;
+    if (colCheck2 && colCheck2.length > 0) {
+      [updatedUser] = await db.query("SELECT id, first_name, last_name, email, role, image_url FROM Users WHERE id = ?", [id]);
+    } else {
+      [updatedUser] = await db.query("SELECT id, first_name, last_name, email, role FROM Users WHERE id = ?", [id]);
+      const [pRows2] = await db.query('SELECT image_url FROM Players WHERE user_id = ?', [id]);
+      if (pRows2 && pRows2.length > 0 && pRows2[0].image_url) {
+        updatedUser[0].image_url = pRows2[0].image_url;
+      }
+    }
+    // ensure absolute URL
+    const makeAbsolute = (req, url) => {
+      if (!url) return null;
+      if (String(url).startsWith('http')) return url;
+      return `${req.protocol}://${req.get('host')}${url}`;
+    };
+    if (updatedUser[0] && updatedUser[0].image_url) updatedUser[0].image_url = makeAbsolute(req, updatedUser[0].image_url);
 
     res.status(200).json({ 
       message: "Profile updated successfully",

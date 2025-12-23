@@ -86,6 +86,7 @@ const Header = ({ pageTitle, pageSubtitle }) => {
           <Avatar
             size="md"
             name={`${user?.first_name} ${user?.last_name}`}
+            src={user?.image_url || undefined}
             bg="#00B050"
             color="white"
             cursor="pointer"

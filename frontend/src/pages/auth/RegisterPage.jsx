@@ -5,7 +5,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigate } from "react-router-dom";
 import { useToast, useColorModeValue, Box } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
-
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import AuthCard from "../../components/ui/AuthCard";
 import AuthForm from "../../components/forms/AuthForm";
 import authService from "../../services/authService";
@@ -27,11 +27,11 @@ const RegisterPage = () => {
   const { switchLanguage, isArabic, currentLang } = useLanguageSwitcher();
 
   // Color mode values
-  const bgGradient = useColorModeValue(
-    "linear(to-b, green.50, white)",
-    "linear(to-b, gray.900, gray.800)"
-  );
-
+  // const bgGradient = useColorModeValue(
+  //   "linear(to-b, green.50, white)",
+  //   "linear(to-b, gray.900, gray.800)"
+  // );
+  const { bgGradient } = useDashboardTheme();
   const resolver = useMemo(() => yupResolver(registerSchema(i18n)), [currentLang]);
 
   const {
@@ -119,7 +119,7 @@ const RegisterPage = () => {
   ];
 
   return (
-    <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bgGradient="linear(to-b, green.50, white)" py={8}>
+    <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bgGradient={bgGradient} py={8}>
       <AuthCard title={t("joinAcademy")} subtitle={t("createAccount")}>
         <AuthForm
           fields={fields}

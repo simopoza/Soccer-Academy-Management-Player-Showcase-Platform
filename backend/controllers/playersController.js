@@ -7,11 +7,19 @@ const crypto = require('crypto');
 const getPlayers = async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT p.*, t.name AS team_name
+      SELECT p.*, t.name AS team_name, COALESCE(p.image_url, u.image_url) AS image_url
       FROM Players p
       LEFT JOIN Teams t ON p.team_id = t.id
+      LEFT JOIN Users u ON p.user_id = u.id
     `);
-    res.status(200).json(rows);
+    // Make image URLs absolute so frontend can load them from the backend host
+    const makeAbsolute = (url) => {
+      if (!url) return null;
+      if (String(url).startsWith('http')) return url;
+      return `${req.protocol}://${req.get('host')}${url}`;
+    };
+    const mapped = rows.map(r => ({ ...r, image_url: makeAbsolute(r.image_url) }));
+    res.status(200).json(mapped);
   } catch (err) {
     console.error("Error fetching players:", err);
     return res.status(500).json({ message : "Internal Server Error" });
@@ -23,17 +31,24 @@ const getPlayerById = async (req, res) => {
 
   try {
     const [rows] = await db.query(`
-      SELECT p.*, t.name AS team_name
+      SELECT p.*, t.name AS team_name, COALESCE(p.image_url, u.image_url) AS image_url
       FROM Players p
       LEFT JOIN Teams t ON p.team_id = t.id
+      LEFT JOIN Users u ON p.user_id = u.id
       WHERE p.id = ?
     `, [id]);
 
     if (rows.length === 0) {
       return res.status(404).json({ message: "Player not found" });
     }
-
-    res.status(200).json(rows[0]);
+    const makeAbsolute = (url) => {
+      if (!url) return null;
+      if (String(url).startsWith('http')) return url;
+      return `${req.protocol}://${req.get('host')}${url}`;
+    };
+    const row = rows[0];
+    row.image_url = makeAbsolute(row.image_url);
+    res.status(200).json(row);
   } catch (err) {
     console.error("Error fetching player by ID:", err);
     return res.status(500).json({ message: "Internal server error" });
@@ -52,8 +67,14 @@ const getCurrentPlayer = async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).json({ message: "Player profile not found" });
     }
-
-    res.status(200).json(rows[0]);
+    const makeAbsolute = (url) => {
+      if (!url) return null;
+      if (String(url).startsWith('http')) return url;
+      return `${req.protocol}://${req.get('host')}${url}`;
+    };
+    const row = rows[0];
+    row.image_url = makeAbsolute(row.image_url);
+    res.status(200).json(row);
   } catch (err) {
     console.error("Error fetching current player:", err);
     return res.status(500).json({ message: "Internal server error" });
@@ -273,8 +294,29 @@ const completeProfile = async (req, res) => {
       strong_foot
     };
 
-    // Add optional image_url if provided
+    // Handle uploaded file (req.file) if present and set image_url accordingly
+    let uploadedImageUrl = null;
+    if (req.file) {
+      try {
+        const fs = require('fs');
+        const fsp = require('fs').promises;
+        const path = require('path');
+        const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
+        await fsp.mkdir(uploadsDir, { recursive: true });
+        const ext = (req.file.originalname || 'img').split('.').pop();
+        const filename = `user_${userId}_${Date.now()}.${ext}`;
+        const filepath = path.join(uploadsDir, filename);
+        await fsp.writeFile(filepath, req.file.buffer);
+        uploadedImageUrl = `/public/uploads/${filename}`;
+      } catch (fileErr) {
+        console.error('Error saving uploaded player image:', fileErr);
+        return res.status(500).json({ message: 'Failed to save profile image' });
+      }
+    }
+
+    // Add optional image_url if provided either via body or uploaded file
     if (image_url) fieldsToUpdate.image_url = image_url;
+    if (uploadedImageUrl) fieldsToUpdate.image_url = uploadedImageUrl;
 
     // Normalize position and strong_foot for DB
     if (fieldsToUpdate.position) {
@@ -321,6 +363,17 @@ const completeProfile = async (req, res) => {
       "UPDATE Users SET profile_completed = TRUE WHERE id = ?",
       [userId]
     );
+
+    // If we saved an uploaded image (or body image_url) and the player is linked to a user, copy it to Users.image_url
+    try {
+      const newImage = fieldsToUpdate.image_url || null;
+      if (newImage && player[0] && player[0].user_id) {
+        await db.query('UPDATE Users SET image_url = ? WHERE id = ?', [newImage, player[0].user_id]);
+      }
+    } catch (copyErr) {
+      console.error('Error copying player image to Users.image_url:', copyErr);
+      // non-fatal
+    }
 
     res.status(200).json({ 
       message: "Profile completed successfully",

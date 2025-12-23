@@ -27,6 +27,8 @@ const ProfileForm = ({ user }) => {
     lastName: user?.last_name || "",
     email: user?.email || "",
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(user?.image_url || null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Update form when user prop changes
@@ -36,10 +38,26 @@ const ProfileForm = ({ user }) => {
       lastName: user?.last_name || "",
       email: user?.email || "",
     });
+    setImagePreview(user?.image_url || null);
+    setImageFile(null);
   }, [user]);
 
   const handleInputChange = (field) => (e) => {
     setProfileData((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const handleFileChange = (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    // Basic client-side validation: accept images only
+    if (!f.type.startsWith('image/')) {
+      toast({ title: t('error') || 'Error', description: t('invalidImage') || 'Please select a valid image file', status: 'error', duration: 3000 });
+      return;
+    }
+    // create preview
+    const url = URL.createObjectURL(f);
+    setImagePreview(url);
+    setImageFile(f);
   };
 
   const handleSubmit = async (e) => {
@@ -52,13 +70,15 @@ const ProfileForm = ({ user }) => {
         firstName: profileData.firstName.trim(),
         lastName: profileData.lastName.trim(),
         email: profileData.email.trim(),
+        imageFile: imageFile || undefined,
       };
 
       // Check if nothing changed
       const hasChanges = 
         payload.firstName !== (user.first_name || "").trim() ||
         payload.lastName !== (user.last_name || "").trim() ||
-        payload.email !== (user.email || "").trim();
+        payload.email !== (user.email || "").trim() ||
+        Boolean(imageFile);
 
       if (!hasChanges) {
         toast({
@@ -84,6 +104,11 @@ const ProfileForm = ({ user }) => {
         duration: 3000,
         isClosable: true,
       });
+      // cleanup local preview URL if we created one
+      if (imageFile) {
+        try { URL.revokeObjectURL(imagePreview); } catch (e) {}
+        setImageFile(null);
+      }
     } catch (error) {
       console.error("Profile update error:", error);
       toast({
@@ -102,7 +127,7 @@ const ProfileForm = ({ user }) => {
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <VStack spacing={4} align="stretch" flex="1">
         <HStack spacing={4} mb={4}>
-          <Avatar size="xl" name={`${user?.first_name} ${user?.last_name}`} bg="green.500" />
+          <Avatar size="xl" name={`${user?.first_name} ${user?.last_name}`} bg="green.500" src={imagePreview} />
           <VStack align="start" spacing={0}>
             <Text fontWeight="bold" fontSize="lg">
               {user?.first_name} {user?.last_name}
@@ -115,6 +140,11 @@ const ProfileForm = ({ user }) => {
             </Text>
           </VStack>
         </HStack>
+
+        <FormControl>
+          <FormLabel>{t('profileImage') || 'Profile Image'}</FormLabel>
+          <Input type="file" accept="image/*" onChange={handleFileChange} isDisabled={isLoading} />
+        </FormControl>
 
         <Divider />
 

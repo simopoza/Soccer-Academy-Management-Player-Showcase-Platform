@@ -28,6 +28,22 @@ const deleteUser = async (userId) => {
 };
 
 const updateUserProfile = async (userId, profileData) => {
+  // If there's an image file, send multipart/form-data, otherwise send JSON
+  if (profileData.imageFile) {
+    const form = new FormData();
+    form.append('first_name', profileData.firstName);
+    form.append('last_name', profileData.lastName);
+    form.append('email', profileData.email);
+    form.append('image', profileData.imageFile);
+
+    const response = await axiosInstance.put(`/users/${userId}/profile`, form, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
+
   const response = await axiosInstance.put(`/users/${userId}/profile`, {
     first_name: profileData.firstName,
     last_name: profileData.lastName,

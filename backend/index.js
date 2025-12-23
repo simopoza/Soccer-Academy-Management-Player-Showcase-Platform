@@ -61,6 +61,10 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+const path = require('path');
+// Serve uploaded files from /public
+app.use('/public', express.static(path.join(__dirname, 'public')));
+
 // app.use("/api/v1", () => {
 //   console.log("API v1 route accessed");
 //   apiRoutes;

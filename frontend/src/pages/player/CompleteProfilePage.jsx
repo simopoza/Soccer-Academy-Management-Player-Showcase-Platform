@@ -24,12 +24,15 @@ import {
   Avatar,
   Icon,
   Flex,
+  IconButton,
   useColorModeValue,
 } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
 import ThemeToggle from "../../components/ui/ThemeToggle";
+import { CloseIcon } from "@chakra-ui/icons";
 import useLanguageSwitcher from "../../hooks/useLanguageSwitcher";
 import playerService from "../../services/playerService";
+import authService from '../../services/authService';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 const CompleteProfilePage = () => {
@@ -45,6 +48,7 @@ const CompleteProfilePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
 
   const [formData, setFormData] = useState({
     date_of_birth: "",
@@ -66,6 +70,8 @@ const CompleteProfilePage = () => {
   const labelColor = useColorModeValue("gray.700", "gray.200");
   const headerBg = useColorModeValue("green.500", "green.600");
   const { bgGradient, cardBg } = useDashboardTheme();
+  const removeBtnBg = useColorModeValue('white', 'gray.700');
+  const removeBtnColor = useColorModeValue('gray.800', 'white');
 
   // Fetch teams and player info on mount
   useEffect(() => {
@@ -106,13 +112,27 @@ const CompleteProfilePage = () => {
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result);
-        setFormData((prev) => ({ ...prev, image_url: reader.result }));
-      };
-      reader.readAsDataURL(file);
+      // Revoke previous object URL if we created one
+      try {
+        if (photoPreview && imageFile) URL.revokeObjectURL(photoPreview);
+      } catch (e) {}
+
+      // Keep the File object so we can upload via FormData; use object URL for preview
+      const objUrl = URL.createObjectURL(file);
+      setPhotoPreview(objUrl);
+      setImageFile(file);
+      // clear any previous base64 preview value
+      setFormData((prev) => ({ ...prev, image_url: null }));
     }
+  };
+
+  const handleRemovePhoto = () => {
+    try {
+      if (photoPreview && imageFile) URL.revokeObjectURL(photoPreview);
+    } catch (e) {}
+    setPhotoPreview(null);
+    setImageFile(null);
+    setFormData((prev) => ({ ...prev, image_url: "" }));
   };
 
   const handleSubmit = async (e) => {
@@ -134,18 +154,34 @@ const CompleteProfilePage = () => {
     try {
       setLoading(true);
 
-      await playerService.completeProfile(playerId, {
+      // Build payload. If an image file was selected, send multipart/form-data
+      const payload = {
         date_of_birth: formData.date_of_birth,
         team_id: parseInt(formData.team_id),
         position: formData.position,
         height: parseFloat(formData.height),
         weight: parseFloat(formData.weight),
         strong_foot: formData.strong_foot,
-        image_url: formData.image_url || null,
-      });
+      };
 
-      // Update user context
-      updateUser({ profile_completed: true });
+      if (imageFile) {
+        const form = new FormData();
+        Object.entries(payload).forEach(([k, v]) => form.append(k, v));
+        form.append('image', imageFile);
+        await playerService.completeProfile(playerId, form);
+      } else {
+        // no binary file, send JSON
+        await playerService.completeProfile(playerId, { ...payload, image_url: formData.image_url || null });
+      }
+
+      // Refresh authenticated user (so header/sidebar receive updated image_url)
+      try {
+        const me = await authService.getMe();
+        if (me && me.user) updateUser(me.user);
+      } catch (e) {
+        // fallback: at least mark profile_completed
+        updateUser({ profile_completed: true });
+      }
 
       toast({
         title: t("success") || "Success",
@@ -331,7 +367,21 @@ const CompleteProfilePage = () => {
                   </FormLabel>
                   <Flex align="center" gap={4}>
                     {photoPreview && (
-                      <Avatar size="lg" src={photoPreview} border="2px" borderColor="green.200" />
+                      <Box position="relative">
+                        <Avatar size="lg" src={photoPreview} border="2px" borderColor="green.200" />
+                        <IconButton
+                          aria-label="Remove photo"
+                          icon={<CloseIcon />}
+                          size="sm"
+                          onClick={handleRemovePhoto}
+                          position="absolute"
+                          top="-8px"
+                          right="-8px"
+                          bg={removeBtnBg}
+                          color={removeBtnColor}
+                          _hover={{ bg: useColorModeValue('gray.50','gray.600') }}
+                        />
+                      </Box>
                     )}
                     <Box flex="1">
                       <Button

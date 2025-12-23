@@ -111,7 +111,7 @@ const Sidebar = ({ children }) => {
 			{/* User Profile Section */}
 			<Box p={4} borderBottom="1px" borderColor={borderColor}>
 				<HStack spacing={3}>
-					<Avatar size="md" name={`${user?.first_name} ${user?.last_name}`} bg="green.500" />
+					<Avatar size="md" name={`${user?.first_name} ${user?.last_name}`} src={user?.image_url || undefined} bg="green.500" />
 					<Box flex={1}>
 						<Text fontSize="sm" fontWeight="bold" noOfLines={1}>
 							{user?.first_name} {user?.last_name}

@@ -97,6 +97,7 @@ const AdminUsersManagementPage = () => {
           email: u.email,
           role: u.role,
           status: u.status,
+          image: u.image_url || null,
         }));
         if (mounted) setUsers(data);
       } catch (err) {
@@ -299,7 +300,7 @@ const AdminUsersManagementPage = () => {
         const last = parts.join(' ') || '';
         return (
           <HStack spacing={3} align="center">
-            <AvatarCircle name={row.name} size="sm" />
+            <AvatarCircle name={row.name} src={row.image} size="sm" />
             <HStack spacing={2} align="baseline">
               <Box fontWeight="600" fontSize="14px" color={nameColor}>{first}</Box>
               <Box fontSize="14px" color={nameColor} opacity={0.9}>{last}</Box>

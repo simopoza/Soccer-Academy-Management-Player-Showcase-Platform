@@ -11,6 +11,14 @@ const getCurrentPlayer = async () => {
 };
 
 const completeProfile = async (playerId, profileData) => {
+  // If profileData is a FormData (multipart), send it with proper headers
+  if (profileData instanceof FormData) {
+    const response = await axiosInstance.put(`/players/${playerId}/complete-profile`, profileData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  }
+
   const response = await axiosInstance.put(`/players/${playerId}/complete-profile`, profileData);
   return response.data;
 };

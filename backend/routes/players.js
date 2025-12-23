@@ -6,6 +6,9 @@ const { playersValidationRules, playersUpdateValidationRules, playersGetByIdVali
 const { adminPlayerValidationRules } = require('../validators/adminPlayerValidator');
 const { hasRole } = require("../middlewares/roleMiddleware");
 
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
+
 /**
  * @swagger
  * /players:
@@ -178,7 +181,8 @@ router.put("/:id", hasRole("admin"), playersUpdateValidationRules, validate, upd
  *       403:
  *         description: Access denied
  */
-router.put("/:id/complete-profile", hasRole("player"), completeProfileValidationRules, validate, completeProfile);
+// Accept multipart/form-data for profile completion (allows image uploads)
+router.put("/:id/complete-profile", hasRole("player"), upload.single('image'), completeProfileValidationRules, validate, completeProfile);
 
 /**
  * @swagger

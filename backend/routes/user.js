@@ -20,6 +20,9 @@ const {
 const { hasRole } = require("../middlewares/roleMiddleware");
 const { resetPasswordLimiter } = require("../middlewares/rateLimitMiddleware");
 
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
+
 /**
  * @swagger
  * /users:
@@ -143,7 +146,8 @@ router.put("/:id", hasRole("admin", "player"), userUpdateValidationRules, valida
  *       200:
  *         description: Profile updated successfully
  */
-router.put("/:id/profile", hasRole("player", "admin", "agent"), userProfileUpdateValidationRules, validate, updateUserProfile);
+// Accept multipart/form-data for profile updates (allows image uploads)
+router.put("/:id/profile", hasRole("player", "admin", "agent"), upload.single('image'), userProfileUpdateValidationRules, validate, updateUserProfile);
 
 /**
  * @swagger
