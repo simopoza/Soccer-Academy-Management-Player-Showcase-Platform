@@ -30,6 +30,7 @@ import { useTranslation } from "react-i18next";
 import ThemeToggle from "../../components/ui/ThemeToggle";
 import useLanguageSwitcher from "../../hooks/useLanguageSwitcher";
 import playerService from "../../services/playerService";
+import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
 const CompleteProfilePage = () => {
   const { user, updateUser } = useAuth();
@@ -56,14 +57,15 @@ const CompleteProfilePage = () => {
   });
 
   // Color mode values
-  const bgGradient = useColorModeValue(
-    "linear(to-b, green.50, white)",
-    "linear(to-b, gray.900, gray.800)"
-  );
-  const cardBg = useColorModeValue("white", "gray.700");
+  // const bgGradient = useColorModeValue(
+  //   "linear(to-b, green.50, white)",
+  //   "linear(to-b, gray.900, gray.800)"
+  // );
+  // const cardBg = useColorModeValue("white", "gray.700");
   const inputBg = useColorModeValue("gray.50", "gray.600");
   const labelColor = useColorModeValue("gray.700", "gray.200");
   const headerBg = useColorModeValue("green.500", "green.600");
+  const { bgGradient, cardBg } = useDashboardTheme();
 
   // Fetch teams and player info on mount
   useEffect(() => {
@@ -176,7 +178,7 @@ const CompleteProfilePage = () => {
   }
 
   return (
-    <Box minH="100vh" bgGradient="linear(to-b, green.50, white)" py={8} dir={isRTL ? "rtl" : "ltr"}>
+    <Box minH="100vh" bgGradient={bgGradient} py={8} dir={isRTL ? "rtl" : "ltr"}>
       <Container maxW="container.sm">
         <Card boxShadow="xl" borderRadius="lg" overflow="hidden" bg={cardBg}>
           <CardHeader bg={headerBg} textAlign="center" py={6} position="relative">

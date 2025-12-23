@@ -68,7 +68,22 @@ const AdminPlayersPage = () => {
     handleDelete,
     openEditDialog,
     openDeleteDialog,
-  } = useCrudList({ initialData: initialPlayers, initialForm: { first_name: '', last_name: '', date_of_birth: '', height: '', weight: '', position: 'Midfielder', strong_foot: 'Right', team_id: '' } });
+  } = useCrudList({
+    initialData: initialPlayers,
+    initialForm: {
+      first_name: '',
+      last_name: '',
+      date_of_birth: '',
+      height: '',
+      weight: '',
+      position: 'Midfielder',
+      strong_foot: 'Right',
+      team_id: '',
+      email: '',
+      sendInvite: false,
+    }
+  });
+
 
   const toast = useToast();
   const [teamFilter, setTeamFilter] = useState('all');
@@ -96,8 +111,10 @@ const AdminPlayersPage = () => {
           position: formData.position,
           strong_foot: formData.strong_foot,
           team_id: formData.team_id ? parseInt(formData.team_id) : null,
+          email: formData.email || null,
+          sendInvite: formData.sendInvite === true || formData.sendInvite === 'true',
         };
-        const resp = await playerService.addPlayer(payload);
+        const resp = await playerService.adminCreatePlayer(payload);
         const newPlayer = {
           id: resp.id,
           name: `${payload.first_name || ''} ${payload.last_name || ''}`.trim(),
@@ -108,7 +125,7 @@ const AdminPlayersPage = () => {
         setPlayers(prev => [...prev, newPlayer]);
         toast({ title: t('notification.playerAdded') || 'Player added', description: t('notification.playerAddedDesc') || `${newPlayer.name} has been added successfully.`, status: 'success', duration: 3000 });
         onAddClose();
-        setFormData({ first_name: '', last_name: '', date_of_birth: '', height: '', weight: '', position: 'Midfielder', strong_foot: 'Right', team_id: '' });
+        setFormData({ first_name: '', last_name: '', date_of_birth: '', height: '', weight: '', position: 'Midfielder', strong_foot: 'Right', team_id: '', email: '', sendInvite: false });
       } catch (err) {
         console.error('Error adding player', err);
         toast({ title: 'Failed to add player', status: 'error', duration: 4000 });
@@ -382,6 +399,11 @@ const AdminPlayersPage = () => {
             { value: 'Right', label: t('right') || 'Right' },
             { value: 'Left', label: t('left') || 'Left' },
             { value: 'Both', label: t('both') || 'Both' },
+          ] },
+          { name: 'email', label: t('email') || 'Email', type: 'text', isRequired: false },
+          { name: 'sendInvite', label: t('sendInvite') || 'Send Invite', type: 'select', isRequired: false, options: [
+            { value: 'true', label: t('yes') || 'Yes' },
+            { value: 'false', label: t('no') || 'No' },
           ] },
           { name: 'team_id', label: t('team') || 'Team', type: 'select', isRequired: false, options: teams.map(tm => ({ value: String(tm.id), label: tm.name })) },
         ]}

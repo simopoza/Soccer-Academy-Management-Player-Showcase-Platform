@@ -30,6 +30,11 @@ const addPlayer = async (playerData) => {
   return response.data;
 };
 
+const adminCreatePlayer = async (playerData) => {
+  const response = await axiosInstance.post('/players/admin-create', playerData);
+  return response.data;
+};
+
 const updatePlayer = async (playerId, playerData) => {
   const response = await axiosInstance.put(`/players/${playerId}`, playerData);
   return response.data;
@@ -40,4 +45,4 @@ const deletePlayer = async (playerId) => {
   return response.data;
 };
 
-export default { getTeams, getCurrentPlayer, completeProfile, getPlayers, getPlayerById, addPlayer, updatePlayer, deletePlayer };
+export default { getTeams, getCurrentPlayer, completeProfile, getPlayers, getPlayerById, addPlayer, adminCreatePlayer, updatePlayer, deletePlayer };
