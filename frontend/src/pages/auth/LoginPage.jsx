@@ -24,7 +24,7 @@ const LoginPage = () => {
     "linear(to-b, gray.900, gray.800)"
   );
 
-  const resolver = useMemo(() => yupResolver(loginSchema(i18n)), [currentLang]);
+  const resolver = useMemo(() => yupResolver(loginSchema(i18n)), [i18n]);
 
   const {
     register: formRegister,
@@ -36,7 +36,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     reset(undefined, { keepValues: true });
-  }, [currentLang]);
+  }, [currentLang, reset]);
 
   const onSubmit = async (data) => {
     try {

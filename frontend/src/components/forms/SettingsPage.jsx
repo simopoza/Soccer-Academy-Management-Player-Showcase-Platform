@@ -1,5 +1,5 @@
 import { Box, Container, Card, CardHeader, CardBody, Heading, Text, SimpleGrid, useColorModeValue, Skeleton, SkeletonCircle, VStack, HStack } from "@chakra-ui/react";
-import { useState, useEffect } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import Layout from "../layout/Layout";
 import ProfileForm from "./ProfileForm";
@@ -8,18 +8,14 @@ import PasswordForm from "./PasswordForm";
 const SettingsPage = ({ user }) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
-  const [isLoading, setIsLoading] = useState(true);
+  const isLoading = !user;
 
   const bgGradient = useColorModeValue("white", "linear(to-b, gray.900, gray.800)");
   const cardBg = useColorModeValue("white", "gray.700");
   const headingColor = useColorModeValue("green.700", "green.300");
   const textColor = useColorModeValue("gray.600", "gray.300");
 
-  useEffect(() => {
-    if (user) {
-      setIsLoading(false);
-    }
-  }, [user]);
+  // Derive loading state from `user` prop; initialize accordingly
 
   if (isLoading) {
     return (

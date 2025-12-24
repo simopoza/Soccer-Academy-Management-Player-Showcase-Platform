@@ -40,8 +40,7 @@ import CrudFormModal from '../../components/admin/CrudFormModal';
 const AdminTeamsPage = () => {
   const { t, i18n } = useTranslation();
 
-  const { bgGradient, cardBg, cardBorder, cardShadow, primaryGreen, textColor } = useDashboardTheme();
-  const pageBg = bgGradient;
+  const { bgGradient, cardBg, cardBorder } = useDashboardTheme();
   const isRTL = i18n?.language === 'ar';
 
   const {
@@ -58,10 +57,8 @@ const AdminTeamsPage = () => {
     onAddOpen,
     onAddClose,
     isEditOpen,
-    onEditOpen,
     onEditClose,
     isDeleteOpen,
-    onDeleteOpen,
     onDeleteClose,
 
     handleAdd,
@@ -134,8 +131,7 @@ const AdminTeamsPage = () => {
     return deleted;
   };
 
-  const onOpenEdit = (team) => openEditDialog(team);
-  const onOpenDelete = (team) => openDeleteDialog(team);
+  
 
   const columns = [
     {

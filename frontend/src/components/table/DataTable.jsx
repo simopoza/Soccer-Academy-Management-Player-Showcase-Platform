@@ -22,12 +22,15 @@ const DataTable = ({
   const tableProps = { ...props };
   const { cardBorder, titleColor, textColor, primaryGreen } = useDashboardTheme();
 
-  // Header background should contrast with the card background in both modes
-  const headerBg = wrapperBorderColor || cardBorder || useColorModeValue('#ECFDF5', '#0B1220');
-  // Hover background for rows (slightly different from header/card bg)
+  // call color-mode hooks at top-level and compute fallbacks
+  const headerBgFallback = useColorModeValue('#ECFDF5', '#0B1220');
   const rowHoverBg = useColorModeValue('#F1F5F9', '#071028');
-  const cellTextColor = textColor || useColorModeValue('#0F172A', '#E6EEF6');
-  const emptyTextColor = useColorModeValue('gray.500', 'gray.400');
+  const cellTextColorFallback = useColorModeValue('#0F172A', '#E6EEF6');
+  const headerColor = useColorModeValue(primaryGreen || titleColor || '#0F172A', 'whiteAlpha.900');
+  const borderBottomColor = useColorModeValue('#E2E8F0', '#1F2937');
+
+  const headerBg = wrapperBorderColor || cardBorder || headerBgFallback;
+  const cellTextColor = textColor || cellTextColorFallback;
 
   return (
     <Box overflowX="auto" borderRadius="8px" border="1px" borderColor={wrapperBorderColor || cardBorder || '#E2E8F0'}>
@@ -35,16 +38,16 @@ const DataTable = ({
         <Thead bg={headerBg}>
           <Tr>
             {columns.map((column, index) => (
-              <Th
+                <Th
                 key={index}
                 fontSize="13px"
                 fontWeight="600"
                 textTransform="none"
                 letterSpacing="normal"
-                color={useColorModeValue(primaryGreen || titleColor || '#0F172A', 'whiteAlpha.900')}
-                _light={{ color: primaryGreen || titleColor || '#0F172A' }}
-                _dark={{ color: 'whiteAlpha.900' }}
-                borderBottom={`1px solid ${wrapperBorderColor || cardBorder || useColorModeValue('#E2E8F0', '#1F2937')}`}
+                  color={headerColor}
+                  _light={{ color: primaryGreen || titleColor || '#0F172A' }}
+                  _dark={{ color: 'whiteAlpha.900' }}
+                  borderBottom={`1px solid ${wrapperBorderColor || cardBorder || borderBottomColor}`}
                 py="14px"
               >
                 {column.header}

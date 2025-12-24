@@ -17,14 +17,16 @@ const FilterSelect = ({
   options = [],
   value,
   onChange,
-  icon: IconComp = FilterIcon,
+  icon,
   ...props
 }) => {
+  const IconComp = icon || FilterIcon;
   const selected = options.find((o) => o.value === value);
-  const { cardBg, cardBorder, cardShadow, textColor, titleColor, primaryGreen } = useDashboardTheme();
+  const { cardBorder, cardShadow, textColor, primaryGreen } = useDashboardTheme();
   const placeholderColor = useColorModeValue('#94A3B8', '#94A3B8');
   const menuBg = useColorModeValue('#FFFFFF', '#1F2937');
   const menuHoverBg = useColorModeValue('#F8FAFC', '#111827');
+  const selectedBg = useColorModeValue('#F1F5F9', '#111827');
 
   const dedupedOptions = options.filter(
     (opt, idx, arr) =>
@@ -51,7 +53,7 @@ const FilterSelect = ({
             _hover={{ bg: menuHoverBg }}
           >
             {/* Left icon (fixed width) */}
-            <Box
+              <Box
               w="24px"
               display="flex"
               alignItems="center"
@@ -104,7 +106,7 @@ const FilterSelect = ({
                 borderRadius="6px"
                 fontSize="14px"
                 fontWeight="500"
-                bg={isSelected ? (useColorModeValue('#F1F5F9', '#111827')) : 'transparent'}
+                bg={isSelected ? selectedBg : 'transparent'}
                 _hover={{ bg: menuHoverBg }}
                 onClick={() =>
                   onChange({ target: { value: option.value } })

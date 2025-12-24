@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Flex,
@@ -43,11 +43,7 @@ const AdminUserManagementPage = () => {
   const { bgGradient } = useDashboardTheme();
 
   // Fetch pending users on component mount
-  useEffect(() => {
-    fetchPendingUsers();
-  }, []);
-
-  const fetchPendingUsers = async () => {
+  const fetchPendingUsers = useCallback(async () => {
     try {
       setLoading(true);
       const data = await adminService.getPendingUsers();
@@ -63,7 +59,11 @@ const AdminUserManagementPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast, t]);
+
+  useEffect(() => {
+    fetchPendingUsers();
+  }, [fetchPendingUsers]);
 
   const handleApprove = async (userId, userName) => {
     try {

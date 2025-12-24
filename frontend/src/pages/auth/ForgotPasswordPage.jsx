@@ -14,9 +14,9 @@ import ThemeToggle from "../../components/ui/ThemeToggle";
 const ForgotPasswordPage = () => {
   const { t, i18n } = useTranslation();
   const toast = useToast();
-  const { switchLanguage, isArabic, currentLang } = useLanguageSwitcher();
+  const { switchLanguage, isArabic } = useLanguageSwitcher();
 
-  const resolver = useMemo(() => yupResolver(forgotPasswordSchema(i18n)), [currentLang]);
+  const resolver = useMemo(() => yupResolver(forgotPasswordSchema(i18n)), [i18n]);
 
   const {
     register: formRegister,

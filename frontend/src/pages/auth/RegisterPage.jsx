@@ -3,7 +3,7 @@ import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigate } from "react-router-dom";
-import { useToast, useColorModeValue, Box } from "@chakra-ui/react";
+import { useToast, Box } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import AuthCard from "../../components/ui/AuthCard";
@@ -32,7 +32,7 @@ const RegisterPage = () => {
   //   "linear(to-b, gray.900, gray.800)"
   // );
   const { bgGradient } = useDashboardTheme();
-  const resolver = useMemo(() => yupResolver(registerSchema(i18n)), [currentLang]);
+  const resolver = useMemo(() => yupResolver(registerSchema(i18n)), [i18n]);
 
   const {
     register: formRegister,
@@ -44,7 +44,7 @@ const RegisterPage = () => {
 
   useEffect(() => {
     reset(undefined, { keepValues: true });
-  }, [currentLang]);
+  }, [currentLang, reset]);
 
   const onSubmit = async (data) => {
     try {

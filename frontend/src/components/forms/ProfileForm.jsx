@@ -106,7 +106,7 @@ const ProfileForm = ({ user }) => {
       });
       // cleanup local preview URL if we created one
       if (imageFile) {
-        try { URL.revokeObjectURL(imagePreview); } catch (e) {}
+        try { URL.revokeObjectURL(imagePreview); } catch (err) { console.warn('Failed to revoke object URL', err); }
         setImageFile(null);
       }
     } catch (error) {

@@ -1,26 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Flex,
   VStack,
   HStack,
-  useDisclosure,
-  ModalCloseButton,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  Select,
   useToast,
   Text,
   SimpleGrid,
-  Textarea,
   useColorModeValue,
 } from '@chakra-ui/react';
 import { CalendarDays, Clock, CheckCircle, Trophy, MapPin } from 'lucide-react';
@@ -31,7 +17,8 @@ import { Badge, ActionButtons, SearchInput, FilterSelect, StatsCard } from '../.
 import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import useCrudList from '../../hooks/useCrudList';
-import { statusOptions, matchTypeOptions } from '../../utils/adminOptions';
+import matchService from '../../services/matchService';
+import { statusOptions } from '../../utils/adminOptions';
 import CrudFormModal from '../../components/admin/CrudFormModal';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 
@@ -49,7 +36,6 @@ const AdminMatchesPage = () => {
   const { t, i18n } = useTranslation();
 
   const { bgGradient, cardBg, cardBorder, cardShadow, primaryGreen, textColor } = useDashboardTheme();
-  const pageBg = bgGradient;
 
   const opponentColor = useColorModeValue('gray.600', '#FFFFFF');
 
@@ -64,34 +50,85 @@ const AdminMatchesPage = () => {
     setSelectedItem,
     formData,
     setFormData,
-
     isAddOpen,
     onAddOpen,
     onAddClose,
     isEditOpen,
-    onEditOpen,
     onEditClose,
     isDeleteOpen,
-    onDeleteOpen,
     onDeleteClose,
 
-    handleAdd,
-    handleEdit,
-    handleDelete,
     openEditDialog,
     openDeleteDialog,
   } = useCrudList({ initialData: initialMatches, initialForm: { team: '', opponent: '', date: '', time: '', location: '', matchType: 'Home', competition: 'League', notes: '' } });
 
+  // fetch matches from backend on mount
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const data = await matchService.getMatches();
+        // map backend rows to UI shape
+        const mapped = (data || []).map((r) => {
+          let dateStr = '';
+          let timeStr = '';
+          try {
+            const dt = new Date(r.date);
+            if (!isNaN(dt)) {
+              dateStr = dt.toISOString().slice(0, 10);
+              timeStr = dt.toTimeString().slice(0,5);
+            }
+          } catch (e) { console.debug(e); }
+
+          // compute status and result for cards and table
+          const now = new Date();
+          const matchDate = new Date(r.date);
+          const isUpcoming = !isNaN(matchDate) && matchDate > now;
+          let status = isUpcoming ? 'Upcoming' : 'Completed';
+          // if date is invalid, mark as Upcoming to avoid counting as completed
+          if (isNaN(matchDate)) status = 'Upcoming';
+
+          // result from perspective of the team (team_goals vs opponent_goals)
+          let result = null;
+          if (!isUpcoming && r.team_goals != null && r.opponent_goals != null) {
+            if (r.team_goals > r.opponent_goals) result = 'Won';
+            else if (r.team_goals === r.opponent_goals) result = 'Draw';
+            else result = 'Lost';
+          }
+
+          return {
+            id: r.id,
+            team: r.team_name || '',
+            opponent: r.opponent,
+            date: dateStr,
+            time: timeStr,
+            location: r.location || '',
+            matchType: r.location || '',
+            competition: r.competition || '',
+            score: (r.team_goals != null && r.opponent_goals != null) ? `${r.team_goals}-${r.opponent_goals}` : null,
+            status,
+            result,
+            
+          };
+        });
+        setMatches(mapped);
+      } catch (err) {
+        // leave initial data if fetch fails
+        console.error('Failed to fetch matches', err);
+      }
+    };
+
+    fetchMatches();
+  }, [setMatches]);
+
   const toast = useToast();
   const [statusFilter, setStatusFilter] = useState('all');
-  const [matchTypeFilter, setMatchTypeFilter] = useState('all');
-
+  const [locationFilter, setLocationFilter] = useState('all');
   const filteredMatches = matches.filter(match => {
     const matchesSearch = match.team.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          match.opponent.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || match.status === statusFilter;
-    const matchesType = matchTypeFilter === 'all' || match.matchType === matchTypeFilter;
-    return matchesSearch && matchesStatus && matchesType;
+    const matchesLocation = locationFilter === 'all' || match.location === locationFilter;
+    return matchesSearch && matchesStatus && matchesLocation;
   });
 
   const totalMatches = matches.length;
@@ -101,46 +138,160 @@ const AdminMatchesPage = () => {
   const winRate = completedMatches > 0 ? ((wins / completedMatches) * 100).toFixed(1) : '0.0';
 
   const onConfirmAdd = () => {
-    const created = handleAdd({ status: 'Upcoming', score: null });
-    toast({
-      title: t('notification.matchAdded') || 'Match added',
-      description: t('notification.matchAddedDesc') || `Match has been scheduled successfully.`,
-      status: 'success',
-      duration: 3000,
-    });
-    onAddClose();
-    setFormData({ team: '', opponent: '', date: '', time: '', location: '', matchType: 'Home', competition: 'League', notes: '' });
-    return created;
+    return (async () => {
+      try {
+        // map formData to backend payload
+        const payload = {
+          date: `${formData.date} ${formData.time || '00:00:00'}`,
+          opponent: formData.opponent,
+          // location now indicates Home/Away
+          location: formData.matchType,
+          competition: formData.competition,
+          team_goals: 0,
+          opponent_goals: 0,
+          team_id: null,
+        };
+        await matchService.addMatch(payload);
+        // re-fetch list
+        const data = await matchService.getMatches();
+        const mapped = (data || []).map((r) => {
+          let dateStr = '';
+          let timeStr = '';
+          try {
+            const dt = new Date(r.date);
+            if (!isNaN(dt)) {
+              dateStr = dt.toISOString().slice(0, 10);
+              timeStr = dt.toTimeString().slice(0,5);
+            }
+          } catch (e) { console.debug(e); }
+          return {
+            id: r.id,
+            team: r.team_name || '',
+            opponent: r.opponent,
+            date: dateStr,
+            time: timeStr,
+            location: r.location || '',
+            matchType: r.location || '',
+            competition: r.competition || '',
+            score: (r.team_goals != null && r.opponent_goals != null) ? `${r.team_goals}-${r.opponent_goals}` : null,
+            
+          };
+        });
+        setMatches(mapped);
+        toast({
+          title: t('notification.matchAdded') || 'Match added',
+          description: t('notification.matchAddedDesc') || `Match has been scheduled successfully.`,
+          status: 'success',
+          duration: 3000,
+        });
+        onAddClose();
+        setFormData({ team: '', opponent: '', date: '', time: '', location: '', matchType: 'Home', competition: 'League', notes: '' });
+      } catch (err) {
+        console.error('Add match failed', err);
+        toast({ title: t('error') || 'Error', description: err?.message || 'Failed to add match', status: 'error' });
+      }
+    })();
   };
 
   const onConfirmEdit = () => {
-    const updated = handleEdit();
-    toast({
-      title: t('notification.matchUpdated') || 'Match updated',
-      description: t('notification.matchUpdatedDesc') || `Match information has been updated successfully.`,
-      status: 'success',
-      duration: 3000,
-    });
-    onEditClose();
-    setSelectedItem(null);
-    return updated;
+    return (async () => {
+      try {
+        if (!selectedItem) return null;
+        const payload = {
+          date: `${formData.date} ${formData.time || '00:00:00'}`,
+          opponent: formData.opponent,
+          // location now stores Home/Away
+          location: formData.matchType,
+          competition: formData.competition,
+        };
+        await matchService.updateMatch(selectedItem.id, payload);
+        // re-fetch
+        const data = await matchService.getMatches();
+        const mapped = (data || []).map((r) => {
+          let dateStr = '';
+          let timeStr = '';
+          try {
+            const dt = new Date(r.date);
+            if (!isNaN(dt)) {
+              dateStr = dt.toISOString().slice(0, 10);
+              timeStr = dt.toTimeString().slice(0,5);
+            }
+          } catch (e) { console.debug(e); }
+          return {
+            id: r.id,
+            team: r.team_name || '',
+            opponent: r.opponent,
+            date: dateStr,
+            time: timeStr,
+            location: r.location || '',
+            matchType: r.location || '',
+            competition: r.competition || '',
+            score: (r.team_goals != null && r.opponent_goals != null) ? `${r.team_goals}-${r.opponent_goals}` : null,
+            
+          };
+        });
+        setMatches(mapped);
+        toast({
+          title: t('notification.matchUpdated') || 'Match updated',
+          description: t('notification.matchUpdatedDesc') || `Match information has been updated successfully.`,
+          status: 'success',
+          duration: 3000,
+        });
+        onEditClose();
+        setSelectedItem(null);
+      } catch (err) {
+        console.error('Update match failed', err);
+        toast({ title: t('error') || 'Error', description: err?.message || 'Failed to update match', status: 'error' });
+      }
+    })();
   };
 
   const onConfirmDelete = () => {
-    const deleted = handleDelete();
-    toast({
-      title: t('notification.matchDeleted') || 'Match deleted',
-      description: t('notification.matchDeletedDesc') || `Match has been removed.`,
-      status: 'success',
-      duration: 3000,
-    });
-    onDeleteClose();
-    setSelectedItem(null);
-    return deleted;
+    return (async () => {
+      try {
+        if (!selectedItem) return null;
+        await matchService.deleteMatch(selectedItem.id);
+        const data = await matchService.getMatches();
+        const mapped = (data || []).map((r) => {
+          let dateStr = '';
+          let timeStr = '';
+          try {
+            const dt = new Date(r.date);
+            if (!isNaN(dt)) {
+              dateStr = dt.toISOString().slice(0, 10);
+              timeStr = dt.toTimeString().slice(0,5);
+            }
+          } catch (e) { console.debug(e); }
+          return {
+            id: r.id,
+            team: r.team_name || '',
+            opponent: r.opponent,
+            date: dateStr,
+            time: timeStr,
+            location: r.location || '',
+            matchType: r.location || '',
+            competition: r.competition || '',
+            score: (r.team_goals != null && r.opponent_goals != null) ? `${r.team_goals}-${r.opponent_goals}` : null,
+            
+          };
+        });
+        setMatches(mapped);
+        toast({
+          title: t('notification.matchDeleted') || 'Match deleted',
+          description: t('notification.matchDeletedDesc') || `Match has been removed.`,
+          status: 'success',
+          duration: 3000,
+        });
+        onDeleteClose();
+        setSelectedItem(null);
+      } catch (err) {
+        console.error('Delete match failed', err);
+        toast({ title: t('error') || 'Error', description: err?.message || 'Failed to delete match', status: 'error' });
+      }
+    })();
   };
 
-  const onOpenEdit = (match) => openEditDialog(match);
-  const onOpenDelete = (match) => openDeleteDialog(match);
+  
 
   // field schema for Add/Edit forms (keeps form definition in one place)
   const matchFields = [
@@ -149,7 +300,10 @@ const AdminMatchesPage = () => {
     { name: 'date', label: t('date') || 'Date', type: 'text', isRequired: true, inputType: 'date' },
     { name: 'time', label: t('time') || 'Time', type: 'text', isRequired: true, inputType: 'time' },
     { name: 'location', label: t('location') || 'Location', type: 'text', isRequired: true, placeholder: t('location') || 'Enter match location' },
-    { name: 'matchType', label: t('matchType') || 'Match Type', type: 'select', isRequired: true, options: matchTypeOptions(t) },
+    { name: 'matchType', label: t('matchType') || 'Match Type', type: 'select', isRequired: true, options: [
+      { value: 'Home', label: t('matchTypeHome') || 'Home' },
+      { value: 'Away', label: t('matchTypeAway') || 'Away' },
+    ] },
     { name: 'competition', label: t('competition') || 'Competition', type: 'select', isRequired: true, options: [
       { value: 'League', label: t('competitionLeague') || 'League' },
       { value: 'Cup', label: t('competitionCup') || 'Cup' },
@@ -181,7 +335,8 @@ const AdminMatchesPage = () => {
           const dt = new Date(`${row.date}T${row.time}`);
           formattedDate = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'short', day: 'numeric' }).format(dt);
           formattedTime = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hour12: false }).format(dt);
-        } catch (e) {
+        } catch (err) {
+          console.debug(err);
           // keep raw values if parsing fails
         }
 
@@ -209,15 +364,7 @@ const AdminMatchesPage = () => {
         </HStack>
       ),
     },
-    {
-      header: t('table.type') || 'Type',
-      accessor: 'matchType',
-      render: (row) => (
-        <Badge variant={row.matchType === 'Home' ? 'success' : 'info'}>
-          {t(row.matchType === 'Home' ? 'matchTypeHome' : 'matchTypeAway') || row.matchType}
-        </Badge>
-      ),
-    },
+    
     {
       header: t('table.competition') || 'Competition',
       accessor: 'competition',
@@ -351,9 +498,13 @@ const AdminMatchesPage = () => {
           <Box width="200px">
             <FilterSelect
               placeholder={t('filterAllTypes') || 'All Types'}
-              options={matchTypeOptions(t)}
-              value={matchTypeFilter}
-              onChange={(e) => setMatchTypeFilter(e.target.value)}
+              options={[
+                { value: 'all', label: t('filterAllTypes') || 'All Types' },
+                { value: 'Home', label: t('matchTypeHome') || 'Home' },
+                { value: 'Away', label: t('matchTypeAway') || 'Away' },
+              ]}
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
             />
           </Box>
         </Flex>

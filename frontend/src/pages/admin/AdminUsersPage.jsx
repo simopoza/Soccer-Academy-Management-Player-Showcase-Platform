@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   Box,
   Flex,
@@ -38,8 +38,7 @@ const initialUsers = [];
 const AdminUsersManagementPage = () => {
   const { t, i18n } = useTranslation();
 
-  const { bgGradient, cardBg, cardBorder, cardShadow, textColor, primaryGreen } = useDashboardTheme();
-  const pageBg = bgGradient;
+  const { bgGradient, cardBg, cardBorder } = useDashboardTheme();
   const nameColor = useColorModeValue('gray.900', 'gray.100');
   const emailColor = useColorModeValue('gray.500', 'gray.300');
 
@@ -56,25 +55,13 @@ const AdminUsersManagementPage = () => {
     formData,
     setFormData,
 
-    isAddOpen,
-    onAddOpen,
-    onAddClose,
-    isEditOpen,
-    onEditOpen,
-    onEditClose,
+    // Only keep the hooks/handlers this page actually uses
     isDeleteOpen,
-    onDeleteOpen,
     onDeleteClose,
-
-    handleAdd,
-    handleEdit,
-    handleDelete,
-    openEditDialog,
     openDeleteDialog,
   } = useCrudList({ initialData: initialUsers, initialForm: { name: '', email: '', role: 'player' } });
 
   const toast = useToast();
-  const [selectedUserForRoleChange, setSelectedUserForRoleChange] = useState(null);
   const { isOpen: isRoleChangeOpen, onOpen: onRoleChangeOpen, onClose: onRoleChangeClose } = useDisclosure();
 
   // Load users from backend on mount
@@ -121,81 +108,7 @@ const AdminUsersManagementPage = () => {
     return matchesSearch && matchesRole;
   });
 
-  // CRUD actions use the hook's handlers; show toasts and close modals here
-  const onConfirmAdd = async () => {
-    try {
-      const name = formData.name || '';
-      const parts = name.split(' ');
-      const first_name = parts.shift() || '';
-      const last_name = parts.join(' ') || '';
-
-      // generate a temporary password for newly created users
-      const tempPassword = Math.random().toString(36).slice(-10) + 'A1!';
-
-      const createdResp = await userService.createUser({
-        firstName: first_name,
-        lastName: last_name,
-        email: formData.email,
-        password: tempPassword,
-        role: formData.role,
-      });
-
-      const created = createdResp && createdResp.user;
-
-      const newUser = {
-        id: created.userId,
-        name: `${created.first_name || first_name} ${created.last_name || last_name}`.trim(),
-        email: created.email || formData.email,
-        role: created.role || formData.role,
-        status: 'Active',
-      };
-
-      setUsers(prev => [...prev, newUser]);
-
-      toast({
-        title: t('buttonAdd') || 'User added',
-        description: `${newUser.name} ${t('actionAddUser') || 'has been added successfully.'}`,
-        status: 'success',
-        duration: 3000,
-      });
-      onAddClose();
-      setFormData({ name: '', email: '', role: 'player' });
-    } catch (err) {
-      console.error('Error adding user', err);
-      toast({ title: 'Failed to add user', status: 'error', duration: 4000 });
-    }
-  };
-
-  const onConfirmEdit = async () => {
-    try {
-      if (!selectedItem) return;
-      const id = selectedItem.id;
-      // Only update role (admins edit role only)
-      await userService.updateUserRole(id, formData.role);
-
-      const updated = { ...selectedItem, role: formData.role };
-      setUsers(prev => prev.map(u => (u.id === id ? updated : u)));
-
-      toast({
-        title: t('buttonSave') || 'User updated',
-        description: t('actionAddUser') || 'User information has been updated successfully.',
-        status: 'success',
-        duration: 3000,
-      });
-      onEditClose();
-      setSelectedItem(null);
-    } catch (err) {
-      console.error('Error updating user', err);
-      toast({ title: 'Failed to update user', status: 'error', duration: 4000 });
-    }
-  };
-
-  // Open edit dialog for role-only editing
-  const openRoleEditDialog = (item) => {
-    setSelectedItem(item);
-    setFormData({ role: item.role });
-    onEditOpen();
-  };
+  // CRUD actions implemented where needed (role change handled below)
 
   const onConfirmDelete = async () => {
     try {
@@ -258,7 +171,6 @@ const AdminUsersManagementPage = () => {
       return;
     }
     // Pre-select the first user or keep it empty
-    setSelectedUserForRoleChange(null);
     setFormData({ userId: '', role: '' });
     onRoleChangeOpen();
   };

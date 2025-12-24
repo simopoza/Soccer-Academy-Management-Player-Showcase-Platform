@@ -19,17 +19,19 @@ const matchesValidatorRules = [
     .trim().escape()
     .notEmpty().withMessage('opponent cannot be empty'),
 
+  // location now stores whether the match is Home or Away
   check('location')
     .exists().withMessage('location is required')
-    .isIn(['Home', 'Away'])
-    .withMessage("Invalid location. Must be 'Home' or 'Away'."),
-
-  check('match_type')
-    .exists().withMessage('match_type is required')
     .trim().escape()
-    .notEmpty().withMessage('match_type cannot be empty')
-    .isIn(['Friendly', 'Officially'])
-    .withMessage("Invalid type. Must be 'Friendly' or 'Officially'."),
+    .isIn(['Home', 'Away']).withMessage("Invalid location. Must be 'Home' or 'Away'."),
+
+  // competition type: Friendly, Cup, League
+  check('competition')
+    .exists().withMessage('competition is required')
+    .trim().escape()
+    .notEmpty().withMessage('competition cannot be empty')
+    .isIn(['Friendly', 'Cup', 'League'])
+    .withMessage("Invalid competition. Must be one of 'Friendly', 'Cup', or 'League'."),
 
   check('team_id')
     .exists().withMessage('team_id is required')
@@ -75,15 +77,14 @@ const matchesUpdateValidatorRules = [
 
   check('location')
     .optional()
-    .isIn(['Home', 'Away'])
-    .withMessage("Invalid location. Must be 'Home' or 'Away'."),
+    .trim().escape()
+    .isIn(['Home', 'Away']).withMessage("Invalid location. Must be 'Home' or 'Away'."),
 
-  check('match_type')
+  check('competition')
     .optional()
     .trim().escape()
-    .notEmpty().withMessage('match_type cannot be empty')
-    .isIn(['Friendly', 'Officially'])
-    .withMessage("Invalid type. Must be 'Friendly' or 'Officially'."),
+    .isIn(['Friendly', 'Cup', 'League'])
+    .withMessage("Invalid competition. Must be one of 'Friendly', 'Cup', or 'League'."),
 
   check('team_id')
     .optional()

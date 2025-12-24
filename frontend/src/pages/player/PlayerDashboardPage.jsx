@@ -9,10 +9,7 @@ const PlayerDashboardPage = () => {
   const isRTL = i18n.language === "ar";
 
   // Color mode values
-  const bgGradient = useColorModeValue(
-    "linear(to-b, green.50, white)",
-    "linear(to-b, gray.900, gray.800)"
-  );
+  
   const headingColor = useColorModeValue("green.700", "green.300");
   const textColor = useColorModeValue("gray.600", "gray.300");
   const cardBg = useColorModeValue("white", "gray.700");

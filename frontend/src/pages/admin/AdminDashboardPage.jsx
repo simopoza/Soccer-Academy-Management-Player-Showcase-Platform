@@ -46,8 +46,9 @@ const AdminDashboardPage = () => {
   const axisStroke = useColorModeValue(textColor || '#0F172A', 'white');
   // Header title color for tables: green in light, white in dark
   const headerColor = useColorModeValue(primaryGreen || titleColor || '#0F172A', 'white');
-  // Header background color: same as DataTable - light green tint in light mode, dark blue-gray in dark mode
-  const headerBg = cardBorder || useColorModeValue('#ECFDF5', '#0B1220');
+  // Header background color: compute fallback from color mode then prefer `cardBorder` if provided
+  const headerBgFallback = useColorModeValue('#ECFDF5', '#0B1220');
+  const headerBg = cardBorder || headerBgFallback;
   const statsCards = useStatsCards(stats, t, primaryGreen);
 
 

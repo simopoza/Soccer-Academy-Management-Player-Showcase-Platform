@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { render } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { BrowserRouter } from 'react-router-dom';

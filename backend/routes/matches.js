@@ -59,9 +59,9 @@ router.get("/:id", hasRole("admin", "agent", "player"), matchesGetByIdValidatorR
  *               location:
  *                 type: string
  *                 enum: [Home, Away]
- *               match_type:
+ *               competition:
  *                 type: string
- *                 enum: [Friendly, Officially]
+ *                 enum: [Friendly, Cup, League]
  *               team_goals:
  *                 type: integer
  *                 default: 0
@@ -89,28 +89,28 @@ router.post("/", hasRole("admin"), matchesValidatorRules, validate, addMatch);
  *           type: integer
  *     requestBody:
  *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               date:
- *                 type: string
- *                 format: date-time
- *               opponent:
- *                 type: string
- *               location:
- *                 type: string
- *                 enum: [Home, Away]
- *               match_type:
- *                 type: string
- *                 enum: [Friendly, Officially]
- *               team_goals:
- *                 type: integer
- *               opponent_goals:
- *                 type: integer
- *               team_id:
- *                 type: integer
+  *       content:
+  *         application/json:
+  *           schema:
+  *             type: object
+  *             properties:
+  *               date:
+  *                 type: string
+  *                 format: date-time
+  *               opponent:
+  *                 type: string
+  *               location:
+  *                 type: string
+  *                 enum: [Home, Away]
+  *               competition:
+  *                 type: string
+  *                 enum: [Friendly, Cup, League]
+  *               team_goals:
+  *                 type: integer
+  *               opponent_goals:
+  *                 type: integer
+  *               team_id:
+  *                 type: integer
  *     responses:
  *       200:
  *         description: Match updated successfully

@@ -4,7 +4,6 @@ import {
   Flex,
   VStack,
   HStack,
-  useDisclosure,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -39,8 +38,7 @@ const initialPlayers = [];
 const AdminPlayersPage = () => {
   const { t, i18n } = useTranslation();
 
-  const { bgGradient, cardBg, cardBorder, cardShadow, primaryGreen, textColor } = useDashboardTheme();
-  const pageBg = bgGradient;
+  const { bgGradient, cardBg, cardBorder } = useDashboardTheme();
   const isRTL = i18n?.language === 'ar';
 
   const {
@@ -63,11 +61,8 @@ const AdminPlayersPage = () => {
     onDeleteOpen,
     onDeleteClose,
 
-    handleAdd,
-    handleEdit,
-    handleDelete,
-    openEditDialog,
-    openDeleteDialog,
+    // keep only handlers we actually call from this component
+    // modal open/close handlers are used directly below
   } = useCrudList({
     initialData: initialPlayers,
     initialForm: {
@@ -199,7 +194,11 @@ const AdminPlayersPage = () => {
       toast({ title: 'Failed to load player details', status: 'error', duration: 3000 });
     }
   };
-  const onOpenDelete = (player) => openDeleteDialog(player);
+  const onOpenDelete = (player) => {
+    // openDeleteDialog isn't available in this hook usage; instead set selected item and open delete modal
+    setSelectedItem(player);
+    if (typeof onDeleteOpen === 'function') onDeleteOpen();
+  };
 
   // Load players and teams from API on mount
   useEffect(() => {
@@ -321,8 +320,8 @@ const AdminPlayersPage = () => {
       accessor: 'actions',
       render: (row) => (
         <ActionButtons
-          onEdit={() => openEditDialog(row)}
-          onDelete={() => openDeleteDialog(row)}
+          onEdit={() => onOpenEdit(row)}
+          onDelete={() => onOpenDelete(row)}
         />
       ),
     },

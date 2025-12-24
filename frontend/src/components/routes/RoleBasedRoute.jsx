@@ -52,7 +52,7 @@ const RoleBasedRoute = ({ children, allowedRoles }) => {
     };
 
     verifyRole();
-  }, [isAuthenticated, loading]); // Only depend on auth state, not user
+  }, [isAuthenticated, loading, updateUser, user, verifiedUser]); // Include updateUser/user/verifiedUser
   
   // Separate effect to sync user from context when it changes
   useEffect(() => {
@@ -60,7 +60,7 @@ const RoleBasedRoute = ({ children, allowedRoles }) => {
       setVerifiedUser(user);
       setVerifying(false);
     }
-  }, [user]);
+  }, [user, loading, isAuthenticated, verifiedUser]);
 
   // Show loading state while checking authentication or verifying role
   if (loading || verifying) {

@@ -72,6 +72,7 @@ const CompleteProfilePage = () => {
   const { bgGradient, cardBg } = useDashboardTheme();
   const removeBtnBg = useColorModeValue('white', 'gray.700');
   const removeBtnColor = useColorModeValue('gray.800', 'white');
+  const hoverBg = useColorModeValue('gray.50','gray.600');
 
   // Fetch teams and player info on mount
   useEffect(() => {
@@ -95,7 +96,7 @@ const CompleteProfilePage = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [t, toast]);
 
   // Check if profile already completed - redirect to dashboard
   useEffect(() => {
@@ -115,7 +116,9 @@ const CompleteProfilePage = () => {
       // Revoke previous object URL if we created one
       try {
         if (photoPreview && imageFile) URL.revokeObjectURL(photoPreview);
-      } catch (e) {}
+      } catch (e) {
+        console.debug(e);
+      }
 
       // Keep the File object so we can upload via FormData; use object URL for preview
       const objUrl = URL.createObjectURL(file);
@@ -129,7 +132,9 @@ const CompleteProfilePage = () => {
   const handleRemovePhoto = () => {
     try {
       if (photoPreview && imageFile) URL.revokeObjectURL(photoPreview);
-    } catch (e) {}
+    } catch (e) {
+      console.debug(e);
+    }
     setPhotoPreview(null);
     setImageFile(null);
     setFormData((prev) => ({ ...prev, image_url: "" }));
@@ -178,7 +183,8 @@ const CompleteProfilePage = () => {
       try {
         const me = await authService.getMe();
         if (me && me.user) updateUser(me.user);
-      } catch (e) {
+      } catch (err) {
+        console.debug(err);
         // fallback: at least mark profile_completed
         updateUser({ profile_completed: true });
       }
@@ -379,7 +385,7 @@ const CompleteProfilePage = () => {
                           right="-8px"
                           bg={removeBtnBg}
                           color={removeBtnColor}
-                          _hover={{ bg: useColorModeValue('gray.50','gray.600') }}
+                          _hover={{ bg: hoverBg }}
                         />
                       </Box>
                     )}

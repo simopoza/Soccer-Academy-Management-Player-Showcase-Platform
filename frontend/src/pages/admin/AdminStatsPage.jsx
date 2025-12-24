@@ -4,7 +4,6 @@ import {
   Flex,
   VStack,
   HStack,
-  useDisclosure,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -46,15 +45,12 @@ const AdminStatsPage = () => {
   const { t, i18n } = useTranslation();
 
   const { bgGradient, cardBg, cardBorder, cardShadow, primaryGreen, textColor } = useDashboardTheme();
-  const pageBg = bgGradient;
   const isRTL = i18n?.language === 'ar';
 
   const {
     items: stats,
-    setItems: setStats,
     searchQuery,
     setSearchQuery,
-    selectedItem,
     setSelectedItem,
     formData,
     setFormData,
@@ -63,10 +59,8 @@ const AdminStatsPage = () => {
     onAddOpen,
     onAddClose,
     isEditOpen,
-    onEditOpen,
     onEditClose,
     isDeleteOpen,
-    onDeleteOpen,
     onDeleteClose,
 
     handleAdd,
@@ -89,7 +83,8 @@ const AdminStatsPage = () => {
     if (parts[0]) uniqueTeamsSet.add(parts[0].trim());
     if (parts[1]) uniqueTeamsSet.add(parts[1].trim());
   });
-  const uniqueTeams = Array.from(uniqueTeamsSet).sort();
+  // derived but not currently used in the UI; remove to satisfy lint
+  // const uniqueTeams = Array.from(uniqueTeamsSet).sort();
 
   const filteredStats = stats.filter(stat => {
     const matchesSearch = stat.playerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -148,8 +143,7 @@ const AdminStatsPage = () => {
     return deleted;
   };
 
-  const onOpenEdit = (stat) => openEditDialog(stat);
-  const onOpenDelete = (stat) => openDeleteDialog(stat);
+  
 
   const getRatingColor = (rating) => {
     if (rating >= 9.0) return 'success';

@@ -16,13 +16,13 @@ const ResetPasswordPage = () => {
   const toast = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { switchLanguage, isArabic, currentLang } = useLanguageSwitcher();
+  const { switchLanguage, isArabic } = useLanguageSwitcher();
 
   const [isValidating, setIsValidating] = useState(true);
   const [tokenValid, setTokenValid] = useState(false);
   const token = searchParams.get("token");
 
-  const resolver = useMemo(() => yupResolver(resetPasswordSchema(i18n)), [currentLang]);
+  const resolver = useMemo(() => yupResolver(resetPasswordSchema(i18n)), [i18n]);
 
   // Color mode values
   const inputBg = useColorModeValue("gray.50", "gray.700");
@@ -58,6 +58,7 @@ const ResetPasswordPage = () => {
           throw new Error("Invalid token");
         }
       } catch (error) {
+        console.debug(error);
         toast({
           title: t("resetPassword.invalidTokenTitle"),
           description: t("resetPassword.tokenExpired"),

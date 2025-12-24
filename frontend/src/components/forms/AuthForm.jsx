@@ -3,8 +3,6 @@ import { Link } from "react-router-dom";
 import ThemeToggle from "../ui/ThemeToggle";
 
 const AuthForm = ({
-  title,
-  subtitle,
   fields,
   onSubmit,
   isSubmitting,

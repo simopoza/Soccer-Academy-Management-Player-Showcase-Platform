@@ -42,16 +42,18 @@ const addMatch = async (req, res) => {
   const {
     date,
     opponent,
-    location,
-    match_type,
+    competition,
     team_goals,
     opponent_goals,
     team_id
   } = req.body;
 
+  // location now indicates Home/Away (validator enforces values)
+  const location = req.body.location ?? null;
+
   try {
-    const query = "INSERT INTO Matches (date, opponent, location, match_type, team_goals, opponent_goals, team_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    const value = [date, opponent, location, match_type, team_goals, opponent_goals, team_id];
+    const query = "INSERT INTO Matches (date, opponent, location, competition, team_goals, opponent_goals, team_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    const value = [date, opponent, location, competition, team_goals, opponent_goals, team_id];
     const [ result ] = await db.query(query, value);
     res.status(201).json({ 
       message: "Match added successfully",
@@ -74,7 +76,7 @@ const updateMatch = async (req, res) => {
     }
 
     const fieldsToUpdate = {};
-    const allowedFields = ["date", "opponent", "location", "match_type", "team_goals", "opponent_goals", "team_id"];
+    const allowedFields = ["date", "opponent", "location", "competition", "team_goals", "opponent_goals", "team_id"];
 
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) {

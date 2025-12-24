@@ -54,7 +54,7 @@ const ProfileCompletionGuard = ({ children }) => {
     };
 
     verifyUser();
-  }, [isAuthenticated, loading, user]); // Added user back to dependencies
+  }, [isAuthenticated, loading, user, updateUser]); // Include updateUser to satisfy exhaustive-deps
 
   // Show loading state while checking authentication or verifying
   if (loading || verifying) {

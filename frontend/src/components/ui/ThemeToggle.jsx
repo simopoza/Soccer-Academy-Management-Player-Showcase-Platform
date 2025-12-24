@@ -2,7 +2,7 @@ import { IconButton, useColorMode, useColorModeValue, Tooltip } from '@chakra-ui
 import { SunIcon, MoonIcon } from '@chakra-ui/icons';
 
 const ThemeToggle = ({ size = "md", variant = "ghost" }) => {
-  const { colorMode, toggleColorMode } = useColorMode();
+  const { toggleColorMode } = useColorMode();
   const icon = useColorModeValue(<MoonIcon />, <SunIcon />);
   const label = useColorModeValue("Switch to dark mode", "Switch to light mode");
   

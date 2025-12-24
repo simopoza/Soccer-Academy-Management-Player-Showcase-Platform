@@ -10,9 +10,11 @@ const SearchInput = ({
 }) => {
   const { cardBg, cardBorder, primaryGreen, textColor } = useDashboardTheme();
   const placeholderColor = useColorModeValue('#94A3B8', '#94A3B8');
-  const inputBg = cardBg || useColorModeValue('#FFFFFF', '#1F2937');
-  const borderColor = cardBorder || useColorModeValue('#E2E8F0', '#374151');
+  const defaultInputBg = useColorModeValue('#FFFFFF', '#1F2937');
+  const defaultBorderColor = useColorModeValue('#E2E8F0', '#374151');
   const hoverBorder = useColorModeValue('#CBD5E1', '#4B5563');
+  const inputBg = cardBg || defaultInputBg;
+  const borderColor = cardBorder || defaultBorderColor;
   const focusBorder = primaryGreen || '#2563EB';
 
   return (

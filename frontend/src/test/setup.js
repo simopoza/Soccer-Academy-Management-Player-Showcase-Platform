@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { cleanup, configure } from '@testing-library/react';
-import { afterEach, vi, beforeAll } from 'vitest';
+import { afterEach, vi } from 'vitest';
 
 // Configure testing library with longer timeouts
 configure({ 
@@ -34,7 +34,7 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
+window.IntersectionObserver = class IntersectionObserver {
   constructor() {}
   disconnect() {}
   observe() {}
@@ -51,4 +51,4 @@ const localStorageMock = {
   removeItem: vi.fn(),
   clear: vi.fn(),
 };
-global.localStorage = localStorageMock;
+window.localStorage = localStorageMock;

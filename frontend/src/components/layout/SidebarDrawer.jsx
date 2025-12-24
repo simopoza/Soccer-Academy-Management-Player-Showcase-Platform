@@ -45,7 +45,6 @@ const SidebarDrawer = ({ isOpen, onClose }) => {
 
   // Color mode values - Design System
   const sidebarBg = useColorModeValue("#FFFFFF", "gray.800");
-  const borderColor = useColorModeValue("#E5E7EB", "gray.700");
   const activeBg = useColorModeValue("#00B050", "#00B050");
   const activeColor = useColorModeValue("#FFFFFF", "#FFFFFF");
   const hoverBg = useColorModeValue("#F9FAFB", "gray.700");
