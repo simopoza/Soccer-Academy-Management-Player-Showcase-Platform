@@ -2,10 +2,11 @@ const { check, param } = require('express-validator');
 
 const matchesValidatorRules = [
   check('date')
-    .exists().withMessage('date is required')
-    .isISO8601().withMessage('date must be a valid ISO date')
-    .toDate()
-    .custom((date) => {
+    .optional({ nullable: true })
+    .custom((value, { req }) => {
+      if (value == null || value === '') return true; // allow null/empty
+      const date = new Date(value);
+      if (isNaN(date.getTime())) throw new Error('date must be a valid ISO date');
       const minDate = new Date('2024-01-01');
       const maxDate = new Date();
       if (date < minDate || date > maxDate) {
@@ -60,10 +61,11 @@ const matchesUpdateValidatorRules = [
     .isInt({ min: 1 }).withMessage('id must be a positive integer'),
 
   check('date')
-    .optional()
-    .isISO8601().withMessage('date must be a valid ISO date')
-    .toDate()
-    .custom((date) => {
+    .optional({ nullable: true })
+    .custom((value) => {
+      if (value == null || value === '') return true;
+      const date = new Date(value);
+      if (isNaN(date.getTime())) throw new Error('date must be a valid ISO date');
       const minDate = new Date('2024-01-01');
       const maxDate = new Date();
       if (date < minDate || date > maxDate) {

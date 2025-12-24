@@ -21,7 +21,7 @@ const getMatchById = async (req, res) => {
 
   try {
     const [rows] = await db.query(`
-      SELECT m.*, t.name AS team_name
+      SELECT m.*, COALESCE(m.team_name, t.name) AS team_name
       FROM Matches m
       LEFT JOIN Teams t ON m.team_id = t.id
       WHERE m.id = ?
