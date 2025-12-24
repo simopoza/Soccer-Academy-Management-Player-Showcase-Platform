@@ -33,10 +33,12 @@ const matchesValidatorRules = [
     .isIn(['Friendly', 'Cup', 'League'])
     .withMessage("Invalid competition. Must be one of 'Friendly', 'Cup', or 'League'."),
 
+  // team_id is optional for upcoming matches; allow null or a positive integer
   check('team_id')
-    .exists().withMessage('team_id is required')
+    .optional({ nullable: true })
     .isInt({ min: 1 }).withMessage('team_id must be a positive integer')
     .custom(async (team_id) => {
+      if (team_id == null) return true;
       const { validateTeam } = require('../helpers/validateForeignKeys');
       const exists = await validateTeam(team_id);
       if (!exists) throw new Error('Invalid team_id');
@@ -87,9 +89,10 @@ const matchesUpdateValidatorRules = [
     .withMessage("Invalid competition. Must be one of 'Friendly', 'Cup', or 'League'."),
 
   check('team_id')
-    .optional()
+    .optional({ nullable: true })
     .isInt({ min: 1 }).withMessage('team_id must be a positive integer')
     .custom(async (team_id) => {
+      if (team_id == null) return true;
       const { validateTeam } = require('../helpers/validateForeignKeys');
       const exists = await validateTeam(team_id);
       if (!exists) throw new Error('Invalid team_id');

@@ -19,9 +19,11 @@ export default function useMatches({ searchQuery = '', statusFilter = 'all', loc
       const dt = new Date(r.date);
       if (!isNaN(dt)) {
         dateStr = dt.toISOString().slice(0, 10);
-        timeStr = dt.toTimeString().slice(0,5);
+        timeStr = dt.toTimeString().slice(0, 5);
       }
-    } catch (e) { console.debug(e); }
+    } catch (e) {
+      console.debug(e);
+    }
 
     const now = new Date();
     const matchDate = new Date(r.date);
@@ -41,12 +43,15 @@ export default function useMatches({ searchQuery = '', statusFilter = 'all', loc
 
     return {
       id: r.id,
-      team: r.team_name || '',
-      opponent: r.opponent,
+      // if team_name missing and team_id is null, treat as the academy's own match
+      team: r.team_name || (r.team_id == null ? 'Academy' : ''),
+      opponent: r.opponent || '—',
       date: dateStr,
       time: timeStr,
       location: r.location || '',
       matchType: r.location || '',
+      team_goals: r.team_goals != null ? r.team_goals : 0,
+      opponent_goals: r.opponent_goals != null ? r.opponent_goals : 0,
       competition: r.competition || '',
       score,
       status: isUpcoming ? 'Upcoming' : 'Completed',
@@ -94,12 +99,12 @@ export default function useMatches({ searchQuery = '', statusFilter = 'all', loc
   const buildPayload = (formData) => ({
     date: `${formData.date} ${formData.time || '00:00:00'}`,
     opponent: formData.opponent,
-    location: formData.matchType,
+    location: formData.location,
     competition: formData.competition,
-    team_goals: null,
-    opponent_goals: null,
-    team_id: null,
-    notes: formData.notes || null,
+    team_goals: formData.team_goals != null && formData.team_goals !== '' ? Number(formData.team_goals) : 0,
+    opponent_goals: formData.opponent_goals != null && formData.opponent_goals !== '' ? Number(formData.opponent_goals) : 0,
+    team_id: formData.team_id ?? null,
+    team_name: formData.team || null,
   });
 
   const addMutation = useMutation({
@@ -113,11 +118,12 @@ export default function useMatches({ searchQuery = '', statusFilter = 'all', loc
         id: tempId,
         date: buildPayload(formData).date,
         opponent: formData.opponent,
-        location: formData.matchType,
+        location: formData.location,
         competition: formData.competition,
-        team_goals: null,
-        opponent_goals: null,
+        team_goals: buildPayload(formData).team_goals,
+        opponent_goals: buildPayload(formData).opponent_goals,
         team_name: formData.team || null,
+        team_id: formData.team_id ?? null,
       };
       queryClient.setQueryData(queryKey, (old = []) => [tempRaw, ...old]);
       return { previous, tempId };
@@ -145,7 +151,7 @@ export default function useMatches({ searchQuery = '', statusFilter = 'all', loc
     onMutate: async ({ id, formData }) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData(queryKey);
-      queryClient.setQueryData(queryKey, (old = []) => old.map(item => (String(item.id) === String(id) ? { ...item, date: buildPayload(formData).date, opponent: formData.opponent, location: formData.matchType, competition: formData.competition, notes: formData.notes || null } : item)));
+      queryClient.setQueryData(queryKey, (old = []) => old.map(item => (String(item.id) === String(id) ? { ...item, date: buildPayload(formData).date, opponent: formData.opponent, location: formData.location, competition: formData.competition, team_goals: buildPayload(formData).team_goals, opponent_goals: buildPayload(formData).opponent_goals } : item)));
       return { previous };
     },
     onError: (err, _vars, context) => {

@@ -51,7 +51,7 @@ const AdminMatchesPage = () => {
     onDeleteClose,
     openEditDialog,
     openDeleteDialog,
-  } = useCrudList({ initialData: [], initialForm: { team: '', opponent: '', date: '', time: '', location: '', matchType: 'Home', competition: 'League', notes: '' } });
+  } = useCrudList({ initialData: [], initialForm: { team: '', opponent: '', date: '', time: '', location: 'Home', competition: 'League', team_goals: 0, opponent_goals: 0 } });
 
   const toast = useToast();
   const [statusFilter, setStatusFilter] = useState('all');
@@ -88,7 +88,7 @@ const AdminMatchesPage = () => {
           duration: 3000,
         });
         onAddClose();
-        setFormData({ team: '', opponent: '', date: '', time: '', location: '', matchType: 'Home', competition: 'League', notes: '' });
+        setFormData({ team: '', opponent: '', date: '', time: '', location: 'Home', competition: 'League', team_goals: 0, opponent_goals: 0 });
       } catch (err) {
         console.error('Add match failed', err);
         toast({ title: t('error') || 'Error', description: err?.message || 'Failed to add match', status: 'error' });

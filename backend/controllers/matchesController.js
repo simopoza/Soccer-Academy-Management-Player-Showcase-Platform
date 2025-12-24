@@ -3,9 +3,10 @@ const db = require("../db");
 const getMatches = async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT m.*, t.name AS team_name
+      SELECT m.*, COALESCE(m.team_name, t.name) AS team_name
       FROM Matches m
-      JOIN Teams t ON m.team_id = t.id
+      LEFT JOIN Teams t ON m.team_id = t.id
+      ORDER BY m.date DESC
     `);
 
     res.status(200).json(rows);
@@ -22,7 +23,7 @@ const getMatchById = async (req, res) => {
     const [rows] = await db.query(`
       SELECT m.*, t.name AS team_name
       FROM Matches m
-      JOIN Teams t ON m.team_id = t.id
+      LEFT JOIN Teams t ON m.team_id = t.id
       WHERE m.id = ?
     `, [id]);
 
@@ -52,13 +53,35 @@ const addMatch = async (req, res) => {
   const location = req.body.location ?? null;
 
   try {
-    const query = "INSERT INTO Matches (date, opponent, location, competition, team_goals, opponent_goals, team_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    const value = [date, opponent, location, competition, team_goals, opponent_goals, team_id];
+    // prevent duplicate exact match entries (same date/opponent/location/competition/team)
+    const [existing] = await db.query(`
+      SELECT m.id
+      FROM Matches m
+      WHERE m.date = ? AND m.opponent = ? AND m.location = ? AND m.competition = ? AND (m.team_id <=> ? AND m.team_name <=> ?)
+    `, [date, opponent, location, competition, team_id, req.body.team_name ?? null]);
+
+    if (existing && existing.length > 0) {
+      const existingId = existing[0].id;
+      const [rows] = await db.query(`
+        SELECT m.*, COALESCE(m.team_name, t.name) AS team_name
+        FROM Matches m
+        LEFT JOIN Teams t ON m.team_id = t.id
+        WHERE m.id = ?
+      `, [existingId]);
+      return res.status(200).json(rows[0]);
+    }
+
+    const query = "INSERT INTO Matches (date, opponent, location, competition, team_goals, opponent_goals, team_id, team_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    const value = [date, opponent, location, competition, team_goals, opponent_goals, team_id, req.body.team_name ?? null];
     const [ result ] = await db.query(query, value);
-    res.status(201).json({ 
-      message: "Match added successfully",
-      id: result.insertId 
-    });
+    // fetch the newly created row (include team_name via LEFT JOIN)
+    const [rows] = await db.query(`
+      SELECT m.*, COALESCE(m.team_name, t.name) AS team_name
+      FROM Matches m
+      LEFT JOIN Teams t ON m.team_id = t.id
+      WHERE m.id = ?
+    `, [result.insertId]);
+    res.status(201).json(rows[0]);
   } catch (err) {
     console.error("Error adding match:", err);
     return res.status(500).json({ message: "Internal server error" });
@@ -69,14 +92,14 @@ const updateMatch = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const [ rows ] = await db.query("SELECT * FROM Matches WHERE id = ?", [id]);
+    const [ row ] = await db.query("SELECT * FROM Matches WHERE id = ?", [id]);
 
-    if (rows.length === 0) {
+    if (!row || row.length === 0) {
       return res.status(404).json({ message: "Match not found" });
     }
 
     const fieldsToUpdate = {};
-    const allowedFields = ["date", "opponent", "location", "competition", "team_goals", "opponent_goals", "team_id"];
+    const allowedFields = ["date", "opponent", "location", "competition", "team_goals", "opponent_goals", "team_id", "team_name"];
 
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) {
@@ -98,8 +121,14 @@ const updateMatch = async (req, res) => {
     const sql = `UPDATE Matches SET ${setClause} WHERE id = ?`;
 
     await db.query(sql, values);
-
-    res.status(200).json({ message: "Match updated successfully" });
+    // return the updated row
+    const [rows] = await db.query(`
+      SELECT m.*, COALESCE(m.team_name, t.name) AS team_name
+      FROM Matches m
+      LEFT JOIN Teams t ON m.team_id = t.id
+      WHERE m.id = ?
+    `, [id]);
+    res.status(200).json(rows[0]);
   } catch (err) {
     console.error("Error updating match:", err);
     return res.status(500).json({ message: "Internal server error" });

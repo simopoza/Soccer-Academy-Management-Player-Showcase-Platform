@@ -76,10 +76,11 @@ CREATE TABLE IF NOT EXISTS Matches (
   id INT AUTO_INCREMENT PRIMARY KEY,
   date DATETIME NOT NULL,
   opponent VARCHAR(100) NOT NULL,
-  -- free-text location (venue). Can be empty/null.
-  location VARCHAR(255) NULL,
+  -- location: Home/Away (indicates whether the match is home or away)
+  location ENUM('Home','Away') DEFAULT 'Home',
   -- competition type: Friendly, Cup, League
   competition ENUM('Friendly','Cup','League') NOT NULL,
+  team_name VARCHAR(100) NULL,
   team_goals INT DEFAULT 0,
   opponent_goals INT DEFAULT 0,
 
