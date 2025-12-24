@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Flex,
@@ -20,6 +20,7 @@ import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import useCrudList from '../../hooks/useCrudList';
 import useMatches from '../../hooks/useMatches';
 import matchFields from '../../constants/matchFields';
+import teamService from '../../services/teamService';
 import { statusOptions } from '../../utils/adminOptions';
 import CrudFormModal from '../../components/admin/CrudFormModal';
 import ConfirmModal from '../../components/admin/ConfirmModal';
@@ -51,7 +52,7 @@ const AdminMatchesPage = () => {
     onDeleteClose,
     openEditDialog,
     openDeleteDialog,
-  } = useCrudList({ initialData: [], initialForm: { team: '', opponent: '', date: '', time: '', location: 'Home', competition: 'League', team_goals: 0, opponent_goals: 0 } });
+  } = useCrudList({ initialData: [], initialForm: { team_id: '', opponent: '', date: '', time: '', location: 'Home', competition: 'League', team_goals: 0, opponent_goals: 0 } });
 
   const toast = useToast();
   const [statusFilter, setStatusFilter] = useState('all');
@@ -75,6 +76,32 @@ const AdminMatchesPage = () => {
     deleteMatch,
   } = useMatches({ searchQuery, statusFilter, locationFilter, pageSize: 10 });
 
+  // teams for Team select options
+  const [teamsOptions, setTeamsOptions] = useState([]);
+
+  // load teams once for select options
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const rows = await teamService.getTeams();
+        if (!mounted) return;
+        const opts = rows.map(t => ({ value: String(t.id), label: t.name }));
+        setTeamsOptions(opts);
+      } catch (e) {
+        console.debug('Failed to load teams', e);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  const fieldsWithOptions = matchFields.map(f => {
+    if (f.name === 'team_id') {
+      return { ...f, options: [{ value: '', label: 'Select team' }, ...teamsOptions] };
+    }
+    return f;
+  });
+
   // pagination, filtering and stats are provided by `useMatches` hook
 
   const onConfirmAdd = () => {
@@ -88,7 +115,7 @@ const AdminMatchesPage = () => {
           duration: 3000,
         });
         onAddClose();
-        setFormData({ team: '', opponent: '', date: '', time: '', location: 'Home', competition: 'League', team_goals: 0, opponent_goals: 0 });
+        setFormData({ team_id: '', opponent: '', date: '', time: '', location: 'Home', competition: 'League', team_goals: 0, opponent_goals: 0 });
       } catch (err) {
         console.error('Add match failed', err);
         toast({ title: t('error') || 'Error', description: err?.message || 'Failed to add match', status: 'error' });
@@ -109,6 +136,7 @@ const AdminMatchesPage = () => {
         });
         onEditClose();
         setSelectedItem(null);
+        setFormData({ team_id: '', opponent: '', date: '', time: '', location: 'Home', competition: 'League', team_goals: 0, opponent_goals: 0 });
       } catch (err) {
         console.error('Update match failed', err);
         toast({ title: t('error') || 'Error', description: err?.message || 'Failed to update match', status: 'error' });
@@ -278,7 +306,7 @@ const AdminMatchesPage = () => {
         formData={formData}
         setFormData={setFormData}
         onConfirm={onConfirmAdd}
-        fields={matchFields}
+        fields={fieldsWithOptions}
         layout="grid"
         columns={2}
       />
@@ -292,7 +320,7 @@ const AdminMatchesPage = () => {
         formData={formData}
         setFormData={setFormData}
         onConfirm={onConfirmEdit}
-        fields={matchFields}
+        fields={fieldsWithOptions}
         layout="grid"
         columns={2}
       />

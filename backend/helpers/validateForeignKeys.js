@@ -20,9 +20,15 @@ async function validateUser(user_id) {
   return rows.length > 0; // true = exists
 }
 
+async function validateParticipant(participant_id) {
+  const [rows] = await db.query("SELECT id FROM Participants WHERE id = ?", [participant_id]);
+  return rows.length > 0;
+}
+
 module.exports = {
   validateMatch,
   validatePlayer,
   validateTeam,
-  validateUser
+  validateUser,
+  validateParticipant
 };

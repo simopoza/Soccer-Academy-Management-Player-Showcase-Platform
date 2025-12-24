@@ -7,9 +7,8 @@ const matchesValidatorRules = [
       if (value == null || value === '') return true; // allow null/empty
       const date = new Date(value);
       if (isNaN(date.getTime())) throw new Error('date must be a valid ISO date');
-      const minDate = new Date('2024-01-01');
-      const maxDate = new Date();
-      if (date < minDate || date > maxDate) {
+      const minDate = new Date('2023-01-01');
+      if (date < minDate) {
         throw new Error('Date must be realistic');
       }
       return true;
@@ -46,12 +45,35 @@ const matchesValidatorRules = [
       return true;
     }),
 
+  // participant ids: optional, must reference existing Participants
+  check('participant_home_id')
+    .optional({ nullable: true })
+    .isInt({ min: 1 }).withMessage('participant_home_id must be a positive integer')
+    .custom(async (participant_id) => {
+      if (participant_id == null) return true;
+      const { validateParticipant } = require('../helpers/validateForeignKeys');
+      const exists = await validateParticipant(participant_id);
+      if (!exists) throw new Error('Invalid participant_home_id');
+      return true;
+    }),
+
+  check('participant_away_id')
+    .optional({ nullable: true })
+    .isInt({ min: 1 }).withMessage('participant_away_id must be a positive integer')
+    .custom(async (participant_id) => {
+      if (participant_id == null) return true;
+      const { validateParticipant } = require('../helpers/validateForeignKeys');
+      const exists = await validateParticipant(participant_id);
+      if (!exists) throw new Error('Invalid participant_away_id');
+      return true;
+    }),
+
   check('team_goals')
-    .exists().withMessage('team_goals is required')
+    .optional()
     .isInt({ min: 0 }).withMessage("team_goals must be a non-negative integer"),
 
   check('opponent_goals')
-    .exists().withMessage('opponent_goals is required')
+    .optional()
     .isInt({ min: 0 }).withMessage("opponent_goals must be a non-negative integer")
 ];
 
@@ -66,9 +88,8 @@ const matchesUpdateValidatorRules = [
       if (value == null || value === '') return true;
       const date = new Date(value);
       if (isNaN(date.getTime())) throw new Error('date must be a valid ISO date');
-      const minDate = new Date('2024-01-01');
-      const maxDate = new Date();
-      if (date < minDate || date > maxDate) {
+      const minDate = new Date('2023-01-01');
+      if (date < minDate) {
         throw new Error('Date must be realistic');
       }
       return true;
@@ -98,6 +119,29 @@ const matchesUpdateValidatorRules = [
       const { validateTeam } = require('../helpers/validateForeignKeys');
       const exists = await validateTeam(team_id);
       if (!exists) throw new Error('Invalid team_id');
+      return true;
+    }),
+
+  // participant ids for updates
+  check('participant_home_id')
+    .optional({ nullable: true })
+    .isInt({ min: 1 }).withMessage('participant_home_id must be a positive integer')
+    .custom(async (participant_id) => {
+      if (participant_id == null) return true;
+      const { validateParticipant } = require('../helpers/validateForeignKeys');
+      const exists = await validateParticipant(participant_id);
+      if (!exists) throw new Error('Invalid participant_home_id');
+      return true;
+    }),
+
+  check('participant_away_id')
+    .optional({ nullable: true })
+    .isInt({ min: 1 }).withMessage('participant_away_id must be a positive integer')
+    .custom(async (participant_id) => {
+      if (participant_id == null) return true;
+      const { validateParticipant } = require('../helpers/validateForeignKeys');
+      const exists = await validateParticipant(participant_id);
+      if (!exists) throw new Error('Invalid participant_away_id');
       return true;
     }),
 

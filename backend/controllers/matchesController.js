@@ -1,28 +1,25 @@
 const db = require("../db");
-
-// Helper: normalize a DB row into a consistent API payload
-const formatMatch = (r) => ({
-  id: r.id,
-  date: r.date ? (r.date instanceof Date ? r.date.toISOString() : r.date) : null,
-  opponent: r.opponent,
-  location: r.location,
-  competition: r.competition,
-  team_id: r.team_id ?? null,
-  team_name: r.team_name ?? null,
-  team_goals: Number(r.team_goals) ?? 0,
-  opponent_goals: Number(r.opponent_goals) ?? 0,
-  participant_home_id: r.participant_home_id ?? null,
-  participant_away_id: r.participant_away_id ?? null,
-  created_at: r.created_at ? (r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at) : null,
-  updated_at: r.updated_at ? (r.updated_at instanceof Date ? r.updated_at.toISOString() : r.updated_at) : null,
-});
+const {
+  resolveTeamName,
+  getHomeParticipantForTeam,
+  resolveOrCreateAwayParticipant,
+  findExistingMatch,
+  insertAndFetchMatch,
+  formatMatch,
+  fetchMatchById,
+  buildUpdateClause,
+  prepareUpdateFields,
+} = require('../helpers/matchHelpers');
 
 const getMatches = async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT m.*, COALESCE(m.team_name, t.name) AS team_name
+      SELECT m.*, 
+        COALESCE(m.team_name, t.name, ch.name, ph.external_name) AS team_name
       FROM Matches m
       LEFT JOIN Teams t ON m.team_id = t.id
+      LEFT JOIN Participants ph ON m.participant_home_id = ph.id
+      LEFT JOIN Clubs ch ON ph.club_id = ch.id
       ORDER BY m.date DESC
     `);
 
@@ -35,80 +32,93 @@ const getMatches = async (req, res) => {
 
 const getMatchById = async (req, res) => {
   const { id } = req.params;
-
   try {
     const [rows] = await db.query(`
-      SELECT m.*, COALESCE(m.team_name, t.name) AS team_name
+      SELECT m.*, COALESCE(m.team_name, t.name, ch.name, ph.external_name) AS team_name
       FROM Matches m
       LEFT JOIN Teams t ON m.team_id = t.id
+      LEFT JOIN Participants ph ON m.participant_home_id = ph.id
+      LEFT JOIN Clubs ch ON ph.club_id = ch.id
       WHERE m.id = ?
+      LIMIT 1
     `, [id]);
 
-    if (rows.length === 0) {
-      return res.status(404).json({ message: "Match not found" });
-    }
-
-    res.status(200).json(formatMatch(rows[0]));
+    if (!rows || rows.length === 0) return res.status(404).json({ message: "Match not found" });
+    return res.status(200).json(formatMatch(rows[0]));
   } catch (err) {
-    console.error("Error fetching match by ID:", err);
+    console.error("Error fetching match by id:", err);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-
 const addMatch = async (req, res) => {
-  const {
-    date,
-    opponent,
-    competition,
-    team_goals,
-    opponent_goals,
-    team_id
+  // Accept and normalize inputs
+  let {
+    date = null,
+    opponent = null,
+    location = null,
+    competition = null,
+    team_goals = 0,
+    opponent_goals = 0,
+    team_id = null,
+    team_name = null,
+    participant_home_id = null,
+    participant_away_id = null,
   } = req.body;
 
-  // location now indicates Home/Away (validator enforces values)
-  const location = req.body.location ?? null;
+  if (date === '') date = null;
 
+  let conn;
   try {
-    // Resolve team_name from team_id if provided (avoid relying only on DB triggers)
-    let teamName = req.body.team_name ?? null;
-    if (team_id != null) {
-      const [teamRows] = await db.query('SELECT name FROM Teams WHERE id = ?', [team_id]);
-      if (teamRows && teamRows.length > 0) teamName = teamRows[0].name;
-    }
+    conn = await db.getConnection();
+    await conn.beginTransaction();
 
-    // prevent duplicate exact match entries (same date/opponent/location/competition/team)
-    // use NULL-safe comparison (<=>) for nullable fields
-    const [existing] = await db.query(`
-      SELECT m.id
-      FROM Matches m
-      WHERE m.date <=> ? AND m.opponent = ? AND m.location <=> ? AND m.competition = ? AND (m.team_id <=> ? AND m.team_name <=> ?)
-    `, [date, opponent, location, competition, team_id, teamName]);
+    const resolvedTeamId = team_id ?? null;
+    const resolvedTeamName = await resolveTeamName(conn, resolvedTeamId, participant_home_id, team_name);
 
-    if (existing && existing.length > 0) {
-      const existingId = existing[0].id;
-      const [rows] = await db.query(`
+    const resolvedHomeParticipantId = participant_home_id ?? await getHomeParticipantForTeam(conn, resolvedTeamId);
+
+    const resolvedAwayParticipantId = participant_away_id ?? await resolveOrCreateAwayParticipant(conn, opponent);
+
+    const existingId = await findExistingMatch(conn, {
+      date,
+      opponent,
+      location,
+      competition,
+      teamId: resolvedTeamId,
+      teamName: resolvedTeamName,
+      participantHomeId: resolvedHomeParticipantId,
+      participantAwayId: resolvedAwayParticipantId,
+    });
+
+    if (existingId) {
+      const [rows] = await conn.query(`
         SELECT m.*, COALESCE(m.team_name, t.name) AS team_name
         FROM Matches m
         LEFT JOIN Teams t ON m.team_id = t.id
         WHERE m.id = ?
       `, [existingId]);
+      await conn.commit();
+      conn.release();
       return res.status(200).json(formatMatch(rows[0]));
     }
 
-    const query = "INSERT INTO Matches (date, opponent, location, competition, team_goals, opponent_goals, team_id, team_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    const value = [date, opponent, location, competition, team_goals, opponent_goals, team_id, teamName];
-    const [ result ] = await db.query(query, value);
-    // fetch the newly created row (include team_name via LEFT JOIN)
-    const [rows] = await db.query(`
-      SELECT m.*, COALESCE(m.team_name, t.name) AS team_name
-      FROM Matches m
-      LEFT JOIN Teams t ON m.team_id = t.id
-      WHERE m.id = ?
-    `, [result.insertId]);
-    res.status(201).json(formatMatch(rows[0]));
+    const values = [date, opponent, location, competition, team_goals, opponent_goals, resolvedTeamId, resolvedTeamName, resolvedHomeParticipantId, resolvedAwayParticipantId];
+    const inserted = await insertAndFetchMatch(conn, values);
+
+    await conn.commit();
+    conn.release();
+    return res.status(201).json(formatMatch(inserted));
   } catch (err) {
     console.error("Error adding match:", err);
+    try {
+      if (conn) {
+        await conn.rollback();
+        conn.release();
+      }
+    } catch (rbErr) {
+      console.error('Error during rollback:', rbErr);
+    }
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -116,63 +126,59 @@ const addMatch = async (req, res) => {
 const updateMatch = async (req, res) => {
   const { id } = req.params;
 
+  let conn;
   try {
-    const [ row ] = await db.query("SELECT * FROM Matches WHERE id = ?", [id]);
+    conn = await db.getConnection();
+    await conn.beginTransaction();
 
-    if (!row || row.length === 0) {
+    const existing = await fetchMatchById(conn, id);
+    if (!existing) {
+      conn.release();
       return res.status(404).json({ message: "Match not found" });
     }
 
     const fieldsToUpdate = {};
-    const allowedFields = ["date", "opponent", "location", "competition", "team_goals", "opponent_goals", "team_id", "team_name"];
+    const allowedFields = ["date", "opponent", "location", "competition", "team_goals", "opponent_goals", "team_id", "team_name", "participant_home_id", "participant_away_id"];
 
     allowedFields.forEach(field => {
-      if (req.body[field] !== undefined) {
-        fieldsToUpdate[field] = req.body[field];
-      }
+      if (req.body[field] !== undefined) fieldsToUpdate[field] = req.body[field];
     });
 
-    // If updating team_id but team_name not provided, resolve it now to keep app-level consistency
-    if (fieldsToUpdate.hasOwnProperty('team_id')) {
-      const newTeamId = fieldsToUpdate.team_id;
-      if (newTeamId != null && !fieldsToUpdate.hasOwnProperty('team_name')) {
-        const [teamRows] = await db.query('SELECT name FROM Teams WHERE id = ?', [newTeamId]);
-        if (teamRows && teamRows.length > 0) {
-          fieldsToUpdate.team_name = teamRows[0].name;
-        } else {
-          fieldsToUpdate.team_name = null;
-        }
-      }
-      // if team_id explicitly set to null and team_name not provided, clear team_name
-      if (newTeamId == null && !fieldsToUpdate.hasOwnProperty('team_name')) {
-        fieldsToUpdate.team_name = null;
-      }
-    }
-
     if (Object.keys(fieldsToUpdate).length === 0) {
-      return res.status(400).json({ message: "No fields provided to update"});
+      await conn.rollback();
+      conn.release();
+      return res.status(400).json({ message: "No fields provided to update" });
     }
 
-    const setClause = Object.keys(fieldsToUpdate)
-      .map(key => `${key} = ?`)
-      .join(', ');
+    // Let helper prepare/resolve any derived fields (team_name, participant ids)
+    const prepared = await prepareUpdateFields(conn, fieldsToUpdate, existing);
 
-    const values = Object.values(fieldsToUpdate);
+    const { setClause, values } = buildUpdateClause(prepared);
+    if (!setClause) {
+      await conn.rollback();
+      conn.release();
+      return res.status(400).json({ message: "No fields provided to update" });
+    }
+
     values.push(id);
-
     const sql = `UPDATE Matches SET ${setClause} WHERE id = ?`;
+    await conn.query(sql, values);
 
-    await db.query(sql, values);
-    // return the updated row
-    const [rows] = await db.query(`
-      SELECT m.*, COALESCE(m.team_name, t.name) AS team_name
-      FROM Matches m
-      LEFT JOIN Teams t ON m.team_id = t.id
-      WHERE m.id = ?
-    `, [id]);
-    res.status(200).json(formatMatch(rows[0]));
+    const updated = await fetchMatchById(conn, id);
+
+    await conn.commit();
+    conn.release();
+    res.status(200).json(formatMatch(updated));
   } catch (err) {
     console.error("Error updating match:", err);
+    try {
+      if (conn) {
+        await conn.rollback();
+        conn.release();
+      }
+    } catch (rbErr) {
+      console.error('Error during rollback:', rbErr);
+    }
     return res.status(500).json({ message: "Internal server error" });
   }
 };

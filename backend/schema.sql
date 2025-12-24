@@ -92,6 +92,8 @@ CREATE TABLE IF NOT EXISTS Participants (
   club_id INT NULL,
   -- external_name is used when participant is not backed by a Club (free-text)
   external_name VARCHAR(150) NULL,
+  -- normalized key for case-insensitive lookup and uniqueness enforcement
+  external_key VARCHAR(255) GENERATED ALWAYS AS (LOWER(TRIM(external_name))) STORED,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 

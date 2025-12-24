@@ -147,10 +147,20 @@ const DEFAULT_INDEXES = [
     table: "Clubs",
     column: "name",
   },
+  // =====================
+  // Enforce uniqueness on Participants
+  // =====================
   {
-    name: "idx_participants_club_id",
+    name: "ux_participants_external_key",
+    table: "Participants",
+    column: "external_key",
+    unique: true,
+  },
+  {
+    name: "ux_participants_club_id",
     table: "Participants",
     column: "club_id",
+    unique: true,
   },
 ];
 
@@ -159,11 +169,12 @@ const checkIfIndexExists = async (table, indexName) => {
   return rows.length > 0;
 };
 
-const createIndex = async (table, column, indexName, composite = false) => {
-  console.log(`📌 Creating index ${indexName} on ${table}(${column})...`);
+const createIndex = async (table, column, indexName, composite = false, unique = false) => {
+  const uniqText = unique ? 'UNIQUE ' : '';
+  console.log(`📌 Creating ${unique ? 'unique ' : ''}index ${indexName} on ${table}(${column})...`);
   const sql = composite
-    ? `CREATE INDEX ${indexName} ON ${table} ${column}`
-    : `CREATE INDEX ${indexName} ON ${table} (${column})`;
+    ? `CREATE ${uniqText}INDEX ${indexName} ON ${table} ${column}`
+    : `CREATE ${uniqText}INDEX ${indexName} ON ${table} (${column})`;
 
   await db.execute(sql);
   console.log(`✅ Index created: ${indexName}`);
@@ -172,13 +183,13 @@ const createIndex = async (table, column, indexName, composite = false) => {
 const ensureIndexes = async () => {
   console.log("🔍 Creating database indexes (if not existing)...");
 
-  for (const { name, table, column, composite } of DEFAULT_INDEXES) {
+  for (const { name, table, column, composite, unique } of DEFAULT_INDEXES) {
     const exists = await checkIfIndexExists(table, name);
 
     if (exists) {
       console.log(`✔ Index already exists: ${name}`);
     } else {
-      await createIndex(table, column, name, composite);
+      await createIndex(table, column, name, composite, unique);
     }
   }
 

@@ -1,5 +1,5 @@
 const matchFields = [
-  { name: 'team', label: 'Team', type: 'text', isRequired: true, placeholder: 'Enter team name' },
+  { name: 'team_id', label: 'Team', type: 'select', isRequired: true, options: [] },
   { name: 'opponent', label: 'Opponent', type: 'text', isRequired: true, placeholder: 'Enter opponent' },
   { name: 'date', label: 'Date', type: 'text', isRequired: true, inputType: 'date' },
   { name: 'time', label: 'Time', type: 'text', isRequired: true, inputType: 'time' },
