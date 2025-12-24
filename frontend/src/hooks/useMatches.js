@@ -15,20 +15,28 @@ export default function useMatches({ searchQuery = '', statusFilter = 'all', loc
   const mapRow = (r) => {
     let dateStr = '';
     let timeStr = '';
-    try {
-      const dt = new Date(r.date);
-      if (!isNaN(dt)) {
-        dateStr = dt.toISOString().slice(0, 10);
-        timeStr = dt.toTimeString().slice(0, 5);
+
+    // Treat null/empty date as unknown/upcoming
+    if (r.date) {
+      try {
+        const dt = new Date(r.date);
+        if (!isNaN(dt)) {
+          dateStr = dt.toISOString().slice(0, 10);
+          timeStr = dt.toTimeString().slice(0, 5);
+        }
+      } catch (e) {
+        console.debug(e);
       }
-    } catch (e) {
-      console.debug(e);
     }
 
     const now = new Date();
-    const matchDate = new Date(r.date);
-    let isUpcoming = !isNaN(matchDate) && matchDate > now;
-    if (isNaN(matchDate)) isUpcoming = true;
+    let isUpcoming = true;
+    if (r.date) {
+      const matchDate = new Date(r.date);
+      if (!isNaN(matchDate)) {
+        isUpcoming = matchDate > now;
+      }
+    }
 
     let result = null;
     if (!isUpcoming && r.team_goals != null && r.opponent_goals != null) {
@@ -97,7 +105,8 @@ export default function useMatches({ searchQuery = '', statusFilter = 'all', loc
   const queryKey = ['matches'];
 
   const buildPayload = (formData) => ({
-    date: `${formData.date} ${formData.time || '00:00:00'}`,
+    // backend accepts nullable date — send null when no date provided
+    date: formData.date ? `${formData.date} ${formData.time || '00:00:00'}` : null,
     opponent: formData.opponent,
     location: formData.location,
     competition: formData.competition,
@@ -151,7 +160,7 @@ export default function useMatches({ searchQuery = '', statusFilter = 'all', loc
     onMutate: async ({ id, formData }) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData(queryKey);
-      queryClient.setQueryData(queryKey, (old = []) => old.map(item => (String(item.id) === String(id) ? { ...item, date: buildPayload(formData).date, opponent: formData.opponent, location: formData.location, competition: formData.competition, team_goals: buildPayload(formData).team_goals, opponent_goals: buildPayload(formData).opponent_goals } : item)));
+      queryClient.setQueryData(queryKey, (old = []) => old.map(item => (String(item.id) === String(id) ? { ...item, date: buildPayload(formData).date, opponent: formData.opponent, location: formData.location, competition: formData.competition, team_goals: buildPayload(formData).team_goals, opponent_goals: buildPayload(formData).opponent_goals, team_id: formData.team_id ?? null, team_name: formData.team || null } : item)));
       return { previous };
     },
     onError: (err, _vars, context) => {

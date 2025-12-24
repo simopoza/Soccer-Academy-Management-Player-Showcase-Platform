@@ -72,22 +72,99 @@ CREATE TABLE IF NOT EXISTS Players (
 -- =====================
 -- Table: Matches
 -- =====================
+-- =====================
+-- Table: Clubs
+-- =====================
+CREATE TABLE IF NOT EXISTS Clubs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  short_name VARCHAR(50) NULL,
+  country VARCHAR(50) NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- =====================
+-- Table: Participants
+-- =====================
+CREATE TABLE IF NOT EXISTS Participants (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  club_id INT NULL,
+  -- external_name is used when participant is not backed by a Club (free-text)
+  external_name VARCHAR(150) NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (club_id) REFERENCES Clubs(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+);
+
+-- =====================
+-- Table: Matches
+-- =====================
 CREATE TABLE IF NOT EXISTS Matches (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  date DATETIME NOT NULL,
+  -- date is nullable to allow TBD / upcoming matches without a scheduled datetime
+  date DATETIME NULL,
   opponent VARCHAR(100) NOT NULL,
   -- location: Home/Away (indicates whether the match is home or away)
   location ENUM('Home','Away') DEFAULT 'Home',
   -- competition type: Friendly, Cup, League
   competition ENUM('Friendly','Cup','League') NOT NULL,
+  -- free-text team name fallback when team_id is NULL
   team_name VARCHAR(100) NULL,
   team_goals INT DEFAULT 0,
   opponent_goals INT DEFAULT 0,
 
+  -- legacy team reference (nullable)
   team_id INT NULL,
 
+  -- new canonical participant references (nullable)
+  participant_home_id INT NULL,
+  participant_away_id INT NULL,
+
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
   FOREIGN KEY (team_id) REFERENCES Teams(id)
-      ON DELETE CASCADE
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+
+  FOREIGN KEY (participant_home_id) REFERENCES Participants(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+
+  FOREIGN KEY (participant_away_id) REFERENCES Participants(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+);
+
+-- =====================
+-- Table: Clubs
+-- =====================
+CREATE TABLE IF NOT EXISTS Clubs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  short_name VARCHAR(50) NULL,
+  country VARCHAR(50) NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- =====================
+-- Table: Participants
+-- =====================
+CREATE TABLE IF NOT EXISTS Participants (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  club_id INT NULL,
+  -- external_name is used when participant is not backed by a Club (free-text)
+  external_name VARCHAR(150) NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (club_id) REFERENCES Clubs(id)
+      ON DELETE SET NULL
       ON UPDATE CASCADE
 );
 

@@ -21,13 +21,21 @@ const MatchesTable = ({ matches, onEdit, onDelete, wrapperBorderColor, emptyMess
       accessor: 'date',
       render: (row) => {
         const locale = i18n?.language || 'en';
-        let formattedDate = row.date;
-        let formattedTime = row.time;
-        try {
-          const dt = new Date(`${row.date}T${row.time}`);
-          formattedDate = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'short', day: 'numeric' }).format(dt);
-          formattedTime = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hour12: false }).format(dt);
-        } catch { /* keep raw */ }
+        let formattedDate = 'TBD';
+        let formattedTime = '-';
+
+        if (row.date) {
+          try {
+            // If time is present use full datetime, otherwise parse date only
+            const dt = row.time ? new Date(`${row.date}T${row.time}`) : new Date(row.date);
+            if (!isNaN(dt)) {
+              formattedDate = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'short', day: 'numeric' }).format(dt);
+              formattedTime = row.time ? new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hour12: false }).format(dt) : '-';
+            }
+          } catch {
+            // keep defaults
+          }
+        }
 
         return (
           <VStack align="start" spacing={0}>

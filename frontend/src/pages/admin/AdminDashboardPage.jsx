@@ -253,7 +253,7 @@ const AdminDashboardPage = () => {
                             fontWeight="400"
                             color={textColor}
                           >
-                            {match.date}
+                            {match.date ? match.date : 'TBD'}
                           </Td>
                           <Td>
                             <Badge

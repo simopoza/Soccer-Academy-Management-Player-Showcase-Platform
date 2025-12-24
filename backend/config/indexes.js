@@ -76,6 +76,32 @@ const DEFAULT_INDEXES = [
     column: "date",
   },
 
+  {
+    name: "idx_matches_participant_home_id",
+    table: "Matches",
+    column: "participant_home_id",
+  },
+  {
+    name: "idx_matches_participant_away_id",
+    table: "Matches",
+    column: "participant_away_id",
+  },
+  {
+    name: "idx_matches_competition",
+    table: "Matches",
+    column: "competition",
+  },
+  {
+    name: "idx_matches_location",
+    table: "Matches",
+    column: "location",
+  },
+  {
+    name: "idx_matches_created_at",
+    table: "Matches",
+    column: "created_at",
+  },
+
   // ⭐ NEW recommended composite index
   {
     name: "idx_matches_team_date",
@@ -111,6 +137,20 @@ const DEFAULT_INDEXES = [
     name: "idx_stats_rating",
     table: "Stats",
     column: "rating",
+  },
+  
+  // =====================
+  // Clubs & Participants
+  // =====================
+  {
+    name: "idx_clubs_name",
+    table: "Clubs",
+    column: "name",
+  },
+  {
+    name: "idx_participants_club_id",
+    table: "Participants",
+    column: "club_id",
   },
 ];
 
