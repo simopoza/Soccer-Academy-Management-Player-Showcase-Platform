@@ -1,7 +1,9 @@
 const db = require("../db");
 const { hashPassword, comparePassword } = require("../helpers/hashPassword");
 
-// GET all users with optional pagination and search
+const cache = require('../helpers/cache');
+
+// GET all users with optional pagination and search (with simple in-memory cache)
 const getAllUsers = async (req, res) => {
   try {
     // Parse query params
@@ -25,6 +27,13 @@ const getAllUsers = async (req, res) => {
     }
 
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+    // Try cache first
+    const cacheKey = `users:${page}:${limit}:${q || ''}`;
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
 
     // Count total matching rows
     const countSql = `SELECT COUNT(*) AS total FROM Users u ${whereSql}`;
@@ -54,7 +63,9 @@ const getAllUsers = async (req, res) => {
     };
     users.forEach(u => { u.image_url = makeAbsolute(req, u.image_url); });
 
-    return res.status(200).json({ data: users, total });
+    const payload = { data: users, total };
+    cache.set(cacheKey, payload, 30 * 1000); // cache 30s
+    return res.status(200).json(payload);
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -113,6 +124,8 @@ const addUser = async (req, res) => {
       message: "User added successfully",
       user: {userId: result.insertId, first_name, last_name, email, role}
     });
+    // invalidate users list cache
+    try { cache.invalidatePrefix('users:'); } catch (e) { /* ignore */ }
   } catch (error) {
     console.error("Error adding user:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -155,6 +168,8 @@ const updateUser = async (req, res) => {
     await db.query(sql, values);
 
     res.status(200).json({ message: "User updated successfully" });
+    // invalidate users list cache
+    try { cache.invalidatePrefix('users:'); } catch (e) { /* ignore */ }
   } catch (error) {
     console.error("Error updating user:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -324,6 +339,8 @@ const deleteUserById = async (req, res) => {
     }
 
     res.status(200).json({ message: "User deleted successfully" });
+    // invalidate users list cache
+    try { cache.invalidatePrefix('users:'); } catch (e) { /* ignore */ }
   } catch (error) {
     console.error("Error deleting user by ID:", error);
     res.status(500).json({ error: "Internal server error" });

@@ -25,6 +25,14 @@ const getPlayers = async (req, res) => {
 
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
+    // Try cache first
+    const cache = require('../helpers/cache');
+    const cacheKey = `players:${page}:${limit}:${q || ''}`;
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
+
     const countSql = `SELECT COUNT(*) AS total FROM Players p LEFT JOIN Users u ON p.user_id = u.id ${whereSql}`;
     const [countRows] = await db.query(countSql, params);
     const total = countRows && countRows.length ? countRows[0].total : 0;
@@ -48,7 +56,9 @@ const getPlayers = async (req, res) => {
       return `${req.protocol}://${req.get('host')}${url}`;
     };
     const mapped = rows.map(r => ({ ...r, image_url: makeAbsolute(r.image_url) }));
-    res.status(200).json({ data: mapped, total });
+    const payload = { data: mapped, total };
+    cache.set(cacheKey, payload, 30 * 1000);
+    res.status(200).json(payload);
   } catch (err) {
     console.error("Error fetching players:", err);
     return res.status(500).json({ message : "Internal Server Error" });
@@ -182,6 +192,8 @@ const addPlayer = async (req, res) => {
       message: "Player added successfully",
       id: result.insertId 
     });
+    // invalidate players list cache
+    try { require('../helpers/cache').invalidatePrefix('players:'); } catch (e) { /* ignore */ }
   } catch (err) {
     console.error("Error adding player: ", err);
     return res.status(500).json({ message: "Internal server error" });
@@ -251,6 +263,8 @@ const updatePlayer = async (req, res) => {
     await db.query(sql, values);
 
     res.status(200).json({ message: "Player updated successfully" });
+    // invalidate players cache
+    try { require('../helpers/cache').invalidatePrefix('players:'); } catch (e) { /* ignore */ }
   } catch (err) {
     console.error("Error updating player: ", err);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -266,6 +280,8 @@ const deletePlayer = async (req, res) => {
       return res.status(404).json({ message: "Player not found" });
     }
     res.status(200).json({ message: "Player deleted successfully" });
+    // invalidate players cache
+    try { require('../helpers/cache').invalidatePrefix('players:'); } catch (e) { /* ignore */ }
   } catch (err) {
     console.error("Error deleting player: ", err);
     return res.status(500).json({ message: "Internal server error" });
