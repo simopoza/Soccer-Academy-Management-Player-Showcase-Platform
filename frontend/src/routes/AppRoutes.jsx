@@ -98,7 +98,7 @@ function AppRoutes() {
         } 
       />
       <Route 
-        path="/admin/stats-management" 
+        path="/admin/analytics" 
         element={
           <RoleBasedRoute allowedRoles={["admin"]}>
             <AdminStatsPage />

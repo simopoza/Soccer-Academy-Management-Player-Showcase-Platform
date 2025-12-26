@@ -60,7 +60,7 @@ const FixedSidebar = () => {
           { label: t("teams"), path: "/admin/teams-management", icon: HiOutlineUserGroup },
           { label: t("matches"), path: "/admin/matches-management", icon: FiCalendar },
           // menu and analytics removed — use dashboard and stats pages instead
-          { label: t("stats"), path: "/admin/stats-management", icon: FiBarChart2 },
+          { label: t("analytics"), path: "/admin/analytics", icon: FiBarChart2 },
           { label: t("settings"), path: "/admin/settings", icon: FiSettings },
         ];
       case "player":
