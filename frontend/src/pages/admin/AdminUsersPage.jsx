@@ -1,34 +1,24 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   Box,
   Flex,
-  VStack,
   HStack,
   useDisclosure,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
   Button,
-  FormControl,
-  FormLabel,
-  Input,
-  Select,
   useToast,
   useColorModeValue,
+  Skeleton,
+  SkeletonCircle,
 } from '@chakra-ui/react';
 import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, AvatarCircle, ActionButtons, SearchInput, FilterSelect } from '../../components/ui';
+import Pagination from '../../components/ui/Pagination';
 import useCrudList from '../../hooks/useCrudList';
+import useAdminUsers from '../../hooks/useAdminUsers';
 import { roleOptions } from '../../utils/adminOptions';
-import userService from '../../services/userService';
-import adminService from '../../services/adminService';
 import CrudFormModal from '../../components/admin/CrudFormModal';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 
@@ -46,66 +36,49 @@ const AdminUsersManagementPage = () => {
   const isRTL = i18n?.language === 'ar';
 
   const {
-    items: users,
-    setItems: setUsers,
-    searchQuery,
-    setSearchQuery,
+    // only UI state managed here
     selectedItem,
     setSelectedItem,
     formData,
     setFormData,
-
-    // Only keep the hooks/handlers this page actually uses
     isDeleteOpen,
     onDeleteClose,
     openDeleteDialog,
   } = useCrudList({ initialData: initialUsers, initialForm: { name: '', email: '', role: 'player' } });
 
+  const {
+    users,
+    rawUsers,
+    total,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    searchQuery,
+    setSearchQuery,
+    isLoading,
+    isFetching,
+    refetch,
+    approve,
+    reject,
+    remove,
+    updateRole,
+  } = useAdminUsers({ initialPage: 1, initialPageSize: 10 });
+
   const toast = useToast();
   const { isOpen: isRoleChangeOpen, onOpen: onRoleChangeOpen, onClose: onRoleChangeClose } = useDisclosure();
 
-  // Load users from backend on mount
-  useEffect(() => {
-    let mounted = true;
-
-    const loadUsers = async () => {
-      try {
-        const raw = await userService.getAllUsers();
-        if (!Array.isArray(raw)) {
-          console.warn('Unexpected users response:', raw);
-          toast({ title: 'Failed to load users (unauthorized or bad response)', status: 'error', duration: 4000 });
-          if (mounted) setUsers([]);
-          return;
-        }
-
-        const data = raw.map(u => ({
-          id: u.id,
-          name: `${u.first_name || ''} ${u.last_name || ''}`.trim(),
-          email: u.email,
-          role: u.role,
-          status: u.status,
-          image: u.image_url || null,
-        }));
-        if (mounted) setUsers(data);
-      } catch (err) {
-        console.error('Failed to load users', err);
-        toast({ title: 'Failed to load users', status: 'error', duration: 4000 });
-      }
-    };
-
-    loadUsers();
-    return () => { mounted = false; };
-  }, [setUsers, toast]);
+  // data + actions come from `useAdminUsers`
 
   const roleOptionsList = roleOptions(t);
 
   const [roleFilter, setRoleFilter] = React.useState('all');
 
+  // `users` already paginated and filtered by searchQuery inside the hook; apply role filter here
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilter === 'all' || user.role.toLowerCase() === roleFilter.toLowerCase();
-    return matchesSearch && matchesRole;
+    const matchesRole = roleFilter === 'all' || (user.role || '').toLowerCase() === roleFilter.toLowerCase();
+    return matchesRole;
   });
 
   // CRUD actions implemented where needed (role change handled below)
@@ -114,8 +87,7 @@ const AdminUsersManagementPage = () => {
     try {
       if (!selectedItem) return;
       const id = selectedItem.id;
-      await userService.deleteUser(id);
-      setUsers(prev => prev.filter(u => u.id !== id));
+      await remove(id);
 
       toast({
         title: t('buttonDelete') || 'User deleted',
@@ -133,9 +105,7 @@ const AdminUsersManagementPage = () => {
 
   const handleApprove = async (user) => {
     try {
-      await adminService.approveUser(user.id);
-      // Update user status to approved
-      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: 'Active' } : u));
+      await approve(user.id);
       toast({
         title: t('approved') || 'User approved',
         description: `${user.name} has been approved successfully`,
@@ -150,9 +120,7 @@ const AdminUsersManagementPage = () => {
 
   const handleReject = async (user) => {
     try {
-      await adminService.rejectUser(user.id);
-      // Remove rejected user from list
-      setUsers(prev => prev.filter(u => u.id !== user.id));
+      await reject(user.id);
       toast({
         title: t('rejected') || 'User rejected',
         description: `${user.name} has been rejected and removed`,
@@ -181,8 +149,7 @@ const AdminUsersManagementPage = () => {
         toast({ title: 'Please select user and role', status: 'warning', duration: 3000 });
         return;
       }
-      await userService.updateUserRole(formData.userId, formData.role);
-      setUsers(prev => prev.map(u => (u.id === parseInt(formData.userId) ? { ...u, role: formData.role } : u)));
+      await updateRole({ id: parseInt(formData.userId), role: formData.role });
       toast({
         title: t('buttonSave') || 'Role updated',
         description: 'User role has been updated successfully.',
@@ -304,10 +271,9 @@ const AdminUsersManagementPage = () => {
     <Layout pageTitle={t('pageTitle') || 'Users Management'} pageSubtitle={t('pageSubtitle') || 'Manage academy users and permissions'}>
       <Box bgGradient={bgGradient} px="32px" pt="24px" pb="32px" minH="100vh" dir={isRTL ? 'rtl' : 'ltr'}>
         <Box bg={cardBg} borderRadius="12px" borderWidth="1px" borderStyle="solid" borderColor={cardBorder} boxShadow="0 10px 25px rgba(0,0,0,0.05)" p="24px">
-
           <TableHeader
             title={t('cardTitle') || 'All Users'}
-            count={filteredUsers.length}
+            count={total}
             actionLabel={t('changeRole') || 'Change Role'}
             onAction={openRoleChangeModal}
           />
@@ -330,12 +296,32 @@ const AdminUsersManagementPage = () => {
             </Box>
           </Flex>
 
-          <DataTable
-            columns={columns}
-            data={filteredUsers}
-            emptyMessage={t('emptyMessage') || 'No users found'}
-            wrapperBorderColor={cardBorder}
-          />
+          {isLoading ? (
+            // Chakra skeleton for nicer look
+            <>
+              {[1,2,3,4,5].map(i => (
+                <Box key={i} display="flex" alignItems="center" gap={3} mb="12px">
+                  <SkeletonCircle size="40px" />
+                  <Box flex={1}>
+                    <Skeleton height="14px" width="60%" mb="8px" />
+                    <Skeleton height="12px" width="40%" />
+                  </Box>
+                </Box>
+              ))}
+            </>
+          ) : (
+            <>
+              <DataTable
+                columns={columns}
+                data={filteredUsers}
+                emptyMessage={t('emptyMessage') || 'No users found'}
+                wrapperBorderColor={cardBorder}
+              />
+
+              {/* Reusable pagination component */}
+              <Pagination page={page} setPage={setPage} totalPages={totalPages} pageSize={pageSize} setPageSize={setPageSize} />
+            </>
+          )}
         </Box>
       </Box>
 

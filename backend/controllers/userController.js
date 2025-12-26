@@ -1,14 +1,51 @@
 const db = require("../db");
 const { hashPassword, comparePassword } = require("../helpers/hashPassword");
 
-// GET all users
+// GET all users with optional pagination and search
 const getAllUsers = async (req, res) => {
   try {
-    const [ users ] = await db.query(
-      `SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.status, COALESCE(u.image_url, p.image_url) AS image_url
-       FROM Users u
-       LEFT JOIN Players p ON p.user_id = u.id`
-    );
+    // Parse query params
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+    const qRaw = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    // Normalize search term: remove quotes, strip most punctuation (keep @ . _ - for emails),
+    // collapse multiple spaces, and lowercase. Uses Unicode-aware character class for letters/numbers.
+    let qClean = qRaw.replace(/['"]/g, '');
+    qClean = qClean.replace(/[^^\p{L}\p{N}\s@._-]/gu, ' ');
+    qClean = qClean.replace(/\s+/g, ' ').trim().toLowerCase();
+    const q = qClean || null;
+
+    // Build WHERE clause for search (name or email)
+    const whereClauses = [];
+    const params = [];
+    if (q) {
+      whereClauses.push(`(LOWER(CONCAT_WS(' ', u.first_name, u.last_name)) LIKE ? OR LOWER(u.email) LIKE ?)`);
+      const like = `%${q}%`;
+      params.push(like, like);
+    }
+
+    const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+    // Count total matching rows
+    const countSql = `SELECT COUNT(*) AS total FROM Users u ${whereSql}`;
+    const [countRows] = await db.query(countSql, params);
+    const total = countRows && countRows.length ? countRows[0].total : 0;
+
+    // Fetch paginated data (join to Players only to pick fallback image)
+    const offset = (page - 1) * limit;
+    const dataSql = `SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.status, COALESCE(u.image_url, p.image_url) AS image_url
+      FROM Users u
+      LEFT JOIN Players p ON p.user_id = u.id
+      ${whereSql}
+      ORDER BY u.id DESC
+      LIMIT ? OFFSET ?`;
+
+    // Append pagination params
+    const dataParams = params.slice();
+    dataParams.push(limit, offset);
+
+    const [users] = await db.query(dataSql, dataParams);
+
     // Convert relative image paths to absolute URLs
     const makeAbsolute = (req, url) => {
       if (!url) return null;
@@ -16,14 +53,8 @@ const getAllUsers = async (req, res) => {
       return `${req.protocol}://${req.get('host')}${url}`;
     };
     users.forEach(u => { u.image_url = makeAbsolute(req, u.image_url); });
-    
-    // Return an empty array when there are no users so clients can always
-    // safely treat the response as an array (avoids `res.data.map` errors).
-    if (users.length === 0) {
-      return res.status(200).json([]);
-    }
 
-    return res.status(200).json(users);
+    return res.status(200).json({ data: users, total });
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ error: "Internal server error" });
