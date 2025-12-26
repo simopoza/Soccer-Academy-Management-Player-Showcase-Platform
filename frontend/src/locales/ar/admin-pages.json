@@ -161,4 +161,11 @@
   "deleteStatistics": "حذف الإحصائية",
   "actionEdit": "تعديل",
   "actionDelete": "حذف"
+  ,
+  "pagination": {
+    "prev": "السابق",
+    "next": "التالي",
+    "perPage": "لكل صفحة:",
+    "pageOf": "الصفحة {{page}} / {{total}}"
+  }
 }

@@ -6,20 +6,49 @@ const crypto = require('crypto');
 
 const getPlayers = async (req, res) => {
   try {
-    const [rows] = await db.query(`
-      SELECT p.*, t.name AS team_name, COALESCE(p.image_url, u.image_url) AS image_url
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+    const qRaw = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    // Normalize search: remove quotes, keep email chars, collapse spaces, lowercase
+    let qClean = qRaw.replace(/['"]/g, '');
+    qClean = qClean.replace(/[^^\p{L}\p{N}\s@._-]/gu, ' ');
+    qClean = qClean.replace(/\s+/g, ' ').trim().toLowerCase();
+    const q = qClean || null;
+
+    const whereClauses = [];
+    const params = [];
+    if (q) {
+      whereClauses.push(`(LOWER(CONCAT_WS(' ', p.first_name, p.last_name)) LIKE ? OR LOWER(u.email) LIKE ? OR LOWER(p.position) LIKE ?)`);
+      const like = `%${q}%`;
+      params.push(like, like, like);
+    }
+
+    const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+    const countSql = `SELECT COUNT(*) AS total FROM Players p LEFT JOIN Users u ON p.user_id = u.id ${whereSql}`;
+    const [countRows] = await db.query(countSql, params);
+    const total = countRows && countRows.length ? countRows[0].total : 0;
+
+    const offset = (page - 1) * limit;
+    const dataSql = `SELECT p.*, t.name AS team_name, COALESCE(p.image_url, u.image_url) AS image_url
       FROM Players p
       LEFT JOIN Teams t ON p.team_id = t.id
       LEFT JOIN Users u ON p.user_id = u.id
-    `);
-    // Make image URLs absolute so frontend can load them from the backend host
+      ${whereSql}
+      ORDER BY p.id DESC
+      LIMIT ? OFFSET ?`;
+
+    const dataParams = params.slice();
+    dataParams.push(limit, offset);
+    const [rows] = await db.query(dataSql, dataParams);
+
     const makeAbsolute = (url) => {
       if (!url) return null;
       if (String(url).startsWith('http')) return url;
       return `${req.protocol}://${req.get('host')}${url}`;
     };
     const mapped = rows.map(r => ({ ...r, image_url: makeAbsolute(r.image_url) }));
-    res.status(200).json(mapped);
+    res.status(200).json({ data: mapped, total });
   } catch (err) {
     console.error("Error fetching players:", err);
     return res.status(500).json({ message : "Internal Server Error" });

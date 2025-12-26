@@ -2,20 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Box,
   Flex,
-  VStack,
   HStack,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  Select,
   useToast,
   Text,
 } from '@chakra-ui/react';
@@ -23,10 +10,12 @@ import { Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import useCrudList from '../../hooks/useCrudList';
+import useAdminPlayers from '../../hooks/useAdminPlayers';
 // teams are loaded from the API; remove static helpers
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, AvatarCircle, ActionButtons, SearchInput, FilterSelect } from '../../components/ui';
+import Pagination from '../../components/ui/Pagination';
 import playerService from '../../services/playerService';
 import CrudFormModal from '../../components/admin/CrudFormModal';
 import ConfirmModal from '../../components/admin/ConfirmModal';
@@ -42,10 +31,6 @@ const AdminPlayersPage = () => {
   const isRTL = i18n?.language === 'ar';
 
   const {
-    items: players,
-    setItems: setPlayers,
-    searchQuery,
-    setSearchQuery,
     selectedItem,
     setSelectedItem,
     formData,
@@ -60,9 +45,6 @@ const AdminPlayersPage = () => {
     isDeleteOpen,
     onDeleteOpen,
     onDeleteClose,
-
-    // keep only handlers we actually call from this component
-    // modal open/close handlers are used directly below
   } = useCrudList({
     initialData: initialPlayers,
     initialForm: {
@@ -84,13 +66,29 @@ const AdminPlayersPage = () => {
   const [teamFilter, setTeamFilter] = useState('all');
   const [teams, setTeams] = useState([]);
 
+  const {
+    players,
+    rawPlayers,
+    total,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    searchQuery,
+    setSearchQuery,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useAdminPlayers();
+
   // load team options from API (keeps the list up-to-date)
   // use `filterAllTeams` i18n key (consistent with other helpers) so translations (e.g. Arabic) show correctly
   const teamOptions = [{ value: 'all', label: t('filterAllTeams') || 'All Teams' }, ...teams.map(tm => ({ value: String(tm.id), label: tm.name }))];
 
-  const filteredPlayers = players.filter(player => {
-    const matchesSearch = player.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTeam = teamFilter === 'all' || player.team === teamFilter;
+  const filteredPlayers = (players || []).filter(player => {
+    const matchesSearch = !searchQuery || (player.name || '').toLowerCase().includes((searchQuery || '').toLowerCase());
+    const matchesTeam = teamFilter === 'all' || String(player.team_id || player.team) === String(teamFilter) || player.team === teamFilter;
     return matchesSearch && matchesTeam;
   });
 
@@ -110,15 +108,8 @@ const AdminPlayersPage = () => {
           sendInvite: formData.sendInvite === true || formData.sendInvite === 'true',
         };
         const resp = await playerService.adminCreatePlayer(payload);
-        const newPlayer = {
-          id: resp.id,
-          name: `${payload.first_name || ''} ${payload.last_name || ''}`.trim(),
-          team: teams.find(ti => ti.id === payload.team_id)?.name || '',
-          position: payload.position,
-          status: 'Active',
-        };
-        setPlayers(prev => [...prev, newPlayer]);
-        toast({ title: t('notification.playerAdded') || 'Player added', description: t('notification.playerAddedDesc') || `${newPlayer.name} has been added successfully.`, status: 'success', duration: 3000 });
+        await refetch();
+        toast({ title: t('notification.playerAdded') || 'Player added', description: t('notification.playerAddedDesc') || `${payload.first_name || ''} ${payload.last_name || ''} has been added successfully.`, status: 'success', duration: 3000 });
         onAddClose();
         setFormData({ first_name: '', last_name: '', date_of_birth: '', height: '', weight: '', position: 'Midfielder', strong_foot: 'Right', team_id: '', email: '', sendInvite: false });
       } catch (err) {
@@ -144,7 +135,7 @@ const AdminPlayersPage = () => {
           team_id: formData.team_id ? parseInt(formData.team_id) : null,
         };
         await playerService.updatePlayer(id, payload);
-        setPlayers(prev => prev.map(p => p.id === id ? { ...p, name: `${payload.first_name} ${payload.last_name}`.trim(), team: teams.find(ti => ti.id === payload.team_id)?.name || p.team, position: payload.position } : p));
+        await refetch();
         toast({ title: t('notification.playerUpdated') || 'Player updated', description: t('notification.playerUpdatedDesc') || `Player information has been updated successfully.`, status: 'success', duration: 3000 });
         onEditClose();
         setSelectedItem(null);
@@ -161,7 +152,7 @@ const AdminPlayersPage = () => {
         if (!selectedItem) return;
         const id = selectedItem.id;
         await playerService.deletePlayer(id);
-        setPlayers(prev => prev.filter(p => p.id !== id));
+        await refetch();
         toast({ title: t('notification.playerDeleted') || 'Player deleted', description: t('notification.playerDeletedDesc') || `${selectedItem?.name} has been removed.`, status: 'success', duration: 3000 });
         onDeleteClose();
         setSelectedItem(null);
@@ -200,38 +191,19 @@ const AdminPlayersPage = () => {
     if (typeof onDeleteOpen === 'function') onDeleteOpen();
   };
 
-  // Load players and teams from API on mount
+  // Load teams from API on mount
   useEffect(() => {
     let mounted = true;
-    const load = async () => {
-      try {
-        const resp = await playerService.getPlayers();
-        const list = Array.isArray(resp) ? resp : [];
-        const mapped = list.map(p => ({
-          id: p.id,
-          name: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
-          team: p.team_name || '',
-          position: p.position || '',
-          status: p.status || 'Active',
-          image: p.image_url || null,
-        }));
-        if (mounted) setPlayers(mapped);
-      } catch (err) {
-        console.error('Failed to load players', err);
-        toast({ title: 'Failed to load players', status: 'error', duration: 4000 });
-      }
-
+    (async () => {
       try {
         const teamsResp = await playerService.getTeams();
         if (mounted) setTeams(Array.isArray(teamsResp) ? teamsResp : []);
       } catch (err) {
         console.error('Failed to load teams', err);
       }
-    };
-
-    load();
+    })();
     return () => { mounted = false; };
-  }, [setPlayers, toast]);
+  }, []);
 
   const getRatingColor = (rating) => {
     if (rating >= 8.5) return 'success';
@@ -369,6 +341,7 @@ const AdminPlayersPage = () => {
           emptyMessage="No players found"
           wrapperBorderColor={cardBorder}
         />
+        <Pagination page={page} setPage={setPage} totalPages={totalPages} pageSize={pageSize} setPageSize={setPageSize} />
         </Box>
       </Box>
 

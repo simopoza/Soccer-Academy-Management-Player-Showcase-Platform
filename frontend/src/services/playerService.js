@@ -23,8 +23,13 @@ const completeProfile = async (playerId, profileData) => {
   return response.data;
 };
 
-const getPlayers = async () => {
-  const response = await axiosInstance.get('/players');
+const getPlayers = async (opts = {}) => {
+  // opts: { page, limit, q }
+  const params = {};
+  if (opts.page != null) params.page = opts.page;
+  if (opts.limit != null) params.limit = opts.limit;
+  if (opts.q) params.q = opts.q;
+  const response = await axiosInstance.get('/players', { params });
   return response.data;
 };
 

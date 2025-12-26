@@ -163,4 +163,11 @@
   "deleteStatistics": "Delete Statistics",
   "actionEdit": "Edit",
   "actionDelete": "Delete"
+  ,
+  "pagination": {
+    "prev": "Prev",
+    "next": "Next",
+    "perPage": "Per page:",
+    "pageOf": "Page {{page}} / {{total}}"
+  }
 }
