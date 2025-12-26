@@ -2,31 +2,20 @@ import { useState, useEffect } from 'react';
 import {
   Box,
   Flex,
-  VStack,
   HStack,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  Select,
   useToast,
   Text,
-  Textarea,
   Icon,
 } from '@chakra-ui/react';
 import { FiUsers } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import useCrudList from '../../hooks/useCrudList';
+import useAdminTeams from '../../hooks/useAdminTeams';
+import Pagination from '../../components/ui/Pagination';
+import { Skeleton, Center } from '@chakra-ui/react';
 import { categoryOptions } from '../../utils/adminOptions';
-import playerService from '../../services/playerService';
+// playerService is not used here anymore; CRUD goes through useAdminTeams
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, ActionButtons, SearchInput, FilterSelect } from '../../components/ui';
@@ -44,10 +33,8 @@ const AdminTeamsPage = () => {
   const isRTL = i18n?.language === 'ar';
 
   const {
-    items: teams,
-    setItems: setTeams,
-    searchQuery,
-    setSearchQuery,
+    // items and local search from useCrudList are not used because this page
+    // now uses server-side data via useAdminTeams. Keep hook for modal/form state.
     selectedItem,
     setSelectedItem,
     formData,
@@ -57,31 +44,34 @@ const AdminTeamsPage = () => {
     onAddOpen,
     onAddClose,
     isEditOpen,
+    onEditOpen,
     onEditClose,
     isDeleteOpen,
+    onDeleteOpen,
     onDeleteClose,
 
-    handleAdd,
-    handleEdit,
-    handleDelete,
     openEditDialog,
     openDeleteDialog,
   } = useCrudList({ initialData: [], initialForm: { name: '', ageCategory: 'U16', coach: '', description: '' } });
 
-  // Load teams from API on mount
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const resp = await playerService.getTeams();
-        if (mounted && Array.isArray(resp)) setTeams(resp);
-      } catch (err) {
-        console.error('Failed to load teams', err);
-      }
-    };
-    load();
-    return () => { mounted = false; };
-  }, [setTeams]);
+  // Use paginated server-side teams hook
+  const {
+    teams,
+    total,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    searchQuery,
+    setSearchQuery,
+    isLoading,
+    isFetching,
+    refetch,
+    addTeam,
+    updateTeam,
+    deleteTeam,
+  } = useAdminTeams({ initialPage: 1, initialPageSize: 10 });
 
   const toast = useToast();
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -93,42 +83,54 @@ const AdminTeamsPage = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const onConfirmAdd = () => {
-    const created = handleAdd({ playerCount: 0, founded: new Date().getFullYear().toString(), status: 'Active' });
-    toast({
-      title: t('notification.teamAdded') || 'Team added',
-      description: t('notification.teamAddedDesc') || `${created.name} ${created.ageCategory} has been added successfully.`,
-      status: 'success',
-      duration: 3000,
-    });
-    onAddClose();
-    setFormData({ name: '', ageCategory: 'U16', coach: '', description: '' });
+  const onConfirmAdd = async () => {
+    try {
+      const payload = {
+        name: formData.name,
+        age_limit: formData.ageCategory ? Number(formData.ageCategory.replace('U','')) : null,
+        coach: formData.coach || null,
+        founded: formData.founded || new Date().getFullYear().toString(),
+        status: formData.status || 'Active',
+      };
+      await addTeam(payload);
+      toast({ title: t('notification.teamAdded') || 'Team added', description: t('notification.teamAddedDesc') || `${payload.name} has been added.`, status: 'success', duration: 3000 });
+      onAddClose();
+      setFormData({ name: '', ageCategory: 'U16', coach: '', description: '' });
+      refetch();
+    } catch (err) {
+      toast({ title: t('error') || 'Error', description: err?.response?.data?.message || 'Failed to add team', status: 'error' });
+    }
   };
 
-  const onConfirmEdit = () => {
-    const updated = handleEdit();
-    toast({
-      title: t('notification.teamUpdated') || 'Team updated',
-      description: t('notification.teamUpdatedDesc') || `Team information has been updated successfully.`,
-      status: 'success',
-      duration: 3000,
-    });
-    onEditClose();
-    setSelectedItem(null);
-    return updated;
+  const onConfirmEdit = async () => {
+    try {
+      const payload = {
+        name: formData.name,
+        age_limit: formData.ageCategory ? Number(formData.ageCategory.replace('U','')) : null,
+        coach: formData.coach || null,
+        founded: formData.founded || null,
+        status: formData.status || 'Active',
+      };
+      await updateTeam({ id: selectedItem.id, data: payload });
+      toast({ title: t('notification.teamUpdated') || 'Team updated', description: t('notification.teamUpdatedDesc') || `Team information has been updated successfully.`, status: 'success', duration: 3000 });
+      onEditClose();
+      setSelectedItem(null);
+      refetch();
+    } catch (err) {
+      toast({ title: t('error') || 'Error', description: err?.response?.data?.message || 'Failed to update team', status: 'error' });
+    }
   };
 
-  const onConfirmDelete = () => {
-    const deleted = handleDelete();
-    toast({
-      title: t('notification.teamDeleted') || 'Team deleted',
-      description: t('notification.teamDeletedDesc') || `${deleted?.name} has been removed.`,
-      status: 'success',
-      duration: 3000,
-    });
-    onDeleteClose();
-    setSelectedItem(null);
-    return deleted;
+  const onConfirmDelete = async () => {
+    try {
+      await deleteTeam(selectedItem.id);
+      toast({ title: t('notification.teamDeleted') || 'Team deleted', description: t('notification.teamDeletedDesc') || `${selectedItem?.name} has been removed.`, status: 'success', duration: 3000 });
+      onDeleteClose();
+      setSelectedItem(null);
+      refetch();
+    } catch (err) {
+      toast({ title: t('error') || 'Error', description: err?.response?.data?.message || 'Failed to delete team', status: 'error' });
+    }
   };
 
   
@@ -209,7 +211,7 @@ const AdminTeamsPage = () => {
         >
         <TableHeader
           title={t('cardTitleTeams') || 'All Teams'}
-          count={filteredTeams.length}
+          count={total}
           actionLabel={t('actionAddTeam') || 'Add Team'}
           onAction={onAddOpen}
         />
@@ -232,12 +234,22 @@ const AdminTeamsPage = () => {
           </Box>
         </Flex>
 
-        <DataTable
-          columns={columns}
-          data={filteredTeams}
-          emptyMessage={t('emptyTeams') || 'No teams found'}
-          wrapperBorderColor={cardBorder}
-        />
+        {isLoading ? (
+          <Center py={8}>
+            <Skeleton height="24px" width="80%" />
+          </Center>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={filteredTeams}
+            emptyMessage={t('emptyTeams') || 'No teams found'}
+            wrapperBorderColor={cardBorder}
+          />
+        )}
+
+        <Box mt={4}>
+          <Pagination page={page} setPage={setPage} totalPages={totalPages} pageSize={pageSize} setPageSize={setPageSize} />
+        </Box>
         </Box>
       </Box>
 

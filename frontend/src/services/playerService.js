@@ -1,7 +1,12 @@
 import axiosInstance from "./axiosInstance";
 
-const getTeams = async () => {
-  const response = await axiosInstance.get("/teams");
+const getTeams = async (opts = {}) => {
+  // opts: { page, limit, q }
+  const params = {};
+  if (opts.page != null) params.page = opts.page;
+  if (opts.limit != null) params.limit = opts.limit;
+  if (opts.q) params.q = opts.q;
+  const response = await axiosInstance.get("/teams", { params });
   return response.data;
 };
 
@@ -43,6 +48,21 @@ const addPlayer = async (playerData) => {
   return response.data;
 };
 
+const addTeam = async (teamData) => {
+  const response = await axiosInstance.post('/teams', teamData);
+  return response.data;
+};
+
+const updateTeam = async (teamId, teamData) => {
+  const response = await axiosInstance.put(`/teams/${teamId}`, teamData);
+  return response.data;
+};
+
+const deleteTeam = async (teamId) => {
+  const response = await axiosInstance.delete(`/teams/${teamId}`);
+  return response.data;
+};
+
 const adminCreatePlayer = async (playerData) => {
   const response = await axiosInstance.post('/players/admin-create', playerData);
   return response.data;
@@ -58,4 +78,4 @@ const deletePlayer = async (playerId) => {
   return response.data;
 };
 
-export default { getTeams, getCurrentPlayer, completeProfile, getPlayers, getPlayerById, addPlayer, adminCreatePlayer, updatePlayer, deletePlayer };
+export default { getTeams, getCurrentPlayer, completeProfile, getPlayers, getPlayerById, addPlayer, adminCreatePlayer, updatePlayer, deletePlayer, addTeam, updateTeam, deleteTeam };
