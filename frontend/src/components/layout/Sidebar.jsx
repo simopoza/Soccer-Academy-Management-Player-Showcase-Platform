@@ -161,7 +161,7 @@ const Sidebar = ({ children }) => {
 					{ name: t("playersManagement") || "Players", icon: "⚽", path: "/admin/players-management" },
 					{ name: t("teamsManagement") || "Teams", icon: "🏆", path: "/admin/teams-management" },
 					{ name: t("matchesManagement") || "Matches", icon: "📅", path: "/admin/matches-management" },
-					{ name: t("analyticsReports") || "Analytics", icon: "📊", path: "/admin/analytics" },
+					// analytics removed — use stats page instead
 					{ name: t("settings") || "Settings", icon: "⚙️", path: "/admin/settings" },
 				];
 			case "player":

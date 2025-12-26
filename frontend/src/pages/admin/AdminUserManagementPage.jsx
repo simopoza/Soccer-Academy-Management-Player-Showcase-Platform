@@ -158,7 +158,7 @@ const AdminUserManagementPage = () => {
               <HStack spacing={4}>
                 <IconButton
                   icon={<ArrowBackIcon />}
-                  onClick={() => navigate("/admin/menu")}
+                  onClick={() => navigate("/admin/dashboard")}
                   aria-label="Back to menu"
                   variant="ghost"
                   color="white"

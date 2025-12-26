@@ -5,9 +5,7 @@ import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 import CompleteProfilePage from "../pages/player/CompleteProfilePage";
 import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
-import AdminMenuPage from "../pages/admin/AdminMenuPage";
 import AdminUserManagementPage from "../pages/admin/AdminUserManagementPage";
-import AdminAnalyticsPage from "../pages/admin/AdminAnalyticsPage";
 import AdminSettingsPage from "../pages/admin/AdminSettingsPage";
 import AdminUsersPage from "../pages/admin/AdminUsersPage";
 import AdminPlayersPage from "../pages/admin/AdminPlayersPage";
@@ -51,14 +49,6 @@ function AppRoutes() {
         } 
       />
       <Route 
-        path="/admin/menu" 
-        element={
-          <RoleBasedRoute allowedRoles={["admin"]}>
-            <AdminMenuPage />
-          </RoleBasedRoute>
-        } 
-      />
-      <Route 
         path="/admin/users" 
         element={
           <RoleBasedRoute allowedRoles={["admin"]}>
@@ -66,14 +56,7 @@ function AppRoutes() {
           </RoleBasedRoute>
         } 
       />
-      <Route 
-        path="/admin/analytics" 
-        element={
-          <RoleBasedRoute allowedRoles={["admin"]}>
-            <AdminAnalyticsPage />
-          </RoleBasedRoute>
-        } 
-      />
+      {/* Admin menu and standalone analytics page removed (use dashboard/stats pages) */}
       <Route 
         path="/admin/settings" 
         element={
