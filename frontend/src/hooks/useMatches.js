@@ -4,6 +4,7 @@ import matchService from '../services/matchService';
 
 export default function useMatches({ searchQuery = '', statusFilter = 'all', locationFilter = 'all', initialPage = 1, pageSize = 10 } = {}) {
   const [page, setPage] = useState(initialPage);
+  const [pageSizeState, setPageSizeState] = useState(pageSize);
   const queryClient = useQueryClient();
 
   const { data: rawMatches = [], isLoading, isFetching } = useQuery({
@@ -78,7 +79,7 @@ export default function useMatches({ searchQuery = '', statusFilter = 'all', loc
   }), [matches, searchQuery, statusFilter, locationFilter]);
 
   const totalFiltered = filteredMatches.length;
-  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSizeState));
 
   // keep page in bounds — run when totalPages changes
   useEffect(() => {
@@ -92,8 +93,8 @@ export default function useMatches({ searchQuery = '', statusFilter = 'all', loc
     setPage(1);
   }, [searchQuery, statusFilter, locationFilter]);
 
-  const startIdx = (page - 1) * pageSize;
-  const pagedMatches = filteredMatches.slice(startIdx, startIdx + pageSize);
+  const startIdx = (page - 1) * pageSizeState;
+  const pagedMatches = filteredMatches.slice(startIdx, startIdx + pageSizeState);
 
   const totalMatches = matches.length;
   const upcomingMatches = matches.filter(m => m.status === 'Upcoming').length;
@@ -212,7 +213,8 @@ export default function useMatches({ searchQuery = '', statusFilter = 'all', loc
     pagedMatches,
     page,
     setPage,
-    pageSize,
+    pageSize: pageSizeState,
+    setPageSize: setPageSizeState,
     totalPages,
     totalFiltered,
     totalMatches,

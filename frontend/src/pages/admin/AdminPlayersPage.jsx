@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Flex,
@@ -17,6 +17,7 @@ import { DataTable, TableHeader } from '../../components/table';
 import { Badge, AvatarCircle, ActionButtons, SearchInput, FilterSelect } from '../../components/ui';
 import Pagination from '../../components/ui/Pagination';
 import playerService from '../../services/playerService';
+import useTeamsOptions from '../../hooks/useTeamsOptions';
 import CrudFormModal from '../../components/admin/CrudFormModal';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 
@@ -64,7 +65,7 @@ const AdminPlayersPage = () => {
 
   const toast = useToast();
   const [teamFilter, setTeamFilter] = useState('all');
-  const [teams, setTeams] = useState([]);
+  const { teamsOptions } = useTeamsOptions();
 
   const {
     players,
@@ -82,9 +83,8 @@ const AdminPlayersPage = () => {
     refetch,
   } = useAdminPlayers();
 
-  // load team options from API (keeps the list up-to-date)
-  // use `filterAllTeams` i18n key (consistent with other helpers) so translations (e.g. Arabic) show correctly
-  const teamOptions = [{ value: 'all', label: t('filterAllTeams') || 'All Teams' }, ...teams.map(tm => ({ value: String(tm.id), label: tm.name }))];
+  // derive team options from cached teams via `useTeamsOptions`
+  const teamOptions = [{ value: 'all', label: t('filterAllTeams') || 'All Teams' }, ...teamsOptions.filter(o => o.value !== '').map(o => ({ value: o.value, label: o.label }))];
 
   const filteredPlayers = (players || []).filter(player => {
     const matchesSearch = !searchQuery || (player.name || '').toLowerCase().includes((searchQuery || '').toLowerCase());
@@ -191,19 +191,7 @@ const AdminPlayersPage = () => {
     if (typeof onDeleteOpen === 'function') onDeleteOpen();
   };
 
-  // Load teams from API on mount
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const teamsResp = await playerService.getTeams();
-        if (mounted) setTeams(Array.isArray(teamsResp) ? teamsResp : []);
-      } catch (err) {
-        console.error('Failed to load teams', err);
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
+  // teams are provided by useTeamsOptions
 
   const getRatingColor = (rating) => {
     if (rating >= 8.5) return 'success';
@@ -378,7 +366,7 @@ const AdminPlayersPage = () => {
             { value: 'true', label: t('yes') || 'Yes' },
             { value: 'false', label: t('no') || 'No' },
           ] },
-          { name: 'team_id', label: t('team') || 'Team', type: 'select', isRequired: false, options: teams.map(tm => ({ value: String(tm.id), label: tm.name })) },
+          { name: 'team_id', label: t('team') || 'Team', type: 'select', isRequired: false, options: teamsOptions },
         ]}
       />
 
@@ -410,7 +398,7 @@ const AdminPlayersPage = () => {
             { value: 'Left', label: t('left') || 'Left' },
             { value: 'Both', label: t('both') || 'Both' },
           ] },
-          { name: 'team_id', label: t('team') || 'Team', type: 'select', isRequired: false, options: teams.map(tm => ({ value: String(tm.id), label: tm.name })) },
+          { name: 'team_id', label: t('team') || 'Team', type: 'select', isRequired: false, options: teamsOptions },
         ]}
       />
 

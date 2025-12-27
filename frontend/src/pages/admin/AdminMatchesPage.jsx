@@ -1,18 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Flex,
   useToast,
-  Text,
   SimpleGrid,
   useColorModeValue,
-  Button,
   Skeleton,
 } from '@chakra-ui/react';
 import { CalendarDays, Clock, CheckCircle, Trophy } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
 import { TableHeader } from '../../components/table';
 import { SearchInput, FilterSelect, StatsCard } from '../../components/ui';
+import Pagination from '../../components/ui/Pagination';
 import MatchesTable from '../../components/admin/MatchesTable';
 
 import { useTranslation } from 'react-i18next';
@@ -20,7 +19,8 @@ import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import useCrudList from '../../hooks/useCrudList';
 import useMatches from '../../hooks/useMatches';
 import matchFields from '../../constants/matchFields';
-import teamService from '../../services/teamService';
+import adminMatchesConfig from '../../constants/adminMatches.config';
+import useTeamsOptions from '../../hooks/useTeamsOptions';
 import { statusOptions } from '../../utils/adminOptions';
 import CrudFormModal from '../../components/admin/CrudFormModal';
 import ConfirmModal from '../../components/admin/ConfirmModal';
@@ -63,6 +63,8 @@ const AdminMatchesPage = () => {
     pagedMatches,
     page,
     setPage,
+    pageSize,
+    setPageSize,
     totalPages,
     totalFiltered,
     totalMatches,
@@ -70,98 +72,70 @@ const AdminMatchesPage = () => {
     completedMatches,
     winRate,
     isLoading,
-    isFetching,
     addMatch,
     updateMatch,
     deleteMatch,
   } = useMatches({ searchQuery, statusFilter, locationFilter, pageSize: 10 });
 
-  // teams for Team select options
-  const [teamsOptions, setTeamsOptions] = useState([]);
+  // teams for Team select options (use React Query via hook)
+  const { teamsOptions } = useTeamsOptions();
 
-  // load teams once for select options
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const rows = await teamService.getTeams();
-        if (!mounted) return;
-        const opts = rows.map(t => ({ value: String(t.id), label: t.name }));
-        setTeamsOptions(opts);
-      } catch (e) {
-        console.debug('Failed to load teams', e);
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
-
-  const fieldsWithOptions = matchFields.map(f => {
-    if (f.name === 'team_id') {
-      return { ...f, options: [{ value: '', label: 'Select team' }, ...teamsOptions] };
-    }
-    return f;
-  });
+  const fieldsWithOptions = adminMatchesConfig.getMatchFields(teamsOptions, t);
 
   // pagination, filtering and stats are provided by `useMatches` hook
 
-  const onConfirmAdd = () => {
-    return (async () => {
-      try {
-        await addMatch(formData);
-        toast({
-          title: t('notification.matchAdded') || 'Match added',
-          description: t('notification.matchAddedDesc') || `Match has been scheduled successfully.`,
-          status: 'success',
-          duration: 3000,
-        });
-        onAddClose();
-        setFormData({ team_id: '', opponent: '', date: '', time: '', location: 'Home', competition: 'League', team_goals: 0, opponent_goals: 0 });
-      } catch (err) {
-        console.error('Add match failed', err);
-        toast({ title: t('error') || 'Error', description: err?.message || 'Failed to add match', status: 'error' });
-      }
-    })();
+  const onConfirmAdd = async () => {
+    try {
+      await addMatch(formData);
+      toast({
+        title: t('notification.matchAdded') || 'Match added',
+        description: t('notification.matchAddedDesc') || `Match has been scheduled successfully.`,
+        status: 'success',
+        duration: 3000,
+      });
+      onAddClose();
+      setFormData({ team_id: '', opponent: '', date: '', time: '', location: 'Home', competition: 'League', team_goals: 0, opponent_goals: 0 });
+    } catch (err) {
+      console.error('Add match failed', err);
+      toast({ title: t('error') || 'Error', description: err?.message || 'Failed to add match', status: 'error' });
+    }
   };
 
-  const onConfirmEdit = () => {
-    return (async () => {
-      try {
-        if (!selectedItem) return null;
-        await updateMatch(selectedItem.id, formData);
-        toast({
-          title: t('notification.matchUpdated') || 'Match updated',
-          description: t('notification.matchUpdatedDesc') || `Match information has been updated successfully.`,
-          status: 'success',
-          duration: 3000,
-        });
-        onEditClose();
-        setSelectedItem(null);
-        setFormData({ team_id: '', opponent: '', date: '', time: '', location: 'Home', competition: 'League', team_goals: 0, opponent_goals: 0 });
-      } catch (err) {
-        console.error('Update match failed', err);
-        toast({ title: t('error') || 'Error', description: err?.message || 'Failed to update match', status: 'error' });
-      }
-    })();
+  const onConfirmEdit = async () => {
+    try {
+      if (!selectedItem) return null;
+      await updateMatch(selectedItem.id, formData);
+      toast({
+        title: t('notification.matchUpdated') || 'Match updated',
+        description: t('notification.matchUpdatedDesc') || `Match information has been updated successfully.`,
+        status: 'success',
+        duration: 3000,
+      });
+      onEditClose();
+      setSelectedItem(null);
+      setFormData({ team_id: '', opponent: '', date: '', time: '', location: 'Home', competition: 'League', team_goals: 0, opponent_goals: 0 });
+    } catch (err) {
+      console.error('Update match failed', err);
+      toast({ title: t('error') || 'Error', description: err?.message || 'Failed to update match', status: 'error' });
+    }
   };
 
-  const onConfirmDelete = () => {
-    return (async () => {
-      try {
-        if (!selectedItem) return null;
-        await deleteMatch(selectedItem.id);
-        toast({
-          title: t('notification.matchDeleted') || 'Match deleted',
-          description: t('notification.matchDeletedDesc') || `Match has been removed.`,
-          status: 'success',
-          duration: 3000,
-        });
-        onDeleteClose();
-        setSelectedItem(null);
-      } catch (err) {
-        console.error('Delete match failed', err);
-        toast({ title: t('error') || 'Error', description: err?.message || 'Failed to delete match', status: 'error' });
-      }
-    })();
+  const onConfirmDelete = async () => {
+    try {
+      if (!selectedItem) return null;
+      await deleteMatch(selectedItem.id);
+      toast({
+        title: t('notification.matchDeleted') || 'Match deleted',
+        description: t('notification.matchDeletedDesc') || `Match has been removed.`,
+        status: 'success',
+        duration: 3000,
+      });
+      onDeleteClose();
+      setSelectedItem(null);
+    } catch (err) {
+      console.error('Delete match failed', err);
+      toast({ title: t('error') || 'Error', description: err?.message || 'Failed to delete match', status: 'error' });
+    }
   };
 
   // table columns and rendering extracted to MatchesTable component
@@ -280,19 +254,13 @@ const AdminMatchesPage = () => {
         )}
 
         <Box mt={4}>
-          <Flex justify="space-between" align="center">
-            <Button size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} isDisabled={page === 1 || isFetching}>
-              {t('prev') || 'Prev'}
-            </Button>
-            <Text fontSize="sm">{t('page') || 'Page'} {page}</Text>
-            <Button
-              size="sm"
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              isDisabled={isFetching || page >= totalPages}
-            >
-              {t('next') || 'Next'}
-            </Button>
-          </Flex>
+          <Pagination
+            page={page}
+            setPage={setPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            setPageSize={setPageSize}
+          />
         </Box>
         </Box>
       </Box>

@@ -32,6 +32,7 @@ import ThemeToggle from "../../components/ui/ThemeToggle";
 import { CloseIcon } from "@chakra-ui/icons";
 import useLanguageSwitcher from "../../hooks/useLanguageSwitcher";
 import playerService from "../../services/playerService";
+import useTeamsOptions from '../../hooks/useTeamsOptions';
 import authService from '../../services/authService';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 
@@ -43,7 +44,7 @@ const CompleteProfilePage = () => {
   const isRTL = i18n.language === "ar";
   const { switchLanguage, isArabic } = useLanguageSwitcher();
 
-  const [teams, setTeams] = useState([]);
+  const { teams } = useTeamsOptions();
   const [playerId, setPlayerId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -74,18 +75,14 @@ const CompleteProfilePage = () => {
   const removeBtnColor = useColorModeValue('gray.800', 'white');
   const hoverBg = useColorModeValue('gray.50','gray.600');
 
-  // Fetch teams and player info on mount
+  // Fetch player info on mount (teams are provided by useTeamsOptions)
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchPlayer = async () => {
       try {
-        const [teamsData, playerData] = await Promise.all([
-          playerService.getTeams(),
-          playerService.getCurrentPlayer(),
-        ]);
-        setTeams(teamsData || []);
+        const playerData = await playerService.getCurrentPlayer();
         setPlayerId(playerData.id);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching player data:", error);
         toast({
           title: t("error") || "Error",
           description: "Failed to load required data",
@@ -95,7 +92,7 @@ const CompleteProfilePage = () => {
         });
       }
     };
-    fetchData();
+    fetchPlayer();
   }, [t, toast]);
 
   // Check if profile already completed - redirect to dashboard
