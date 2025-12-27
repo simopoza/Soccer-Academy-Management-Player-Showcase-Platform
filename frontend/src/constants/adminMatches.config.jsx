@@ -96,11 +96,24 @@ export const createMatchColumns = ({ i18n, primaryGreen, opponentColor, onEdit, 
 };
 
 export const getMatchFields = (teamsOptions = [], t) => {
-  return matchFields.map(f => {
-    if (f.name === 'team_id') {
-      return { ...f, options: [{ value: '', label: t ? t('selectTeam') || 'Select team' : 'Select team' }, ...teamsOptions] };
+  const translateLabel = (f) => {
+    if (!t) return f.label;
+    // try a few candidate keys based on field name and label
+    const candidates = [f.name, f.name.replace(/_id$/, ''), f.label && f.label.toLowerCase().replace(/\s+/g, '_')];
+    for (const key of candidates) {
+      if (!key) continue;
+      const val = t(key);
+      if (val && typeof val === 'string' && val !== key) return val;
     }
-    return f;
+    return f.label;
+  };
+
+  return matchFields.map(f => {
+    const base = { ...f, label: translateLabel(f) };
+    if (f.name === 'team_id') {
+      return { ...base, options: [{ value: '', label: t ? t('selectTeam') || 'Select team' : 'Select team' }, ...teamsOptions] };
+    }
+    return base;
   });
 };
 
