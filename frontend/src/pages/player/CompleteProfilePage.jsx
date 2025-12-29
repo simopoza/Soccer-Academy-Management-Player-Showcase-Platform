@@ -44,7 +44,7 @@ const CompleteProfilePage = () => {
   const isRTL = i18n.language === "ar";
   const { switchLanguage, isArabic } = useLanguageSwitcher();
 
-  const { teams } = useTeamsOptions();
+  const { teams, isLoading: teamsLoading } = useTeamsOptions();
   const [playerId, setPlayerId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -283,12 +283,17 @@ const CompleteProfilePage = () => {
                     value={formData.team_id}
                     onChange={(e) => handleInputChange("team_id", e.target.value)}
                     bg={inputBg}
+                    isDisabled={teamsLoading}
                   >
-                    {teams.map((team) => (
-                      <option key={team.id} value={team.id}>
-                        {team.name} (Age {team.age_limit})
-                      </option>
-                    ))}
+                    {teamsLoading ? (
+                      <option value="">{t('loading') || 'Loading...'}</option>
+                    ) : (
+                      teams.map((team) => (
+                        <option key={team.id} value={team.id}>
+                          {team.name} (Age {team.age_limit})
+                        </option>
+                      ))
+                    )}
                   </Select>
                 </FormControl>
 

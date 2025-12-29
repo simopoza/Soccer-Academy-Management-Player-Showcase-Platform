@@ -91,7 +91,7 @@ export const createPlayerColumns = ({ t, onEdit, onDelete }) => {
   ];
 };
 
-export const getPlayerAddFields = (teamsOptions = [], t) => ([
+export const getPlayerAddFields = (teamsOptions = [], t, { isLoading = false } = {}) => ([
   { name: 'first_name', label: t('firstName') || 'First Name', type: 'text', isRequired: true },
   { name: 'last_name', label: t('lastName') || 'Last Name', type: 'text', isRequired: true },
   { name: 'date_of_birth', label: t('dateOfBirth') || 'Date of Birth', type: 'text', inputType: 'date', isRequired: true },
@@ -115,10 +115,10 @@ export const getPlayerAddFields = (teamsOptions = [], t) => ([
     { value: 'true', label: t('yes') || 'Yes' },
     { value: 'false', label: t('no') || 'No' },
   ] },
-  { name: 'team_id', label: t('team') || 'Team', type: 'select', isRequired: false, options: teamsOptions },
+  { name: 'team_id', label: t('team') || 'Team', type: 'select', isRequired: false, options: isLoading ? [{ value: '', label: t ? t('loading') || 'Loading...' : 'Loading...', isDisabled: true }] : teamsOptions },
 ]);
 
-export const getPlayerEditFields = (teamsOptions = [], t) => ([
+export const getPlayerEditFields = (teamsOptions = [], t, { isLoading = false } = {}) => ([
   { name: 'first_name', label: t('firstName') || 'First Name', type: 'text', isRequired: true },
   { name: 'last_name', label: t('lastName') || 'Last Name', type: 'text', isRequired: true },
   { name: 'date_of_birth', label: t('dateOfBirth') || 'Date of Birth', type: 'text', inputType: 'date', isRequired: true },
@@ -137,7 +137,7 @@ export const getPlayerEditFields = (teamsOptions = [], t) => ([
     { value: 'Left', label: t('left') || 'Left' },
     { value: 'Both', label: t('both') || 'Both' },
   ] },
-  { name: 'team_id', label: t('team') || 'Team', type: 'select', isRequired: false, options: teamsOptions },
+  { name: 'team_id', label: t('team') || 'Team', type: 'select', isRequired: false, options: isLoading ? [{ value: '', label: t ? t('loading') || 'Loading...' : 'Loading...', isDisabled: true }] : teamsOptions },
 ]);
 
 export default {

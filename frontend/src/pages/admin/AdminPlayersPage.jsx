@@ -1,12 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Flex,
-  HStack,
   useToast,
-  Text,
 } from '@chakra-ui/react';
-import { Star } from 'lucide-react';
 import adminPlayersConfig from '../../constants/adminPlayers.config';
 import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
@@ -15,10 +12,11 @@ import useAdminPlayers from '../../hooks/useAdminPlayers';
 // teams are loaded from the API; remove static helpers
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
-import { Badge, AvatarCircle, ActionButtons, SearchInput, FilterSelect } from '../../components/ui';
+import { SearchInput, FilterSelect } from '../../components/ui';
 import Pagination from '../../components/ui/Pagination';
 import playerService from '../../services/playerService';
 import useTeamsOptions from '../../hooks/useTeamsOptions';
+import useDebouncedValue from '../../hooks/useDebouncedValue';
 import CrudFormModal from '../../components/admin/CrudFormModal';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 
@@ -66,7 +64,7 @@ const AdminPlayersPage = () => {
 
   const toast = useToast();
   const [teamFilter, setTeamFilter] = useState('all');
-  const { teamsOptions } = useTeamsOptions();
+  const { teamsOptions, isLoading: teamsLoading } = useTeamsOptions();
 
   const {
     players,
@@ -84,8 +82,22 @@ const AdminPlayersPage = () => {
     refetch,
   } = useAdminPlayers();
 
+  // local debounced search input to avoid rapid updates
+  const [searchInput, setSearchInput] = useState(searchQuery || '');
+  const debouncedSearch = useDebouncedValue(searchInput, 300);
+
+  // update global searchQuery after debounce
+  useEffect(() => {
+    setSearchQuery(debouncedSearch);
+  }, [debouncedSearch]);
+
+  // keep local input in sync if searchQuery changes externally
+  useEffect(() => {
+    setSearchInput(searchQuery || '');
+  }, [searchQuery]);
+
   // derive team options from cached teams via `useTeamsOptions`
-  const teamOptions = [{ value: 'all', label: t('filterAllTeams') || 'All Teams' }, ...teamsOptions.filter(o => o.value !== '').map(o => ({ value: o.value, label: o.label }))];
+  const teamOptions = [{ value: 'all', label: t('filterAllTeams') || 'All Teams' }, ...teamsOptions.map(o => ({ value: o.value, label: o.label }))];
 
   const filteredPlayers = (players || []).filter(player => {
     const matchesSearch = !searchQuery || (player.name || '').toLowerCase().includes((searchQuery || '').toLowerCase());
@@ -224,8 +236,8 @@ const AdminPlayersPage = () => {
           <Box flex={1}>
               <SearchInput
                 placeholder={t('searchPlaceholderPlayers') || 'Search by player name...'}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
               />
             </Box>
             <Box width="200px">
@@ -257,7 +269,7 @@ const AdminPlayersPage = () => {
         formData={formData}
         setFormData={setFormData}
         onConfirm={onConfirmAdd}
-        fields={adminPlayersConfig.getPlayerAddFields(teamsOptions, t)}
+        fields={adminPlayersConfig.getPlayerAddFields(teamsOptions, t, { isLoading: teamsLoading })}
       />
 
       <CrudFormModal
@@ -269,7 +281,7 @@ const AdminPlayersPage = () => {
         formData={formData}
         setFormData={setFormData}
         onConfirm={onConfirmEdit}
-        fields={adminPlayersConfig.getPlayerEditFields(teamsOptions, t)}
+        fields={adminPlayersConfig.getPlayerEditFields(teamsOptions, t, { isLoading: teamsLoading })}
       />
 
       <ConfirmModal

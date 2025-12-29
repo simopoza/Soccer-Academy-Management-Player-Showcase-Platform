@@ -69,9 +69,10 @@ const CrudFormModal = ({
                     <Select
                       value={formData[f.name] ?? ''}
                       onChange={(e) => handleChange(f.name, e.target.value)}
+                      isDisabled={f.isDisabled}
                     >
                       {f.options && f.options.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        <option key={opt.value} value={opt.value} disabled={opt.isDisabled}>{opt.label}</option>
                       ))}
                     </Select>
                   ) : f.type === 'textarea' ? (
@@ -104,9 +105,10 @@ const CrudFormModal = ({
                     <Select
                       value={formData[f.name] ?? ''}
                       onChange={(e) => handleChange(f.name, e.target.value)}
+                      isDisabled={f.isDisabled}
                     >
                       {f.options && f.options.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        <option key={opt.value} value={opt.value} disabled={opt.isDisabled}>{opt.label}</option>
                       ))}
                     </Select>
                   ) : f.type === 'textarea' ? (

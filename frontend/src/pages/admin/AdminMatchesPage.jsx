@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Flex,
@@ -18,9 +18,9 @@ import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import useCrudList from '../../hooks/useCrudList';
 import useMatches from '../../hooks/useMatches';
-import matchFields from '../../constants/matchFields';
 import adminMatchesConfig from '../../constants/adminMatches.config';
 import useTeamsOptions from '../../hooks/useTeamsOptions';
+import useDebouncedValue from '../../hooks/useDebouncedValue';
 import { statusOptions } from '../../utils/adminOptions';
 import CrudFormModal from '../../components/admin/CrudFormModal';
 import ConfirmModal from '../../components/admin/ConfirmModal';
@@ -54,6 +54,17 @@ const AdminMatchesPage = () => {
     openDeleteDialog,
   } = useCrudList({ initialData: [], initialForm: { team_id: '', opponent: '', date: '', time: '', location: 'Home', competition: 'League', team_goals: 0, opponent_goals: 0 } });
 
+  // local input state for debounced search
+  const [searchInput, setSearchInput] = useState(searchQuery || '');
+  const debouncedSearch = useDebouncedValue(searchInput, 300);
+
+  // update global searchQuery only after debounce
+  useEffect(() => {
+    setSearchQuery(debouncedSearch);
+    // reset to first page when search changes
+    // setPage? useMatches provides setPage but we leave pagination hook to react to searchQuery changes
+  }, [debouncedSearch]);
+
   const toast = useToast();
   const [statusFilter, setStatusFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
@@ -78,9 +89,9 @@ const AdminMatchesPage = () => {
   } = useMatches({ searchQuery, statusFilter, locationFilter, pageSize: 10 });
 
   // teams for Team select options (use React Query via hook)
-  const { teamsOptions } = useTeamsOptions();
+  const { teamsOptions, isLoading: teamsLoading } = useTeamsOptions();
 
-  const fieldsWithOptions = adminMatchesConfig.getMatchFields(teamsOptions, t);
+  const fieldsWithOptions = adminMatchesConfig.getMatchFields(teamsOptions, t, { isLoading: teamsLoading });
 
   // pagination, filtering and stats are provided by `useMatches` hook
 
@@ -209,8 +220,8 @@ const AdminMatchesPage = () => {
           <Box flex={1}>
             <SearchInput
               placeholder={t('searchPlaceholderMatches') || 'Search by team, opponent, or location...'}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
             />
           </Box>
           <Box width="200px">

@@ -95,7 +95,7 @@ export const createMatchColumns = ({ i18n, primaryGreen, opponentColor, onEdit, 
   ];
 };
 
-export const getMatchFields = (teamsOptions = [], t) => {
+export const getMatchFields = (teamsOptions = [], t, { isLoading = false } = {}) => {
   const translateLabel = (f) => {
     if (!t) return f.label;
     // try a few candidate keys based on field name and label
@@ -111,6 +111,9 @@ export const getMatchFields = (teamsOptions = [], t) => {
   return matchFields.map(f => {
     const base = { ...f, label: translateLabel(f) };
     if (f.name === 'team_id') {
+      if (isLoading) {
+        return { ...base, options: [{ value: '', label: t ? t('loading') || 'Loading...' : 'Loading...', isDisabled: true }] };
+      }
       return { ...base, options: [{ value: '', label: t ? t('selectTeam') || 'Select team' : 'Select team' }, ...teamsOptions] };
     }
     return base;
