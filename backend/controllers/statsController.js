@@ -7,9 +7,13 @@ const getStats = async (req, res) => {
       SELECT 
         s.*, 
         CONCAT(p.first_name, ' ', p.last_name) AS player_name, 
-        p.team_id
+        p.team_id AS player_team_id,
+        m.team_name AS team_name,
+        m.opponent AS opponent,
+        m.date AS match_date
       FROM Stats s
       JOIN Players p ON s.player_id = p.id
+      LEFT JOIN Matches m ON s.match_id = m.id
     `);
 
     if (rows.length === 0) {
@@ -31,9 +35,13 @@ const getStatById = async (req, res) => {
       SELECT 
         s.*, 
         CONCAT(p.first_name, ' ', p.last_name) AS player_name, 
-        p.team_id
+        p.team_id AS player_team_id,
+        m.team_name AS team_name,
+        m.opponent AS opponent,
+        m.date AS match_date
       FROM Stats s
       JOIN Players p ON s.player_id = p.id
+      LEFT JOIN Matches m ON s.match_id = m.id
       WHERE s.id = ?
     `, [id]);
 

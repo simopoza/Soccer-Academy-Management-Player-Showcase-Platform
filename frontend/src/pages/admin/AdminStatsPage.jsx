@@ -4,25 +4,16 @@ import {
   Flex,
   VStack,
   HStack,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  Select,
   useToast,
   Text,
   SimpleGrid,
+  Skeleton,
+  Center,
 } from '@chakra-ui/react';
 import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import useCrudList from '../../hooks/useCrudList';
+import useAdminStats from '../../hooks/useAdminStats';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, ActionButtons, SearchInput, FilterSelect, StatsCard } from '../../components/ui';
@@ -30,16 +21,7 @@ import { BarChart3, Target, TrendingUp, Star } from 'lucide-react';
 import CrudFormModal from '../../components/admin/CrudFormModal';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 
-const initialStats = [
-  { id: 1, playerName: 'Marcus Johnson', playerNumber: 10, matchName: 'Academy U17 vs Riverside FC', matchDate: '2024-12-05', opponent: 'Riverside FC', goals: 2, assists: 1, minutes: 90, saves: 0, yellowCards: 0, redCards: 0, rating: 9.2 },
-  { id: 2, playerName: 'David Chen', playerNumber: 7, matchName: 'Academy U17 vs Riverside FC', matchDate: '2024-12-05', opponent: 'Riverside FC', goals: 1, assists: 2, minutes: 90, saves: 0, yellowCards: 1, redCards: 0, rating: 8.8 },
-  { id: 3, playerName: 'Alex Rivera', playerNumber: 1, matchName: 'Academy U17 vs Riverside FC', matchDate: '2024-12-05', opponent: 'Riverside FC', goals: 0, assists: 0, minutes: 90, saves: 8, yellowCards: 0, redCards: 0, rating: 8.5 },
-  { id: 4, playerName: 'Marcus Johnson', playerNumber: 10, matchName: 'Academy U17 vs City United', matchDate: '2024-11-28', opponent: 'City United', goals: 1, assists: 0, minutes: 85, saves: 0, yellowCards: 0, redCards: 0, rating: 8.0 },
-  { id: 5, playerName: 'Emma Wilson', playerNumber: 8, matchName: 'Academy U17 vs City United', matchDate: '2024-11-28', opponent: 'City United', goals: 0, assists: 2, minutes: 90, saves: 0, yellowCards: 0, redCards: 0, rating: 8.3 },
-  { id: 6, playerName: 'James Wilson', playerNumber: 5, matchName: 'Academy U17 vs Riverside FC', matchDate: '2024-12-05', opponent: 'Riverside FC', goals: 0, assists: 0, minutes: 90, saves: 0, yellowCards: 0, redCards: 0, rating: 7.8 },
-  { id: 7, playerName: 'Sarah Martinez', playerNumber: 11, matchName: 'Academy U17 vs Parkside Academy', matchDate: '2024-11-21', opponent: 'Parkside Academy', goals: 3, assists: 1, minutes: 90, saves: 0, yellowCards: 0, redCards: 0, rating: 9.5 },
-  { id: 8, playerName: 'Alex Rivera', playerNumber: 1, matchName: 'Academy U17 vs City United', matchDate: '2024-11-28', opponent: 'City United', goals: 0, assists: 0, minutes: 90, saves: 5, yellowCards: 0, redCards: 0, rating: 7.9 },
-];
+// initialStats removed — data now comes from backend via useAdminStats
 
 const AdminStatsPage = () => {
   const { t, i18n } = useTranslation();
@@ -48,7 +30,7 @@ const AdminStatsPage = () => {
   const isRTL = i18n?.language === 'ar';
 
   const {
-    items: stats,
+    // useCrudList manages modal + form state only; stats list comes from backend
     searchQuery,
     setSearchQuery,
     setSelectedItem,
@@ -63,84 +45,129 @@ const AdminStatsPage = () => {
     isDeleteOpen,
     onDeleteClose,
 
-    handleAdd,
-    handleEdit,
-    handleDelete,
+    // actions for local UI modals
     openEditDialog,
     openDeleteDialog,
-  } = useCrudList({ initialData: initialStats, initialForm: { playerName: '', matchName: '', goals: '', assists: '', minutes: '', saves: '', yellowCards: '', redCards: '', rating: '' } });
+  } = useCrudList({ initialData: [], initialForm: { playerName: '', matchName: '', goals: '', assists: '', minutes: '', saves: '', yellowCards: '', redCards: '', rating: '' } });
+
+  // Backend-powered stats hook
+  const { stats, isLoading: statsLoading, isError: statsError, refetch, addStat, updateStat, deleteStat } = useAdminStats();
 
   const toast = useToast();
   const [filterType, setFilterType] = useState('all');
   const [filterValue, setFilterValue] = useState('all');
 
-  const uniquePlayers = Array.from(new Set(stats.map(stat => stat.playerName))).sort();
-  const uniqueMatches = Array.from(new Set(stats.map(stat => stat.matchName))).sort();
-  // derive unique teams from matchName like 'Team A vs Team B'
-  const uniqueTeamsSet = new Set();
-  stats.forEach(s => {
-    const parts = (s.matchName || '').split(' vs ');
-    if (parts[0]) uniqueTeamsSet.add(parts[0].trim());
-    if (parts[1]) uniqueTeamsSet.add(parts[1].trim());
-  });
-  // derived but not currently used in the UI; remove to satisfy lint
-  // const uniqueTeams = Array.from(uniqueTeamsSet).sort();
+  const normalizedStats = (stats || []).map(s => {
+    // prefer joined/returned fields; fall back to sensible alternatives
+    const playerName = s.player_name || s.playerName || `${s.first_name || ''} ${s.last_name || ''}`.trim();
+    const matchTeam = s.team_name || s.team || s.teamName || s.team_name;
+    const matchOpponent = s.opponent || s.opponent_name || s.opponentName || s.opponent;
+    const matchName = matchTeam && matchOpponent ? `${matchTeam} vs ${matchOpponent}` : (s.match_name || s.matchName || `Match ${s.match_id || ''}`);
 
-  const filteredStats = stats.filter(stat => {
-    const matchesSearch = stat.playerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         stat.matchName.toLowerCase().includes(searchQuery.toLowerCase());
-    
+    // normalize date from several possible keys and formats
+    let matchDateRaw = s.match_date || s.matchDate || s.date || s.match_datetime || s.event_date || null;
+    // keep raw value; rendering will attempt to parse it robustly
+    return {
+      id: s.id,
+      playerName,
+      player_id: s.player_id,
+      matchName,
+      match_id: s.match_id,
+      matchDate: matchDateRaw,
+      opponent: matchOpponent || null,
+      goals: Number(s.goals || 0),
+      assists: Number(s.assists || 0),
+      minutes: Number(s.minutes_played || s.minutes || 0),
+      saves: Number(s.saves || 0),
+      yellowCards: Number(s.yellowCards || 0),
+      redCards: Number(s.redCards || 0),
+      rating: Number(s.rating || 0),
+      raw: s,
+    };
+  });
+
+  // derive unique filter lists from normalized stats
+  const uniquePlayers = Array.from(new Set(normalizedStats.map(stat => stat.playerName))).sort();
+  const uniqueMatches = Array.from(new Set(normalizedStats.map(stat => stat.matchName))).sort();
+
+  const filteredStats = normalizedStats.filter(stat => {
+    const q = (searchQuery || '').toLowerCase();
+    const matchesSearch = (stat.playerName || '').toLowerCase().includes(q) || (stat.matchName || '').toLowerCase().includes(q);
+
     if (filterType === 'player') {
       return matchesSearch && (filterValue === 'all' || stat.playerName === filterValue);
     } else if (filterType === 'match') {
       return matchesSearch && (filterValue === 'all' || stat.matchName === filterValue);
     }
-    
     return matchesSearch;
   });
 
-  const totalStats = stats.length;
-  const totalGoals = stats.reduce((sum, s) => sum + (Number(s.goals) || 0), 0);
-  const totalAssists = stats.reduce((sum, s) => sum + (Number(s.assists) || 0), 0);
-  const avgRating = stats.length ? (stats.reduce((sum, s) => sum + (Number(s.rating) || 0), 0) / stats.length).toFixed(2) : '0.00';
+  const totalStats = normalizedStats.length;
+  const totalGoals = normalizedStats.reduce((sum, s) => sum + (Number(s.goals) || 0), 0);
+  const totalAssists = normalizedStats.reduce((sum, s) => sum + (Number(s.assists) || 0), 0);
+  const avgRating = normalizedStats.length ? (normalizedStats.reduce((sum, s) => sum + (Number(s.rating) || 0), 0) / normalizedStats.length).toFixed(2) : '0.00';
 
   const onConfirmAdd = () => {
-    const created = handleAdd({ playerNumber: 0, matchDate: new Date().toISOString().split('T')[0], opponent: formData.matchName.split(' vs ')[1] || '', goals: parseInt(formData.goals) || 0, assists: parseInt(formData.assists) || 0, minutes: parseInt(formData.minutes) || 0, saves: parseInt(formData.saves) || 0, yellowCards: parseInt(formData.yellowCards) || 0, redCards: parseInt(formData.redCards) || 0, rating: parseFloat(formData.rating) || 0 });
-    toast({
-      title: t('notification.added') || 'Statistics added',
-      description: t('notification.addedDesc') || `Player statistics have been recorded successfully.`,
-      status: 'success',
-      duration: 3000,
-    });
-    onAddClose();
-    setFormData({ playerName: '', matchName: '', goals: '', assists: '', minutes: '', saves: '', yellowCards: '', redCards: '', rating: '' });
-    return created;
+    (async () => {
+      try {
+        const payload = {
+          player_id: formData.player_id || null,
+          match_id: formData.match_id || null,
+          goals: parseInt(formData.goals) || 0,
+          assists: parseInt(formData.assists) || 0,
+          minutes_played: parseInt(formData.minutes) || 0,
+        };
+        await addStat(payload);
+        toast({
+          title: t('notification.added') || 'Statistics added',
+          description: t('notification.addedDesc') || `Player statistics have been recorded successfully.`,
+          status: 'success',
+          duration: 3000,
+        });
+        onAddClose();
+        setFormData({ playerName: '', matchName: '', goals: '', assists: '', minutes: '', saves: '', yellowCards: '', redCards: '', rating: '' });
+      } catch (err) {
+        console.error('Error adding stat', err);
+        toast({ title: t('error') || 'Error', description: err?.message || 'Failed to add statistics', status: 'error' });
+      }
+    })();
   };
 
   const onConfirmEdit = () => {
-    const updated = handleEdit();
-    toast({
-      title: t('notification.updated') || 'Statistics updated',
-      description: t('notification.updatedDesc') || `Statistics have been updated successfully.`,
-      status: 'success',
-      duration: 3000,
-    });
-    onEditClose();
-    setSelectedItem(null);
-    return updated;
+    (async () => {
+      try {
+        const id = formData.id || (typeof selectedItem !== 'undefined' && selectedItem?.id);
+        if (!id) return;
+        const payload = {
+          goals: parseInt(formData.goals) || 0,
+          assists: parseInt(formData.assists) || 0,
+          minutes_played: parseInt(formData.minutes) || 0,
+        };
+        await updateStat(id, payload);
+        toast({ title: t('notification.updated') || 'Statistics updated', description: t('notification.updatedDesc') || `Statistics have been updated successfully.`, status: 'success', duration: 3000 });
+        onEditClose();
+        setSelectedItem(null);
+      } catch (err) {
+        console.error('Error updating stat', err);
+        toast({ title: t('error') || 'Error', description: err?.message || 'Failed to update statistics', status: 'error' });
+      }
+    })();
   };
 
   const onConfirmDelete = () => {
-    const deleted = handleDelete();
-    toast({
-      title: t('notification.deleted') || 'Statistics deleted',
-      description: t('notification.deletedDesc') || `Statistics record has been removed.`,
-      status: 'success',
-      duration: 3000,
-    });
-    onDeleteClose();
-    setSelectedItem(null);
-    return deleted;
+    (async () => {
+      try {
+        const id = formData.id || (typeof selectedItem !== 'undefined' && selectedItem?.id);
+        if (!id) return;
+        await deleteStat(id);
+        toast({ title: t('notification.deleted') || 'Statistics deleted', description: t('notification.deletedDesc') || `Statistics record has been removed.`, status: 'success', duration: 3000 });
+        onDeleteClose();
+        setSelectedItem(null);
+      } catch (err) {
+        console.error('Error deleting stat', err);
+        toast({ title: t('error') || 'Error', description: err?.message || 'Failed to delete statistics', status: 'error' });
+      }
+    })();
   };
 
   
@@ -175,9 +202,19 @@ const AdminStatsPage = () => {
       header: t('table.date') || 'Date',
       accessor: 'matchDate',
       render: (row) => {
-        const d = row.matchDate ? new Date(row.matchDate) : null
-        const formatted = d ? d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''
-        return <Text fontSize="sm">{formatted}</Text>
+        if (!row.matchDate) return <Text fontSize="sm">-</Text>;
+        let d = new Date(row.matchDate);
+        if (isNaN(d)) {
+          // try converting MySQL datetime 'YYYY-MM-DD HH:MM:SS' -> 'YYYY-MM-DDTHH:MM:SS'
+          try {
+            d = new Date(String(row.matchDate).replace(' ', 'T'));
+          } catch (e) {
+            d = null;
+          }
+        }
+        if (!d || isNaN(d)) return <Text fontSize="sm">{String(row.matchDate)}</Text>;
+        const formatted = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        return <Text fontSize="sm">{formatted}</Text>;
       }
     },
     {
@@ -365,12 +402,18 @@ const AdminStatsPage = () => {
           )}
         </Flex>
 
-        <DataTable
-          columns={columns}
-          data={filteredStats}
-          emptyMessage={t('emptyStats') || 'No statistics found'}
-          wrapperBorderColor={cardBorder}
-        />
+        {statsLoading ? (
+          <Center py={8}>
+            <Skeleton height="24px" width="80%" />
+          </Center>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={filteredStats}
+            emptyMessage={t('emptyStats') || 'No statistics found'}
+            wrapperBorderColor={cardBorder}
+          />
+        )}
         </Box>
       </Box>
 
