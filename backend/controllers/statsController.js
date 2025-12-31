@@ -3,6 +3,17 @@ const calculateRating = require("../helpers/calculateRating");
 
 const getStats = async (req, res) => {
   try {
+    console.log('[statsController] getStats called with', req.query);
+    // pagination
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const offset = (page - 1) * limit;
+
+    // total count
+    const [[countRow]] = await db.query(`SELECT COUNT(*) AS total FROM Stats`);
+    const total = countRow ? countRow.total : 0;
+
+    // fetch page of rows with match/player data
     const [rows] = await db.query(`
       SELECT 
         s.*, 
@@ -14,13 +25,11 @@ const getStats = async (req, res) => {
       FROM Stats s
       JOIN Players p ON s.player_id = p.id
       LEFT JOIN Matches m ON s.match_id = m.id
-    `);
+      ORDER BY s.id DESC
+      LIMIT ? OFFSET ?
+    `, [limit, offset]);
 
-    if (rows.length === 0) {
-      return res.status(200).json({ message: "Stats table is empty" });
-    }
-
-    res.status(200).json(rows);
+    return res.status(200).json({ data: rows, total });
   } catch (err) {
     console.error("Error fetching Stats: ", err);
     return res.status(500).json({ message: "Internal server error" });

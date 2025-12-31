@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Flex,
@@ -14,6 +14,8 @@ import { useTranslation } from 'react-i18next';
 import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import useCrudList from '../../hooks/useCrudList';
 import useAdminStats from '../../hooks/useAdminStats';
+import useDebouncedValue from '../../hooks/useDebouncedValue';
+import Pagination from '../../components/ui/Pagination';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
 import { Badge, ActionButtons, SearchInput, FilterSelect, StatsCard } from '../../components/ui';
@@ -31,8 +33,7 @@ const AdminStatsPage = () => {
 
   const {
     // useCrudList manages modal + form state only; stats list comes from backend
-    searchQuery,
-    setSearchQuery,
+    selectedItem,
     setSelectedItem,
     formData,
     setFormData,
@@ -49,13 +50,74 @@ const AdminStatsPage = () => {
     openEditDialog,
     openDeleteDialog,
   } = useCrudList({ initialData: [], initialForm: { playerName: '', matchName: '', goals: '', assists: '', minutes: '', saves: '', yellowCards: '', redCards: '', rating: '' } });
-
-  // Backend-powered stats hook
-  const { stats, isLoading: statsLoading, isError: statsError, refetch, addStat, updateStat, deleteStat } = useAdminStats();
-
   const toast = useToast();
   const [filterType, setFilterType] = useState('all');
   const [filterValue, setFilterValue] = useState('all');
+
+  // Backend-powered stats hook (with pagination)
+  const {
+    raw,
+    stats,
+    total,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    searchQuery,
+    setSearchQuery,
+    isLoading: statsLoading,
+    isFetching: statsFetching,
+    isError: statsError,
+    refetch,
+    addStat,
+    updateStat,
+    deleteStat,
+  } = useAdminStats({ filterType, filterValue });
+
+  // local debounced search to avoid rapid requests
+  const [searchInput, setSearchInput] = useState(searchQuery || '');
+  const debouncedSearch = useDebouncedValue(searchInput, 300);
+
+  // sync debounced input into hook's searchQuery
+  useEffect(() => {
+    setSearchQuery(debouncedSearch);
+  }, [debouncedSearch, setSearchQuery]);
+
+  // keep local input in sync with hook's searchQuery
+  useEffect(() => {
+    setSearchInput(searchQuery || '');
+  }, [searchQuery]);
+
+  useEffect(() => {
+    // no-op: removed debug logging
+  }, [page, total, totalPages, pageSize, stats]);
+
+  // normalize both the full raw set (for filter lists) and the paged stats (for display)
+  const rawArray = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : []);
+  const normalizedAll = rawArray.map(s => {
+    const playerName = s.player_name || s.playerName || `${s.first_name || ''} ${s.last_name || ''}`.trim();
+    const matchTeam = s.team_name || s.team || s.teamName || s.team_name;
+    const matchOpponent = s.opponent || s.opponent_name || s.opponentName || s.opponent;
+    const matchName = matchTeam && matchOpponent ? `${matchTeam} vs ${matchOpponent}` : (s.match_name || s.matchName || `Match ${s.match_id || ''}`);
+    return {
+      id: s.id,
+      playerName,
+      player_id: s.player_id,
+      matchName,
+      match_id: s.match_id,
+      matchDate: s.match_date || s.matchDate || s.date || s.match_datetime || s.event_date || null,
+      opponent: matchOpponent || null,
+      goals: Number(s.goals || 0),
+      assists: Number(s.assists || 0),
+      minutes: Number(s.minutes_played || s.minutes || 0),
+      saves: Number(s.saves || 0),
+      yellowCards: Number(s.yellowCards || 0),
+      redCards: Number(s.redCards || 0),
+      rating: Number(s.rating || 0),
+      raw: s,
+    };
+  });
 
   const normalizedStats = (stats || []).map(s => {
     // prefer joined/returned fields; fall back to sensible alternatives
@@ -86,26 +148,17 @@ const AdminStatsPage = () => {
     };
   });
 
-  // derive unique filter lists from normalized stats
-  const uniquePlayers = Array.from(new Set(normalizedStats.map(stat => stat.playerName))).sort();
-  const uniqueMatches = Array.from(new Set(normalizedStats.map(stat => stat.matchName))).sort();
+  // derive unique filter lists from the full dataset
+  const uniquePlayers = Array.from(new Set(normalizedAll.map(stat => stat.playerName))).sort();
+  const uniqueMatches = Array.from(new Set(normalizedAll.map(stat => stat.matchName))).sort();
 
-  const filteredStats = normalizedStats.filter(stat => {
-    const q = (searchQuery || '').toLowerCase();
-    const matchesSearch = (stat.playerName || '').toLowerCase().includes(q) || (stat.matchName || '').toLowerCase().includes(q);
+  // stats to display are the paged/filtered results from the hook
+  const displayStats = normalizedStats;
 
-    if (filterType === 'player') {
-      return matchesSearch && (filterValue === 'all' || stat.playerName === filterValue);
-    } else if (filterType === 'match') {
-      return matchesSearch && (filterValue === 'all' || stat.matchName === filterValue);
-    }
-    return matchesSearch;
-  });
-
-  const totalStats = normalizedStats.length;
-  const totalGoals = normalizedStats.reduce((sum, s) => sum + (Number(s.goals) || 0), 0);
-  const totalAssists = normalizedStats.reduce((sum, s) => sum + (Number(s.assists) || 0), 0);
-  const avgRating = normalizedStats.length ? (normalizedStats.reduce((sum, s) => sum + (Number(s.rating) || 0), 0) / normalizedStats.length).toFixed(2) : '0.00';
+  const totalStats = normalizedAll.length;
+  const totalGoals = normalizedAll.reduce((sum, s) => sum + (Number(s.goals) || 0), 0);
+  const totalAssists = normalizedAll.reduce((sum, s) => sum + (Number(s.assists) || 0), 0);
+  const avgRating = normalizedAll.length ? (normalizedAll.reduce((sum, s) => sum + (Number(s.rating) || 0), 0) / normalizedAll.length).toFixed(2) : '0.00';
 
   const onConfirmAdd = () => {
     (async () => {
@@ -366,7 +419,7 @@ const AdminStatsPage = () => {
         >
         <TableHeader
           title={t('cardTitleStats') || 'Player Statistics'}
-          count={filteredStats.length}
+          count={displayStats.length}
           actionLabel={t('actionAddStats') || 'Add Statistics'}
           onAction={onAddOpen}
         />
@@ -375,8 +428,8 @@ const AdminStatsPage = () => {
           <Box flex={1}>
                 <SearchInput
                   placeholder={t('searchPlaceholderStats') || 'Search by player, match, or opponent...'}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                 />
           </Box>
           <Box width="180px">
@@ -402,17 +455,20 @@ const AdminStatsPage = () => {
           )}
         </Flex>
 
-        {statsLoading ? (
+        {statsLoading && !statsFetching ? (
           <Center py={8}>
             <Skeleton height="24px" width="80%" />
           </Center>
         ) : (
-          <DataTable
-            columns={columns}
-            data={filteredStats}
-            emptyMessage={t('emptyStats') || 'No statistics found'}
-            wrapperBorderColor={cardBorder}
-          />
+          <>
+            <DataTable
+              columns={columns}
+              data={displayStats}
+              emptyMessage={t('emptyStats') || 'No statistics found'}
+              wrapperBorderColor={cardBorder}
+            />
+            <Pagination page={page} setPage={setPage} totalPages={totalPages} pageSize={pageSize} setPageSize={setPageSize} isLoading={statsFetching} />
+          </>
         )}
         </Box>
       </Box>

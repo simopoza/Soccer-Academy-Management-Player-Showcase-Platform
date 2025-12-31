@@ -80,7 +80,7 @@ const AdminPlayersPage = () => {
     isLoading,
     isFetching,
     refetch,
-  } = useAdminPlayers();
+  } = useAdminPlayers({ teamFilter });
 
   // local debounced search input to avoid rapid updates
   const [searchInput, setSearchInput] = useState(searchQuery || '');
@@ -99,11 +99,8 @@ const AdminPlayersPage = () => {
   // derive team options from cached teams via `useTeamsOptions`
   const teamOptions = [{ value: 'all', label: t('filterAllTeams') || 'All Teams' }, ...teamsOptions.map(o => ({ value: o.value, label: o.label }))];
 
-  const filteredPlayers = (players || []).filter(player => {
-    const matchesSearch = !searchQuery || (player.name || '').toLowerCase().includes((searchQuery || '').toLowerCase());
-    const matchesTeam = teamFilter === 'all' || String(player.team_id || player.team) === String(teamFilter) || player.team === teamFilter;
-    return matchesSearch && matchesTeam;
-  });
+  // `players` already comes paginated and filtered by search + team via the hook
+  const filteredPlayers = players || [];
 
   const onConfirmAdd = () => {
     (async () => {

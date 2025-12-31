@@ -4,6 +4,8 @@ const getStats = async (opts = {}) => {
   // opts can include pagination/search in future
   const params = {};
   if (opts.q) params.q = opts.q;
+  if (opts.page) params.page = opts.page;
+  if (opts.limit) params.limit = opts.limit;
   const response = await axiosInstance.get('/stats', { params });
   return response.data;
 };
