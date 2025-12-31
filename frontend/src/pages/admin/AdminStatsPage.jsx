@@ -58,7 +58,6 @@ const AdminStatsPage = () => {
   const {
     raw,
     stats,
-    total,
     page,
     setPage,
     pageSize,
@@ -68,8 +67,6 @@ const AdminStatsPage = () => {
     setSearchQuery,
     isLoading: statsLoading,
     isFetching: statsFetching,
-    isError: statsError,
-    refetch,
     addStat,
     updateStat,
     deleteStat,
@@ -81,17 +78,21 @@ const AdminStatsPage = () => {
 
   // sync debounced input into hook's searchQuery
   useEffect(() => {
-    setSearchQuery(debouncedSearch);
-  }, [debouncedSearch, setSearchQuery]);
+    setSearchQuery(prev => {
+      if (prev === debouncedSearch) return prev;
+      return debouncedSearch;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
 
   // keep local input in sync with hook's searchQuery
   useEffect(() => {
-    setSearchInput(searchQuery || '');
+    setSearchInput(prev => (prev === (searchQuery || '') ? prev : (searchQuery || '')));
   }, [searchQuery]);
 
   useEffect(() => {
     // no-op: removed debug logging
-  }, [page, total, totalPages, pageSize, stats]);
+  }, [page, totalPages, pageSize, stats]);
 
   // normalize both the full raw set (for filter lists) and the paged stats (for display)
   const rawArray = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : []);
@@ -261,7 +262,7 @@ const AdminStatsPage = () => {
           // try converting MySQL datetime 'YYYY-MM-DD HH:MM:SS' -> 'YYYY-MM-DDTHH:MM:SS'
           try {
             d = new Date(String(row.matchDate).replace(' ', 'T'));
-          } catch (e) {
+          } catch {
             d = null;
           }
         }

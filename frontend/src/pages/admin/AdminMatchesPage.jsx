@@ -63,6 +63,7 @@ const AdminMatchesPage = () => {
     setSearchQuery(debouncedSearch);
     // reset to first page when search changes
     // setPage? useMatches provides setPage but we leave pagination hook to react to searchQuery changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch]);
 
   const toast = useToast();

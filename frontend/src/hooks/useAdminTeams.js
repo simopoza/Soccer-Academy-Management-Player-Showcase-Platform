@@ -33,6 +33,8 @@ export default function useAdminTeams({ initialPage = 1, initialPageSize = 10 } 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   useEffect(() => {
+    // Ensure page is within bounds; it's safe to update only when needed.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
 

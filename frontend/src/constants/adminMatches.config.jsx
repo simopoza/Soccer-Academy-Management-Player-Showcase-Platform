@@ -1,10 +1,10 @@
 import matchFields from './matchFields';
 import { CalendarDays, Clock, MapPin } from 'lucide-react';
-import React from 'react';
+// React import not required with the new JSX transform
 import { VStack, HStack, Box, Text } from '@chakra-ui/react';
 import { Badge } from '../components/ui';
 
-export const createMatchColumns = ({ i18n, primaryGreen, opponentColor, onEdit, onDelete }) => {
+export const createMatchColumns = ({ i18n, primaryGreen, opponentColor }) => {
   const t = i18n?.t?.bind(i18n);
 
   return [
@@ -33,7 +33,9 @@ export const createMatchColumns = ({ i18n, primaryGreen, opponentColor, onEdit, 
               formattedDate = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'short', day: 'numeric' }).format(dt);
               formattedTime = row.time ? new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hour12: false }).format(dt) : '-';
             }
-          } catch {}
+          } catch {
+            // ignore invalid date formats
+          }
         }
 
         return (
@@ -88,7 +90,7 @@ export const createMatchColumns = ({ i18n, primaryGreen, opponentColor, onEdit, 
     {
       header: t ? t('table.actions') || 'Actions' : 'Actions',
       accessor: 'actions',
-      render: (row) => (
+      render: () => (
         <Box>{/* consumer should provide action handlers via onEdit/onDelete */}</Box>
       ),
     },

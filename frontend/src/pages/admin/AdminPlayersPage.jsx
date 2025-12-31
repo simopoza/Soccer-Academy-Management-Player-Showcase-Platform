@@ -68,8 +68,6 @@ const AdminPlayersPage = () => {
 
   const {
     players,
-    rawPlayers,
-    total,
     page,
     setPage,
     pageSize,
@@ -77,8 +75,6 @@ const AdminPlayersPage = () => {
     totalPages,
     searchQuery,
     setSearchQuery,
-    isLoading,
-    isFetching,
     refetch,
   } = useAdminPlayers({ teamFilter });
 
@@ -88,12 +84,17 @@ const AdminPlayersPage = () => {
 
   // update global searchQuery after debounce
   useEffect(() => {
-    setSearchQuery(debouncedSearch);
+    setSearchQuery(prev => {
+      if (prev === debouncedSearch) return prev;
+      return debouncedSearch;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch]);
 
   // keep local input in sync if searchQuery changes externally
   useEffect(() => {
-    setSearchInput(searchQuery || '');
+    // synchronize local input only when it actually differs
+    setSearchInput(prev => (prev === (searchQuery || '') ? prev : (searchQuery || '')));
   }, [searchQuery]);
 
   // derive team options from cached teams via `useTeamsOptions`
@@ -117,7 +118,7 @@ const AdminPlayersPage = () => {
           email: formData.email || null,
           sendInvite: formData.sendInvite === true || formData.sendInvite === 'true',
         };
-        const resp = await playerService.adminCreatePlayer(payload);
+        await playerService.adminCreatePlayer(payload);
         await refetch();
         toast({ title: t('notification.playerAdded') || 'Player added', description: t('notification.playerAddedDesc') || `${payload.first_name || ''} ${payload.last_name || ''} has been added successfully.`, status: 'success', duration: 3000 });
         onAddClose();
@@ -203,11 +204,7 @@ const AdminPlayersPage = () => {
 
   // teams are provided by useTeamsOptions
 
-  const getRatingColor = (rating) => {
-    if (rating >= 8.5) return 'success';
-    if (rating >= 7.5) return 'info';
-    return 'warning';
-  };
+  // rating color helper removed (not used here)
 
   const columns = adminPlayersConfig.createPlayerColumns({ t, onEdit: onOpenEdit, onDelete: onOpenDelete });
 

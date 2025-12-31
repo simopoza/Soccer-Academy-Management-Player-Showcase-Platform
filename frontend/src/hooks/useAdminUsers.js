@@ -36,6 +36,8 @@ export default function useAdminUsers({ initialPage = 1, initialPageSize = 10 } 
 
   // ensure page is within bounds
   useEffect(() => {
+    // ensure page is within bounds; suppress rule that complains about setState in effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
 

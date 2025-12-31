@@ -48,7 +48,6 @@ const AdminUsersManagementPage = () => {
 
   const {
     users,
-    rawUsers,
     total,
     page,
     setPage,
@@ -58,8 +57,7 @@ const AdminUsersManagementPage = () => {
     searchQuery,
     setSearchQuery,
     isLoading,
-    isFetching,
-    refetch,
+    
     approve,
     reject,
     remove,
