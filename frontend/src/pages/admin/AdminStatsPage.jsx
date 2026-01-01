@@ -15,6 +15,8 @@ import { useDashboardTheme } from '../../hooks/useDashboardTheme';
 import useCrudList from '../../hooks/useCrudList';
 import useAdminStats from '../../hooks/useAdminStats';
 import useDebouncedValue from '../../hooks/useDebouncedValue';
+import useAdminPlayers from '../../hooks/useAdminPlayers';
+import useMatches from '../../hooks/useMatches';
 import Pagination from '../../components/ui/Pagination';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
@@ -49,7 +51,7 @@ const AdminStatsPage = () => {
     // actions for local UI modals
     openEditDialog,
     openDeleteDialog,
-  } = useCrudList({ initialData: [], initialForm: { playerName: '', matchName: '', goals: '', assists: '', minutes: '', saves: '', yellowCards: '', redCards: '', rating: '' } });
+  } = useCrudList({ initialData: [], initialForm: { player_id: '', match_id: '', goals: '', assists: '', minutes: '', saves: '', yellowCards: '', redCards: '' } });
   const toast = useToast();
   const [filterType, setFilterType] = useState('all');
   const [filterValue, setFilterValue] = useState('all');
@@ -150,8 +152,20 @@ const AdminStatsPage = () => {
   });
 
   // derive unique filter lists from the full dataset
-  const uniquePlayers = Array.from(new Set(normalizedAll.map(stat => stat.playerName))).sort();
-  const uniqueMatches = Array.from(new Set(normalizedAll.map(stat => stat.matchName))).sort();
+  // get full players and matches lists to populate selects reliably
+  const { rawPlayers = [], players: playersPaged } = useAdminPlayers();
+  const { matches: allMatches = [] } = useMatches();
+
+  const playersOptions = (Array.isArray(rawPlayers) ? rawPlayers : []).map(p => ({ value: String(p.id), label: `${p.first_name || ''} ${p.last_name || ''}`.trim() }));
+  // start with matches from the matches hook
+  const matchesMap = new Map((Array.isArray(allMatches) ? allMatches : []).map(m => [String(m.id), `${m.team} vs ${m.opponent}`]));
+  // add any matches referenced by stats that might not be in the matches hook result
+  normalizedAll.forEach(s => {
+    if (s.match_id && !matchesMap.has(String(s.match_id))) {
+      matchesMap.set(String(s.match_id), s.matchName || `Match ${s.match_id}`);
+    }
+  });
+  const matchesOptions = Array.from(matchesMap.entries()).map(([value, label]) => ({ value, label }));
 
   // stats to display are the paged/filtered results from the hook
   const displayStats = normalizedStats;
@@ -164,12 +178,26 @@ const AdminStatsPage = () => {
   const onConfirmAdd = () => {
     (async () => {
       try {
+        // resolve player_id and match_id robustly (support numeric strings or labels)
+        let resolvedPlayerId = formData.player_id ? parseInt(formData.player_id, 10) : null;
+        let resolvedMatchId = formData.match_id ? parseInt(formData.match_id, 10) : null;
+
+        if (isNaN(resolvedPlayerId)) resolvedPlayerId = null;
+        if (isNaN(resolvedMatchId)) {
+          // try to resolve from matchesOptions by matching value or label
+          const found = matchesOptions.find(opt => opt.value === String(formData.match_id) || opt.label === String(formData.match_id));
+          resolvedMatchId = found ? parseInt(found.value, 10) : null;
+        }
+
         const payload = {
-          player_id: formData.player_id || null,
-          match_id: formData.match_id || null,
+          player_id: resolvedPlayerId,
+          match_id: resolvedMatchId,
           goals: parseInt(formData.goals) || 0,
           assists: parseInt(formData.assists) || 0,
           minutes_played: parseInt(formData.minutes) || 0,
+          saves: parseInt(formData.saves) || 0,
+          yellowCards: parseInt(formData.yellowCards) || 0,
+          redCards: parseInt(formData.redCards) || 0,
         };
         await addStat(payload);
         toast({
@@ -179,7 +207,7 @@ const AdminStatsPage = () => {
           duration: 3000,
         });
         onAddClose();
-        setFormData({ playerName: '', matchName: '', goals: '', assists: '', minutes: '', saves: '', yellowCards: '', redCards: '', rating: '' });
+        setFormData({ player_id: '', match_id: '', goals: '', assists: '', minutes: '', saves: '', yellowCards: '', redCards: '' });
       } catch (err) {
         console.error('Error adding stat', err);
         toast({ title: t('error') || 'Error', description: err?.message || 'Failed to add statistics', status: 'error' });
@@ -192,10 +220,24 @@ const AdminStatsPage = () => {
       try {
         const id = formData.id || (typeof selectedItem !== 'undefined' && selectedItem?.id);
         if (!id) return;
+        // resolve match/player IDs when editing as well
+        let resolvedPlayerId = formData.player_id ? parseInt(formData.player_id, 10) : null;
+        let resolvedMatchId = formData.match_id ? parseInt(formData.match_id, 10) : null;
+        if (isNaN(resolvedPlayerId)) resolvedPlayerId = null;
+        if (isNaN(resolvedMatchId)) {
+          const found = matchesOptions.find(opt => opt.value === String(formData.match_id) || opt.label === String(formData.match_id));
+          resolvedMatchId = found ? parseInt(found.value, 10) : null;
+        }
+
         const payload = {
+          player_id: resolvedPlayerId,
+          match_id: resolvedMatchId,
           goals: parseInt(formData.goals) || 0,
           assists: parseInt(formData.assists) || 0,
           minutes_played: parseInt(formData.minutes) || 0,
+          saves: parseInt(formData.saves) || 0,
+          yellowCards: parseInt(formData.yellowCards) || 0,
+          redCards: parseInt(formData.redCards) || 0,
         };
         await updateStat(id, payload);
         toast({ title: t('notification.updated') || 'Statistics updated', description: t('notification.updatedDesc') || `Statistics have been updated successfully.`, status: 'success', duration: 3000 });
@@ -334,12 +376,30 @@ const AdminStatsPage = () => {
       accessor: 'actions',
       render: (row) => (
         <ActionButtons
-          onEdit={() => openEditDialog(row)}
+          onEdit={() => handleOpenEdit(row)}
           onDelete={() => openDeleteDialog(row)}
         />
       ),
     },
   ];
+
+  const handleOpenEdit = (row) => {
+    // normalize id fields to strings so Select values match option values
+    const normalized = {
+      ...row,
+      player_id: row.player_id != null ? String(row.player_id) : '',
+      match_id: row.match_id != null ? String(row.match_id) : '',
+      minutes: row.minutes != null ? String(row.minutes) : '',
+      goals: row.goals != null ? String(row.goals) : '',
+      assists: row.assists != null ? String(row.assists) : '',
+      saves: row.saves != null ? String(row.saves) : '',
+      yellowCards: row.yellowCards != null ? String(row.yellowCards) : '',
+      redCards: row.redCards != null ? String(row.redCards) : '',
+    };
+    setSelectedItem(row);
+    setFormData(normalized);
+    onEditOpen();
+  };
 
   const filterTypeOptions = [
     { value: 'all', label: t('filterAllRecords') || 'All Records' },
@@ -484,15 +544,15 @@ const AdminStatsPage = () => {
         setFormData={setFormData}
         onConfirm={onConfirmAdd}
         fields={[
-          { name: 'playerName', label: t('playerName') || 'Player Name', type: 'text', isRequired: true, placeholder: t('playerNamePlaceholder') || 'Enter player name' },
-          { name: 'matchName', label: t('matchName') || 'Match Name', type: 'text', isRequired: true, placeholder: t('matchNamePlaceholder') || 'e.g., Academy U17 vs Riverside FC' },
+          { name: 'player_id', label: t('playerName') || 'Player', type: 'select', isRequired: true, options: playersOptions },
+          { name: 'match_id', label: t('matchName') || 'Match', type: 'select', isRequired: true, options: matchesOptions },
           { name: 'goals', label: t('goals') || 'Goals', type: 'number', isRequired: true },
           { name: 'assists', label: t('assists') || 'Assists', type: 'number', isRequired: true },
           { name: 'minutes', label: t('minutes') || 'Minutes', type: 'number', isRequired: true },
           { name: 'saves', label: t('saves') || 'Saves', type: 'number', isRequired: true },
           { name: 'yellowCards', label: t('yellowCards') || 'Yellow Cards', type: 'number', isRequired: true },
           { name: 'redCards', label: t('redCards') || 'Red Cards', type: 'number', isRequired: true },
-          { name: 'rating', label: t('rating') || 'Rating (0-10)', type: 'number', isRequired: true, inputType: 'number' },
+          // rating is generated by the backend; do not allow manual input
         ]}
       />
 
@@ -506,15 +566,14 @@ const AdminStatsPage = () => {
         setFormData={setFormData}
         onConfirm={onConfirmEdit}
         fields={[
-          { name: 'playerName', label: t('playerName') || 'Player Name', type: 'text', isRequired: true },
-          { name: 'matchName', label: t('matchName') || 'Match Name', type: 'text', isRequired: true },
+          { name: 'player_id', label: t('playerName') || 'Player', type: 'select', isRequired: true, options: playersOptions },
+          { name: 'match_id', label: t('matchName') || 'Match', type: 'select', isRequired: true, options: matchesOptions },
           { name: 'goals', label: t('goals') || 'Goals', type: 'number', isRequired: true },
           { name: 'assists', label: t('assists') || 'Assists', type: 'number', isRequired: true },
           { name: 'minutes', label: t('minutes') || 'Minutes', type: 'number', isRequired: true },
           { name: 'saves', label: t('saves') || 'Saves', type: 'number', isRequired: true },
           { name: 'yellowCards', label: t('yellowCards') || 'Yellow Cards', type: 'number', isRequired: true },
           { name: 'redCards', label: t('redCards') || 'Red Cards', type: 'number', isRequired: true },
-          { name: 'rating', label: t('rating') || 'Rating (0-10)', type: 'number', isRequired: true, inputType: 'number' },
         ]}
       />
 

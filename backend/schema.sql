@@ -149,6 +149,9 @@ CREATE TABLE IF NOT EXISTS Stats (
 
   goals INT DEFAULT 0,
   assists INT DEFAULT 0,
+  saves INT DEFAULT 0,
+  yellowCards INT DEFAULT 0,
+  redCards INT DEFAULT 0,
   minutes_played INT DEFAULT 0 CHECK (minutes_played BETWEEN 0 AND 120),
   rating DECIMAL(4,2) DEFAULT 0.0,
 

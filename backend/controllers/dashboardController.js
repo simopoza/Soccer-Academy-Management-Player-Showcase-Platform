@@ -114,19 +114,34 @@ const getRecentMatches = async (req, res) => {
  */
 const getPerformanceRatings = async (req, res) => {
   try {
-    const months = parseInt(req.query.months) || 6;
+    const monthsParam = req.query.months;
+    const months = monthsParam !== undefined ? parseInt(monthsParam, 10) : 6;
 
-    const [ratings] = await db.query(
-      `SELECT 
+    // Build SQL dynamically: if months is a positive integer, filter by date; if months === 0, return all time
+    let ratingsQuery;
+    let params = [];
+    if (Number.isInteger(months) && months > 0) {
+      ratingsQuery = `SELECT 
         DATE_FORMAT(m.date, '%b') as name,
         COALESCE(AVG(s.rating), 0) as rating
       FROM Matches m
       LEFT JOIN Stats s ON m.id = s.match_id
       WHERE m.date >= DATE_SUB(NOW(), INTERVAL ? MONTH)
       GROUP BY DATE_FORMAT(m.date, '%Y-%m'), DATE_FORMAT(m.date, '%b')
-      ORDER BY MIN(m.date) ASC`,
-      [months]
-    );
+      ORDER BY MIN(m.date) ASC`;
+      params = [months];
+    } else {
+      ratingsQuery = `SELECT 
+        DATE_FORMAT(m.date, '%b') as name,
+        COALESCE(AVG(s.rating), 0) as rating
+      FROM Matches m
+      LEFT JOIN Stats s ON m.id = s.match_id
+      GROUP BY DATE_FORMAT(m.date, '%Y-%m'), DATE_FORMAT(m.date, '%b')
+      ORDER BY MIN(m.date) ASC`;
+      params = [];
+    }
+
+    const [ratings] = await db.query(ratingsQuery, params);
 
     // If no ratings data, return sample structure
     const formattedRatings = ratings.length > 0 ? ratings.map(r => ({

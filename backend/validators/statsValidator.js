@@ -37,6 +37,18 @@ const statsValidationRules = [
     .exists().withMessage('minutes_played is required')
     .isInt({ min: 0, max: 120 }).withMessage('minutes_played must be between 0 and 120')
     .toInt(),
+  check('saves')
+    .optional()
+    .isInt({ min: 0 }).withMessage('saves must be a non-negative integer')
+    .toInt(),
+  check('yellowCards')
+    .optional()
+    .isInt({ min: 0 }).withMessage('yellowCards must be a non-negative integer')
+    .toInt(),
+  check('redCards')
+    .optional()
+    .isInt({ min: 0 }).withMessage('redCards must be a non-negative integer')
+    .toInt(),
 ];
 
 const statsUpdateValidationRules = [
@@ -80,6 +92,18 @@ const statsUpdateValidationRules = [
   check('minutes_played')
     .optional()
     .isInt({ min: 0, max: 120 }).withMessage('minutes_played must be between 0 and 120')
+    .toInt(),
+  check('saves')
+    .optional()
+    .isInt({ min: 0 }).withMessage('saves must be a non-negative integer')
+    .toInt(),
+  check('yellowCards')
+    .optional()
+    .isInt({ min: 0 }).withMessage('yellowCards must be a non-negative integer')
+    .toInt(),
+  check('redCards')
+    .optional()
+    .isInt({ min: 0 }).withMessage('redCards must be a non-negative integer')
     .toInt(),
 ];
 

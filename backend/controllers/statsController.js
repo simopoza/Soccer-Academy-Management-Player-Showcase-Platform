@@ -72,14 +72,17 @@ const addStat = async (req, res) => {
     match_id,
     goals,
     assists,
-    minutes_played
+    minutes_played,
+    saves,
+    yellowCards,
+    redCards
   } = req.body;
 
   const { rating, finalGoals, finalAssists } = calculateRating(minutes_played, goals, assists);
   
   try {
-    const query = `INSERT INTO Stats (player_id, match_id, goals, assists, minutes_played, rating) VALUES (?,?,?,?,?,?)`;
-    const value = [player_id, match_id, finalGoals, finalAssists, minutes_played, rating];
+    const query = `INSERT INTO Stats (player_id, match_id, goals, assists, minutes_played, saves, yellowCards, redCards, rating) VALUES (?,?,?,?,?,?,?,?,?)`;
+    const value = [player_id, match_id, finalGoals, finalAssists, minutes_played, Number(saves) || 0, Number(yellowCards) || 0, Number(redCards) || 0, rating];
     const [ result ] = await db.query(query, value);
 
     res.status(201).json({
@@ -104,7 +107,7 @@ const updateStat = async (req, res) => {
 
     const existing = rows[0];
     const fieldsToUpdate = {};
-    const allowedFields = ["player_id", "match_id", "goals", "assists", "minutes_played"];
+    const allowedFields = ["player_id", "match_id", "goals", "assists", "minutes_played", "saves", "yellowCards", "redCards"];
   
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) {
