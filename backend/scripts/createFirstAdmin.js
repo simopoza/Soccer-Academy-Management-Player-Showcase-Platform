@@ -6,7 +6,7 @@ const createFirstAdmin = async () => {
   try {
     // Admin details (change these!)
     const email = process.argv[2] || 'admin@academy.com';
-    const password = process.argv[3] || 'Admin123!';
+    const password = process.argv[3] || 'Abdo123!';
     const firstName = process.argv[4] || 'Super';
     const lastName = process.argv[5] || 'Admin';
     

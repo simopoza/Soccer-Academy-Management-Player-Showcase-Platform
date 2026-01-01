@@ -105,12 +105,21 @@ export default function useAdminStats({ initialPage = 1, initialPageSize = 10, f
     totalPages,
     searchQuery: searchQueryState,
     setSearchQuery: (q) => {
-      setSearchQueryState(prev => {
-        if (prev === q) return prev;
-        // only reset page when the search query actually changes
-        setPage(1);
-        return q;
-      });
+      // support both updater function and direct value
+      if (typeof q === 'function') {
+        setSearchQueryState(prev => {
+          const next = q(prev);
+          if (prev === next) return prev;
+          setPage(1);
+          return typeof next === 'string' ? next : String(next || '');
+        });
+      } else {
+        setSearchQueryState(prev => {
+          if (prev === q) return prev;
+          setPage(1);
+          return typeof q === 'string' ? q : String(q || '');
+        });
+      }
     },
     isLoading,
     isFetching,

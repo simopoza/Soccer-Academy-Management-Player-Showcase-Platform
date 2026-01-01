@@ -70,9 +70,6 @@ CREATE TABLE IF NOT EXISTS Players (
 );
 
 -- =====================
--- Table: Matches
--- =====================
--- =====================
 -- Table: Clubs
 -- =====================
 CREATE TABLE IF NOT EXISTS Clubs (
@@ -140,34 +137,6 @@ CREATE TABLE IF NOT EXISTS Matches (
   FOREIGN KEY (participant_away_id) REFERENCES Participants(id)
     ON DELETE SET NULL
     ON UPDATE CASCADE
-);
-
--- =====================
--- Table: Clubs
--- =====================
-CREATE TABLE IF NOT EXISTS Clubs (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) NOT NULL UNIQUE,
-  short_name VARCHAR(50) NULL,
-  country VARCHAR(50) NULL,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- =====================
--- Table: Participants
--- =====================
-CREATE TABLE IF NOT EXISTS Participants (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  club_id INT NULL,
-  -- external_name is used when participant is not backed by a Club (free-text)
-  external_name VARCHAR(150) NULL,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-  FOREIGN KEY (club_id) REFERENCES Clubs(id)
-      ON DELETE SET NULL
-      ON UPDATE CASCADE
 );
 
 -- =====================
