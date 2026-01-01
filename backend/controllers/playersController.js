@@ -38,10 +38,16 @@ const getPlayers = async (req, res) => {
     const total = countRows && countRows.length ? countRows[0].total : 0;
 
     const offset = (page - 1) * limit;
-    const dataSql = `SELECT p.*, t.name AS team_name, COALESCE(p.image_url, u.image_url) AS image_url
+    const dataSql = `SELECT p.*, t.name AS team_name, COALESCE(p.image_url, u.image_url) AS image_url,
+      s.avg_rating, s.total_rating, s.matches_played
       FROM Players p
       LEFT JOIN Teams t ON p.team_id = t.id
       LEFT JOIN Users u ON p.user_id = u.id
+      LEFT JOIN (
+        SELECT player_id, AVG(rating) AS avg_rating, SUM(rating) AS total_rating, COUNT(*) AS matches_played
+        FROM Stats
+        GROUP BY player_id
+      ) s ON s.player_id = p.id
       ${whereSql}
       ORDER BY p.id DESC
       LIMIT ? OFFSET ?`;
@@ -55,7 +61,13 @@ const getPlayers = async (req, res) => {
       if (String(url).startsWith('http')) return url;
       return `${req.protocol}://${req.get('host')}${url}`;
     };
-    const mapped = rows.map(r => ({ ...r, image_url: makeAbsolute(r.image_url) }));
+    const mapped = rows.map(r => ({
+      ...r,
+      image_url: makeAbsolute(r.image_url),
+      avg_rating: r.avg_rating != null ? Number(r.avg_rating) : null,
+      total_rating: r.total_rating != null ? Number(r.total_rating) : 0,
+      matches_played: r.matches_played != null ? Number(r.matches_played) : 0,
+    }));
     const payload = { data: mapped, total };
     cache.set(cacheKey, payload, 30 * 1000);
     res.status(200).json(payload);
@@ -70,7 +82,10 @@ const getPlayerById = async (req, res) => {
 
   try {
     const [rows] = await db.query(`
-      SELECT p.*, t.name AS team_name, COALESCE(p.image_url, u.image_url) AS image_url
+      SELECT p.*, t.name AS team_name, COALESCE(p.image_url, u.image_url) AS image_url,
+        (SELECT AVG(rating) FROM Stats WHERE player_id = p.id) AS avg_rating,
+        (SELECT SUM(rating) FROM Stats WHERE player_id = p.id) AS total_rating,
+        (SELECT COUNT(*) FROM Stats WHERE player_id = p.id) AS matches_played
       FROM Players p
       LEFT JOIN Teams t ON p.team_id = t.id
       LEFT JOIN Users u ON p.user_id = u.id
@@ -87,6 +102,9 @@ const getPlayerById = async (req, res) => {
     };
     const row = rows[0];
     row.image_url = makeAbsolute(row.image_url);
+    row.avg_rating = row.avg_rating != null ? Number(row.avg_rating) : null;
+    row.total_rating = row.total_rating != null ? Number(row.total_rating) : 0;
+    row.matches_played = row.matches_played != null ? Number(row.matches_played) : 0;
     res.status(200).json(row);
   } catch (err) {
     console.error("Error fetching player by ID:", err);

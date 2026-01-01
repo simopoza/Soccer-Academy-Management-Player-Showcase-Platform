@@ -33,6 +33,10 @@ export default function useAdminPlayers({ initialPage = 1, initialPageSize = 10,
     position: p.position || '',
     status: p.status || 'Active',
     image: p.image_url || null,
+    // aggregated stats from backend
+    avg_rating: p.avg_rating != null ? Number(p.avg_rating) : null,
+    total_rating: p.total_rating != null ? Number(p.total_rating) : 0,
+    matches_played: p.matches_played != null ? Number(p.matches_played) : 0,
     raw: p,
   })), [playersArray]);
 

@@ -60,12 +60,17 @@ export const createPlayerColumns = ({ t, onEdit, onDelete }) => {
     },
     {
       header: t('table.rating') || 'Rating',
-      accessor: 'rating',
+      accessor: 'avg_rating',
       render: (row) => (
-        <HStack spacing={2}>
+        <HStack spacing={2} align="center">
           <Star size={14} color="#F59E0B" />
-          {typeof row.rating === 'number' && !isNaN(row.rating) ? (
-            <Badge variant={getRatingColor(row.rating)}>{row.rating.toFixed(1)}</Badge>
+          {typeof row.avg_rating === 'number' && !isNaN(row.avg_rating) ? (
+            <HStack spacing={2} align="center">
+              <Badge variant={getRatingColor(row.avg_rating)}>{row.avg_rating.toFixed(1)}</Badge>
+              {row.matches_played > 0 && (
+                <Text fontSize="xs" color="gray.500">({row.matches_played})</Text>
+              )}
+            </HStack>
           ) : (
             <Text fontSize="sm" color="gray.400">-</Text>
           )}
