@@ -128,8 +128,9 @@ const AdminDashboardPage = () => {
               </CardHeader>
               <CardBody p={0}>
                 {performanceData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={350}>
-                    <AreaChart data={performanceData}>
+                  <Box tabIndex={-1} sx={{ '& svg:focus': { outline: 'none' }, '& *:focus': { outline: 'none', boxShadow: 'none' } }}>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <AreaChart data={performanceData}>
                       <defs>
                         <linearGradient id="colorRating" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#00B050" stopOpacity={0.25}/>
@@ -164,7 +165,8 @@ const AdminDashboardPage = () => {
                         fill="url(#colorRating)" 
                       />
                     </AreaChart>
-                  </ResponsiveContainer>
+                    </ResponsiveContainer>
+                  </Box>
                 ) : (
                   <Flex
                     align="center"
