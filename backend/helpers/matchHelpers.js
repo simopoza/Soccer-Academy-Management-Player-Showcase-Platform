@@ -4,6 +4,8 @@ const normalize = (s) => typeof s === 'string' ? s.trim().replace(/\s+/g, ' ').t
 const formatMatch = (r) => ({
   id: r.id,
   date: r.date ? (r.date instanceof Date ? r.date.toISOString() : r.date) : null,
+  scheduled_start: r.scheduled_start ? (r.scheduled_start instanceof Date ? r.scheduled_start.toISOString() : r.scheduled_start) : null,
+  duration_minutes: r.duration_minutes != null ? Number(r.duration_minutes) : null,
   opponent: r.opponent,
   location: r.location,
   competition: r.competition,
@@ -94,7 +96,7 @@ const findExistingMatch = async (conn, { date, opponent, location, competition, 
 };
 
 const insertAndFetchMatch = async (conn, values) => {
-  const query = "INSERT INTO Matches (date, opponent, location, competition, team_goals, opponent_goals, team_id, team_name, participant_home_id, participant_away_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  const query = "INSERT INTO Matches (date, scheduled_start, duration_minutes, opponent, location, competition, team_goals, opponent_goals, team_id, team_name, participant_home_id, participant_away_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   const [result] = await conn.query(query, values);
   const [rows] = await conn.query(`
     SELECT m.*, COALESCE(m.team_name, t.name) AS team_name

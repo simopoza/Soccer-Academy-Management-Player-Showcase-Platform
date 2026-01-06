@@ -55,6 +55,8 @@ const addMatch = async (req, res) => {
   // Accept and normalize inputs
   let {
     date = null,
+    scheduled_start = null,
+    duration_minutes = 90,
     opponent = null,
     location = null,
     competition = null,
@@ -67,6 +69,7 @@ const addMatch = async (req, res) => {
   } = req.body;
 
   if (date === '') date = null;
+  if (scheduled_start === '') scheduled_start = null;
 
   let conn;
   try {
@@ -103,7 +106,19 @@ const addMatch = async (req, res) => {
       return res.status(200).json(formatMatch(rows[0]));
     }
 
-    const values = [date, opponent, location, competition, team_goals, opponent_goals, resolvedTeamId, resolvedTeamName, resolvedHomeParticipantId, resolvedAwayParticipantId];
+    // convert incoming ISO8601 datetimes into MySQL DATETIME 'YYYY-MM-DD HH:MM:SS' (UTC)
+    const toMySQLDatetime = (iso) => {
+      if (!iso) return null;
+      const d = new Date(iso);
+      if (isNaN(d)) return null;
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+    };
+
+    const mysqlDate = toMySQLDatetime(date);
+    const mysqlScheduled = toMySQLDatetime(scheduled_start);
+
+    const values = [mysqlDate, mysqlScheduled, Number(duration_minutes) || 90, opponent, location, competition, team_goals, opponent_goals, resolvedTeamId, resolvedTeamName, resolvedHomeParticipantId, resolvedAwayParticipantId];
     const inserted = await insertAndFetchMatch(conn, values);
 
     await conn.commit();
@@ -138,7 +153,7 @@ const updateMatch = async (req, res) => {
     }
 
     const fieldsToUpdate = {};
-    const allowedFields = ["date", "opponent", "location", "competition", "team_goals", "opponent_goals", "team_id", "team_name", "participant_home_id", "participant_away_id"];
+    const allowedFields = ["date", "scheduled_start", "duration_minutes", "opponent", "location", "competition", "team_goals", "opponent_goals", "team_id", "team_name", "participant_home_id", "participant_away_id"];
 
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) fieldsToUpdate[field] = req.body[field];
@@ -151,6 +166,18 @@ const updateMatch = async (req, res) => {
     }
 
     // Let helper prepare/resolve any derived fields (team_name, participant ids)
+    // convert any incoming ISO datetimes to MySQL format for updates
+    const toMySQLDatetime = (iso) => {
+      if (!iso) return null;
+      const d = new Date(iso);
+      if (isNaN(d)) return null;
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+    };
+    if (fieldsToUpdate.date) fieldsToUpdate.date = toMySQLDatetime(fieldsToUpdate.date);
+    if (fieldsToUpdate.scheduled_start) fieldsToUpdate.scheduled_start = toMySQLDatetime(fieldsToUpdate.scheduled_start);
+    if (fieldsToUpdate.duration_minutes !== undefined) fieldsToUpdate.duration_minutes = Number(fieldsToUpdate.duration_minutes) || null;
+
     const prepared = await prepareUpdateFields(conn, fieldsToUpdate, existing);
 
     const { setClause, values } = buildUpdateClause(prepared);

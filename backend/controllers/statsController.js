@@ -1,5 +1,6 @@
 const db = require("../db");
 const calculateRating = require("../helpers/calculateRating");
+const recomputeMatchScore = require('../helpers/recomputeMatchScore');
 
 const getStats = async (req, res) => {
   try {
@@ -84,6 +85,12 @@ const addStat = async (req, res) => {
     const query = `INSERT INTO Stats (player_id, match_id, goals, assists, minutes_played, saves, yellowCards, redCards, rating) VALUES (?,?,?,?,?,?,?,?,?)`;
     const value = [player_id, match_id, finalGoals, finalAssists, minutes_played, Number(saves) || 0, Number(yellowCards) || 0, Number(redCards) || 0, rating];
     const [ result ] = await db.query(query, value);
+    // Recompute match score after adding stat
+    try {
+      await recomputeMatchScore(match_id);
+    } catch (e) {
+      console.error('Failed to recompute match score after addStat', e);
+    }
 
     res.status(201).json({
       message: "Stat added successfully",
@@ -149,6 +156,13 @@ const updateStat = async (req, res) => {
     const sql = `UPDATE Stats SET ${setClause} WHERE id = ?`;
     
     await db.query(sql, values);
+    // Recompute match score when relevant fields changed
+    try {
+      const mid = fieldsToUpdate.match_id ?? existing.match_id;
+      await recomputeMatchScore(mid);
+    } catch (e) {
+      console.error('Failed to recompute match score after updateStat', e);
+    }
 
     res.status(200).json({ message: "Stat updated successfully" });
   } catch (err) {
@@ -161,10 +175,25 @@ const deleteStat = async (req, res) => {
   const { id } = req.params;
 
   try {
+    // fetch match_id before deletion
+    const [rows] = await db.query('SELECT match_id FROM Stats WHERE id = ?', [id]);
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ message: 'Stat not found' });
+    }
+    const matchId = rows[0].match_id;
+
     const [ result ] = await db.query("DELETE FROM Stats WHERE id = ?", [id]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Stat not found" });
     }
+
+    // Recompute match score after deletion
+    try {
+      await recomputeMatchScore(matchId);
+    } catch (e) {
+      console.error('Failed to recompute match score after deleteStat', e);
+    }
+
     res.status(200).json({ message: "Stats deleted successfully" });
   } catch (err) {
     console.error("Error deleting Stats by ID: ", err);
