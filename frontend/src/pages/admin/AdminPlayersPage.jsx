@@ -103,6 +103,13 @@ const AdminPlayersPage = () => {
   // `players` already comes paginated and filtered by search + team via the hook
   const filteredPlayers = players || [];
 
+  // hide the special opponent placeholder from the players management view
+  const displayedPlayers = filteredPlayers.filter(p => {
+    const fn = String(p.first_name || '').trim();
+    const ln = String(p.last_name || '').trim();
+    return !(fn === 'Opponent' && ln === 'Scorer');
+  });
+
   const onConfirmAdd = () => {
     (async () => {
       try {
@@ -150,6 +157,7 @@ const AdminPlayersPage = () => {
         toast({ title: t('notification.playerUpdated') || 'Player updated', description: t('notification.playerUpdatedDesc') || `Player information has been updated successfully.`, status: 'success', duration: 3000 });
         onEditClose();
         setSelectedItem(null);
+
       } catch (err) {
         console.error('Error updating player', err);
         toast({ title: 'Failed to update player', status: 'error', duration: 4000 });
@@ -221,7 +229,7 @@ const AdminPlayersPage = () => {
         >
         <TableHeader
           title={t('cardTitlePlayers') || 'All Players'}
-          count={filteredPlayers.length}
+          count={displayedPlayers.length}
           actionLabel={t('actionAddPlayer') || 'Add Player'}
           onAction={onAddOpen}
         />
@@ -246,7 +254,7 @@ const AdminPlayersPage = () => {
 
         <DataTable
           columns={columns}
-          data={filteredPlayers}
+          data={displayedPlayers}
           emptyMessage="No players found"
           wrapperBorderColor={cardBorder}
         />
@@ -269,7 +277,7 @@ const AdminPlayersPage = () => {
       <CrudFormModal
         isOpen={isEditOpen}
         onClose={onEditClose}
-        mode="edit"
+            count={displayedPlayers.length}
         titleEdit={t('modal.editPlayer') || 'Edit Player'}
         confirmLabelEdit={t('saveChanges') || 'Save Changes'}
         formData={formData}
@@ -292,3 +300,4 @@ const AdminPlayersPage = () => {
 };
 
 export default AdminPlayersPage;
+ 

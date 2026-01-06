@@ -25,4 +25,9 @@ const deleteMatch = async (matchId) => {
   return response.data;
 };
 
-export default { getMatches, getMatchById, addMatch, updateMatch, deleteMatch };
+const opponentGoal = async (matchId, payload) => {
+  const response = await axiosInstance.post(`/matches/${matchId}/opponent-goal`, payload);
+  return response.data;
+};
+
+export default { getMatches, getMatchById, addMatch, updateMatch, deleteMatch, opponentGoal };

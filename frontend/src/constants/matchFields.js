@@ -3,6 +3,7 @@ const matchFields = [
   { name: 'opponent', label: 'Opponent', type: 'text', isRequired: true, placeholder: 'Enter opponent' },
   { name: 'date', label: 'Date', type: 'text', isRequired: true, inputType: 'date' },
   { name: 'time', label: 'Time', type: 'text', isRequired: true, inputType: 'time' },
+  { name: 'duration_minutes', label: 'Duration (min)', type: 'number', isRequired: true, inputType: 'number', placeholder: '90' },
   { name: 'location', label: 'Location', type: 'select', isRequired: true, options: [
     { value: 'Home', label: 'Home' },
     { value: 'Away', label: 'Away' },

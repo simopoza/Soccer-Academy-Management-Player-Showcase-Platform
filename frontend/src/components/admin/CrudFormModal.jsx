@@ -50,6 +50,8 @@ const CrudFormModal = ({
   const confirmLabel = mode === 'add' ? confirmLabelAdd : confirmLabelEdit;
 
   const handleChange = (name, value) => {
+    // debug: log changes to form fields to help diagnose selection issues
+    try { console.log('CrudFormModal change', name, value); } catch (e) {}
     setFormData({ ...formData, [name]: value });
   };
 

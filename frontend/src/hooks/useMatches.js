@@ -17,10 +17,13 @@ export default function useMatches({ searchQuery = '', statusFilter = 'all', loc
     let dateStr = '';
     let timeStr = '';
 
-    // Treat null/empty date as unknown/upcoming
-    if (r.date) {
+    // prefer scheduled_start if provided, otherwise fall back to date+time
+    const startRaw = r.scheduled_start || r.date || null;
+    const duration = (r.duration_minutes != null && r.duration_minutes !== '') ? Number(r.duration_minutes) : 90;
+
+    if (startRaw) {
       try {
-        const dt = new Date(r.date);
+        const dt = new Date(startRaw);
         if (!isNaN(dt)) {
           dateStr = dt.toISOString().slice(0, 10);
           timeStr = dt.toTimeString().slice(0, 5);
@@ -31,22 +34,33 @@ export default function useMatches({ searchQuery = '', statusFilter = 'all', loc
     }
 
     const now = new Date();
-    let isUpcoming = true;
-    if (r.date) {
-      const matchDate = new Date(r.date);
-      if (!isNaN(matchDate)) {
-        isUpcoming = matchDate > now;
+    let status = 'Upcoming';
+    if (startRaw) {
+      const start = new Date(startRaw);
+      if (!isNaN(start)) {
+        const end = new Date(start.getTime() + (duration * 60000));
+        if (now < start) status = 'Upcoming';
+        else if (now >= start && now < end) status = 'Playing';
+        else status = 'Completed';
+      }
+    } else {
+      // fallback: if date provided, use previous logic
+      if (r.date) {
+        const matchDate = new Date(r.date);
+        if (!isNaN(matchDate)) {
+          status = (matchDate > now) ? 'Upcoming' : 'Completed';
+        }
       }
     }
 
     let result = null;
-    if (!isUpcoming && r.team_goals != null && r.opponent_goals != null) {
+    if (status !== 'Upcoming' && r.team_goals != null && r.opponent_goals != null) {
       if (r.team_goals > r.opponent_goals) result = 'Won';
       else if (r.team_goals === r.opponent_goals) result = 'Draw';
       else result = 'Lost';
     }
 
-    const score = (!isUpcoming && r.team_goals != null && r.opponent_goals != null)
+    const score = (status !== 'Upcoming' && r.team_goals != null && r.opponent_goals != null)
       ? `${r.team_goals}-${r.opponent_goals}`
       : null;
 
@@ -57,13 +71,15 @@ export default function useMatches({ searchQuery = '', statusFilter = 'all', loc
       opponent: r.opponent || '—',
       date: dateStr,
       time: timeStr,
+      scheduled_start: r.scheduled_start || null,
+      duration_minutes: duration,
       location: r.location || '',
       matchType: r.location || '',
       team_goals: r.team_goals != null ? r.team_goals : 0,
       opponent_goals: r.opponent_goals != null ? r.opponent_goals : 0,
       competition: r.competition || '',
       score,
-      status: isUpcoming ? 'Upcoming' : 'Completed',
+      status,
       result,
     };
   };
@@ -108,6 +124,8 @@ export default function useMatches({ searchQuery = '', statusFilter = 'all', loc
   const buildPayload = (formData) => ({
     // backend accepts nullable date — send null when no date provided
     date: formData.date ? `${formData.date} ${formData.time || '00:00:00'}` : null,
+    scheduled_start: formData.date ? `${formData.date} ${formData.time || '00:00:00'}` : null,
+    duration_minutes: formData.duration_minutes != null && formData.duration_minutes !== '' ? Number(formData.duration_minutes) : 90,
     opponent: formData.opponent,
     location: formData.location,
     competition: formData.competition,

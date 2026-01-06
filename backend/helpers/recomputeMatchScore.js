@@ -5,17 +5,21 @@ const db = require('../db');
  * - Treat a stat as belonging to the academy/team when Players.team_id = Matches.team_id
  * - Otherwise treat the stat goals as opponent goals
  */
-async function recomputeMatchScore(matchId) {
+async function recomputeMatchScore(matchId, providedConn = null) {
   if (!matchId) return;
-  const conn = db; // db.query is a pool instance
+  const pool = db; // db is the exported pool instance
+  const useExternalConn = !!providedConn;
+  const conn = providedConn || pool; // when providedConn is a connection, use it; otherwise use pool
   try {
-    // start transaction
-    await conn.query('START TRANSACTION');
+    if (!useExternalConn) {
+      // start transaction when using pool directly
+      await conn.query('START TRANSACTION');
+    }
 
     // get match and team_id
     const [mrows] = await conn.query('SELECT team_id FROM Matches WHERE id = ?', [matchId]);
     if (!mrows || mrows.length === 0) {
-      await conn.query('ROLLBACK');
+      if (!useExternalConn) await conn.query('ROLLBACK');
       return;
     }
     const match = mrows[0];
@@ -37,10 +41,12 @@ async function recomputeMatchScore(matchId) {
     // persist into Matches
     await conn.query('UPDATE Matches SET team_goals = ?, opponent_goals = ?, updated_at = NOW() WHERE id = ?', [ag.team_goals, ag.opponent_goals, matchId]);
 
-    await conn.query('COMMIT');
+    if (!useExternalConn) {
+      await conn.query('COMMIT');
+    }
     return ag;
   } catch (err) {
-    try { await conn.query('ROLLBACK'); } catch (e) { /* ignore */ }
+    try { if (!useExternalConn) await conn.query('ROLLBACK'); } catch (e) { /* ignore */ }
     console.error('Error in recomputeMatchScore:', err);
     throw err;
   }

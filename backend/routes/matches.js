@@ -4,6 +4,7 @@ const {
   getMatches,
   getMatchById,
   addMatch,
+  addOpponentGoal,
   updateMatch,
   deleteMatch,
 } = require("../controllers/matchesController");
@@ -75,6 +76,9 @@ router.get("/:id", hasRole("admin", "agent", "player"), matchesGetByIdValidatorR
  *         description: Match added successfully
  */
 router.post("/", hasRole("admin"), matchesValidatorRules, validate, addMatch);
+
+// record an opponent goal quickly
+router.post("/:id/opponent-goal", hasRole("admin"), addOpponentGoal);
 
 /**
  * @swagger

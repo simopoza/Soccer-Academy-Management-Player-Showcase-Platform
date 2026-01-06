@@ -84,7 +84,29 @@ const addStat = async (req, res) => {
   try {
     const query = `INSERT INTO Stats (player_id, match_id, goals, assists, minutes_played, saves, yellowCards, redCards, rating) VALUES (?,?,?,?,?,?,?,?,?)`;
     const value = [player_id, match_id, finalGoals, finalAssists, minutes_played, Number(saves) || 0, Number(yellowCards) || 0, Number(redCards) || 0, rating];
+    // validate player belongs to match team or is an opponent placeholder
+    try {
+      const [mrows] = await db.query('SELECT team_id FROM Matches WHERE id = ? LIMIT 1', [match_id]);
+      const matchTeamId = (mrows && mrows.length) ? mrows[0].team_id : null;
+      const [prows] = await db.query('SELECT id, team_id, first_name, last_name FROM Players WHERE id = ? LIMIT 1', [player_id]);
+      if (!prows || prows.length === 0) {
+        return res.status(400).json({ message: 'Player not found' });
+      }
+      const player = prows[0];
+      const isOpponentPlaceholder = String(player.first_name) === 'Opponent' && String(player.last_name) === 'Scorer';
+      if (matchTeamId != null) {
+        if (player.team_id !== matchTeamId && !isOpponentPlaceholder) {
+          return res.status(400).json({ message: 'Player does not belong to the match team' });
+        }
+      }
+
+    } catch (e) {
+      console.error('Error validating player/team for addStat', e);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
     const [ result ] = await db.query(query, value);
+
     // Recompute match score after adding stat
     try {
       await recomputeMatchScore(match_id);
@@ -156,9 +178,29 @@ const updateStat = async (req, res) => {
     const sql = `UPDATE Stats SET ${setClause} WHERE id = ?`;
     
     await db.query(sql, values);
-    // Recompute match score when relevant fields changed
+    // Recompute match score when relevant fields changed and validate player-team membership
     try {
       const mid = fieldsToUpdate.match_id ?? existing.match_id;
+      const finalPlayerId = fieldsToUpdate.player_id ?? existing.player_id;
+      // validate membership similar to addStat
+      try {
+        const [mrows] = await db.query('SELECT team_id FROM Matches WHERE id = ? LIMIT 1', [mid]);
+        const matchTeamId = (mrows && mrows.length) ? mrows[0].team_id : null;
+        const [prows] = await db.query('SELECT id, team_id, first_name, last_name FROM Players WHERE id = ? LIMIT 1', [finalPlayerId]);
+        if (!prows || prows.length === 0) {
+          return res.status(400).json({ message: 'Player not found' });
+        }
+        const player = prows[0];
+        const isOpponentPlaceholder = String(player.first_name) === 'Opponent' && String(player.last_name) === 'Scorer';
+        if (matchTeamId != null) {
+          if (player.team_id !== matchTeamId && !isOpponentPlaceholder) {
+            return res.status(400).json({ message: 'Player does not belong to the match team' });
+          }
+        }
+      } catch (e) {
+        console.error('Error validating player/team for updateStat', e);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
       await recomputeMatchScore(mid);
     } catch (e) {
       console.error('Failed to recompute match score after updateStat', e);

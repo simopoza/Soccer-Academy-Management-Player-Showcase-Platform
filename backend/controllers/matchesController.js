@@ -225,10 +225,82 @@ const deleteMatch = async (req, res) => {
   }
 };
 
+// Add an opponent goal without requiring a real player id.
+// Creates or finds a placeholder opponent player, creates/updates a Stats row, and recomputes match score.
+const addOpponentGoal = async (req, res) => {
+  const { id: matchId } = req.params;
+  const {
+    goals = 1,
+    assists = 0,
+    minutes_played = 0,
+    saves = 0,
+    yellowCards = 0,
+    redCards = 0,
+  } = req.body || {};
+
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // ensure match exists
+    const [mrows] = await conn.query('SELECT id FROM Matches WHERE id = ? FOR UPDATE', [matchId]);
+    if (!mrows || mrows.length === 0) {
+      await conn.rollback();
+      conn.release();
+      return res.status(404).json({ message: 'Match not found' });
+    }
+
+    // find or create placeholder opponent player
+    const [prow] = await conn.query("SELECT id FROM Players WHERE first_name = 'Opponent' AND last_name = 'Scorer' LIMIT 1");
+    let playerId;
+    if (prow && prow.length > 0) {
+      playerId = prow[0].id;
+    } else {
+      const [ins] = await conn.query('INSERT INTO Players (first_name, last_name, position, team_id) VALUES (?,?,?,NULL)', ['Opponent', 'Scorer', 'ST']);
+      playerId = ins.insertId;
+    }
+
+    // check for existing stat for this player+match
+    const [srows] = await conn.query('SELECT * FROM Stats WHERE player_id = ? AND match_id = ? FOR UPDATE', [playerId, matchId]);
+    const calculateRating = require('../helpers/calculateRating');
+    let statId;
+    if (srows && srows.length > 0) {
+      const existing = srows[0];
+      const newGoals = (Number(existing.goals) || 0) + Number(goals || 0);
+      const newAssists = (Number(existing.assists) || 0) + Number(assists || 0);
+      const newMinutes = minutes_played || existing.minutes_played || 0;
+      const { rating, finalGoals, finalAssists } = calculateRating(newMinutes, newGoals, newAssists);
+      await conn.query('UPDATE Stats SET goals = ?, assists = ?, minutes_played = ?, saves = ?, yellowCards = ?, redCards = ?, rating = ? WHERE id = ?', [finalGoals, finalAssists, newMinutes, Number(saves) || 0, Number(yellowCards) || 0, Number(redCards) || 0, rating, existing.id]);
+      statId = existing.id;
+    } else {
+      const { rating, finalGoals, finalAssists } = calculateRating(minutes_played, Number(goals || 0), Number(assists || 0));
+      const [insStat] = await conn.query('INSERT INTO Stats (player_id, match_id, goals, assists, minutes_played, saves, yellowCards, redCards, rating) VALUES (?,?,?,?,?,?,?,?,?)', [playerId, matchId, finalGoals, finalAssists, Number(minutes_played) || 0, Number(saves) || 0, Number(yellowCards) || 0, Number(redCards) || 0, rating]);
+      statId = insStat.insertId;
+    }
+
+    // recompute match score
+    const recomputeMatchScore = require('../helpers/recomputeMatchScore');
+    try {
+      await recomputeMatchScore(matchId, conn);
+    } catch (e) {
+      console.error('Failed to recompute match score after opponent goal', e);
+    }
+
+    await conn.commit();
+    conn.release();
+    res.status(201).json({ message: 'Opponent goal recorded', statId });
+  } catch (err) {
+    console.error('Error adding opponent goal:', err);
+    try { await conn.rollback(); conn.release(); } catch (e) {}
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 module.exports = {
   getMatches,
   getMatchById,
   addMatch,
   updateMatch,
   deleteMatch,
+  addOpponentGoal,
 };

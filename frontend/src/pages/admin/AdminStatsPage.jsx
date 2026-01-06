@@ -17,6 +17,8 @@ import useAdminStats from '../../hooks/useAdminStats';
 import useDebouncedValue from '../../hooks/useDebouncedValue';
 import useAdminPlayers from '../../hooks/useAdminPlayers';
 import useMatches from '../../hooks/useMatches';
+import { useQuery } from '@tanstack/react-query';
+import matchService from '../../services/matchService';
 import Pagination from '../../components/ui/Pagination';
 import Layout from '../../components/layout/Layout';
 import { DataTable, TableHeader } from '../../components/table';
@@ -154,11 +156,17 @@ const AdminStatsPage = () => {
   // derive unique filter lists from the full dataset
   // get full players and matches lists to populate selects reliably
   const { rawPlayers = [], players: playersPaged } = useAdminPlayers();
-  const { matches: allMatches = [] } = useMatches();
+  // fetch full matches list for selects (useMatches returns pagedMatches, so fetch full list here)
+  const { data: allMatches = [] } = useQuery({ queryKey: ['matches', 'all'], queryFn: () => matchService.getMatches() });
 
   const playersOptions = (Array.isArray(rawPlayers) ? rawPlayers : []).map(p => ({ value: String(p.id), label: `${p.first_name || ''} ${p.last_name || ''}`.trim() }));
-  // start with matches from the matches hook
-  const matchesMap = new Map((Array.isArray(allMatches) ? allMatches : []).map(m => [String(m.id), `${m.team} vs ${m.opponent}`]));
+  // start with matches from the matches hook; build user-friendly labels with fallbacks
+  const matchesMap = new Map((Array.isArray(allMatches) ? allMatches : []).map(m => {
+    const teamLabel = m.team_name || (m.team_id == null ? 'Academy' : (m.team || ''));
+    const opponentLabel = m.opponent || '—';
+    const label = teamLabel ? `${teamLabel} vs ${opponentLabel}` : `${opponentLabel}`;
+    return [String(m.id), label];
+  }));
   // add any matches referenced by stats that might not be in the matches hook result
   normalizedAll.forEach(s => {
     if (s.match_id && !matchesMap.has(String(s.match_id))) {
@@ -166,6 +174,14 @@ const AdminStatsPage = () => {
     }
   });
   const matchesOptions = Array.from(matchesMap.entries()).map(([value, label]) => ({ value, label }));
+
+  // Prefill add-form defaults to first available player and match to avoid select UI/value mismatch
+  const handleAddOpenPrefill = () => {
+    const defaultPlayer = playersOptions && playersOptions.length ? playersOptions[0].value : '';
+    const defaultMatch = matchesOptions && matchesOptions.length ? matchesOptions[0].value : '';
+    setFormData({ player_id: defaultPlayer ? String(defaultPlayer) : '', match_id: defaultMatch ? String(defaultMatch) : '', goals: '', assists: '', minutes: '', saves: '', yellowCards: '', redCards: '' });
+    onAddOpen();
+  };
 
   // stats to display are the paged/filtered results from the hook
   const displayStats = normalizedStats;
@@ -178,15 +194,34 @@ const AdminStatsPage = () => {
   const onConfirmAdd = () => {
     (async () => {
       try {
+        console.log('onConfirmAdd formData.player_id, match_id, playersOptions length, matchesOptions length', formData.player_id, formData.match_id, playersOptions.length, matchesOptions.length);
         // resolve player_id and match_id robustly (support numeric strings or labels)
-        let resolvedPlayerId = formData.player_id ? parseInt(formData.player_id, 10) : null;
-        let resolvedMatchId = formData.match_id ? parseInt(formData.match_id, 10) : null;
+        const resolveFromOptions = (rawValue, options) => {
+          if (!rawValue) return null;
+          // try numeric
+          const asNum = parseInt(rawValue, 10);
+          if (!isNaN(asNum)) return asNum;
+          const sRaw = String(rawValue).trim();
+          // direct match on value or label
+          const direct = options.find(opt => String(opt.value) === sRaw || String(opt.label) === sRaw);
+          if (direct) return parseInt(direct.value, 10);
+          // fuzzy match: label includes raw or raw includes label
+          const sLower = sRaw.toLowerCase();
+          const fuzzy = options.find(opt => (String(opt.label || '').toLowerCase().includes(sLower) || sLower.includes(String(opt.label || '').toLowerCase())));
+          if (fuzzy) return parseInt(fuzzy.value, 10);
+          return null;
+        };
 
-        if (isNaN(resolvedPlayerId)) resolvedPlayerId = null;
-        if (isNaN(resolvedMatchId)) {
-          // try to resolve from matchesOptions by matching value or label
-          const found = matchesOptions.find(opt => opt.value === String(formData.match_id) || opt.label === String(formData.match_id));
-          resolvedMatchId = found ? parseInt(found.value, 10) : null;
+        let resolvedPlayerId = resolveFromOptions(formData.player_id, playersOptions);
+        let resolvedMatchId = resolveFromOptions(formData.match_id, matchesOptions);
+
+        console.debug('Resolved IDs', { resolvedPlayerId, resolvedMatchId });
+
+        if (!resolvedPlayerId || !resolvedMatchId) {
+          console.debug('Players sample', playersOptions.slice(0,5));
+          console.debug('Matches sample', matchesOptions.slice(0,5));
+          toast({ title: t('error') || 'Error', description: t('selectPlayerMatch') || 'Please select a player and a match before submitting.', status: 'error' });
+          return;
         }
 
         const payload = {
@@ -199,6 +234,7 @@ const AdminStatsPage = () => {
           yellowCards: parseInt(formData.yellowCards) || 0,
           redCards: parseInt(formData.redCards) || 0,
         };
+        console.debug('Adding stat payload', payload);
         await addStat(payload);
         toast({
           title: t('notification.added') || 'Statistics added',
@@ -210,7 +246,16 @@ const AdminStatsPage = () => {
         setFormData({ player_id: '', match_id: '', goals: '', assists: '', minutes: '', saves: '', yellowCards: '', redCards: '' });
       } catch (err) {
         console.error('Error adding stat', err);
-        toast({ title: t('error') || 'Error', description: err?.message || 'Failed to add statistics', status: 'error' });
+        const serverMessage = err?.response?.data?.message;
+        if (err?.response?.status === 400 && (serverMessage === 'Player does not belong to the match team' || serverMessage === 'Player not found')) {
+          toast({
+            title: t('error') || 'Error',
+            description: t('selectPlayerRightAcademy') || 'Selected player is not on the match team — please choose a player from the correct academy/category.',
+            status: 'error',
+          });
+        } else {
+          toast({ title: t('error') || 'Error', description: err?.response?.data?.message || err?.message || 'Failed to add statistics', status: 'error' });
+        }
       }
     })();
   };
@@ -239,13 +284,22 @@ const AdminStatsPage = () => {
           yellowCards: parseInt(formData.yellowCards) || 0,
           redCards: parseInt(formData.redCards) || 0,
         };
-        await updateStat(id, payload);
+        await updateStat({ id, data: payload });
         toast({ title: t('notification.updated') || 'Statistics updated', description: t('notification.updatedDesc') || `Statistics have been updated successfully.`, status: 'success', duration: 3000 });
         onEditClose();
         setSelectedItem(null);
       } catch (err) {
         console.error('Error updating stat', err);
-        toast({ title: t('error') || 'Error', description: err?.message || 'Failed to update statistics', status: 'error' });
+        const serverMessage = err?.response?.data?.message;
+        if (err?.response?.status === 400 && (serverMessage === 'Player does not belong to the match team' || serverMessage === 'Player not found')) {
+          toast({
+            title: t('error') || 'Error',
+            description: t('selectPlayerRightAcademy') || 'Selected player is not on the match team — please choose a player from the correct academy/category.',
+            status: 'error',
+          });
+        } else {
+          toast({ title: t('error') || 'Error', description: err?.response?.data?.message || err?.message || 'Failed to update statistics', status: 'error' });
+        }
       }
     })();
   };
@@ -396,9 +450,7 @@ const AdminStatsPage = () => {
       yellowCards: row.yellowCards != null ? String(row.yellowCards) : '',
       redCards: row.redCards != null ? String(row.redCards) : '',
     };
-    setSelectedItem(row);
-    setFormData(normalized);
-    onEditOpen();
+    openEditDialog(normalized);
   };
 
   const filterTypeOptions = [
@@ -482,7 +534,7 @@ const AdminStatsPage = () => {
           title={t('cardTitleStats') || 'Player Statistics'}
           count={displayStats.length}
           actionLabel={t('actionAddStats') || 'Add Statistics'}
-          onAction={onAddOpen}
+          onAction={handleAddOpenPrefill}
         />
 
         <Flex gap={4} mb={6}>

@@ -73,7 +73,7 @@ export const createMatchColumns = ({ i18n, primaryGreen, opponentColor }) => {
       header: t ? t('table.status') || 'Status' : 'Status',
       accessor: 'status',
       render: (row) => (
-        <Badge variant={row.status === 'Upcoming' ? 'warning' : 'success'}>{row.status}</Badge>
+        <Badge variant={row.status === 'Upcoming' ? 'warning' : row.status === 'Playing' ? 'info' : 'success'}>{row.status}</Badge>
       ),
     },
     {

@@ -24,6 +24,7 @@ import useDebouncedValue from '../../hooks/useDebouncedValue';
 import { statusOptions } from '../../utils/adminOptions';
 import CrudFormModal from '../../components/admin/CrudFormModal';
 import ConfirmModal from '../../components/admin/ConfirmModal';
+import OpponentGoalModal from '../../components/admin/OpponentGoalModal';
 
 // initialLocal data removed: matches are loaded from backend via React Query
 
@@ -87,6 +88,7 @@ const AdminMatchesPage = () => {
     addMatch,
     updateMatch,
     deleteMatch,
+    // we'll use query invalidation for opponent-goal via modal
   } = useMatches({ searchQuery, statusFilter, locationFilter, pageSize: 10 });
 
   // teams for Team select options (use React Query via hook)
@@ -149,6 +151,12 @@ const AdminMatchesPage = () => {
       toast({ title: t('error') || 'Error', description: err?.message || 'Failed to delete match', status: 'error' });
     }
   };
+
+  // opponent goal modal state
+  const [isOpponentOpen, setIsOpponentOpen] = useState(false);
+  const [opponentMatch, setOpponentMatch] = useState(null);
+  const onOpponentOpen = (m) => { setOpponentMatch(m); setIsOpponentOpen(true); };
+  const onOpponentClose = () => { setOpponentMatch(null); setIsOpponentOpen(false); };
 
   // table columns and rendering extracted to MatchesTable component
 
@@ -251,6 +259,7 @@ const AdminMatchesPage = () => {
           matches={pagedMatches}
           onEdit={openEditDialog}
           onDelete={openDeleteDialog}
+          onOpponentGoal={(m) => onOpponentOpen(m)}
           emptyMessage={t('emptyMatches') || 'No matches found'}
           wrapperBorderColor={cardBorder}
           i18n={i18n}
@@ -314,6 +323,8 @@ const AdminMatchesPage = () => {
         confirmLabel={t('delete') || 'Delete'}
         cancelLabel={t('cancel') || 'Cancel'}
       />
+
+      <OpponentGoalModal isOpen={isOpponentOpen} onClose={onOpponentClose} match={opponentMatch} />
     </Layout>
   );
 };
