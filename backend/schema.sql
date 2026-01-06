@@ -106,6 +106,9 @@ CREATE TABLE IF NOT EXISTS Matches (
   id INT AUTO_INCREMENT PRIMARY KEY,
   -- date is nullable to allow TBD / upcoming matches without a scheduled datetime
   date DATETIME NULL,
+  -- scheduled start (UTC) and duration for automatic Playing detection
+  scheduled_start DATETIME NULL,
+  duration_minutes INT DEFAULT 90,
   opponent VARCHAR(100) NOT NULL,
   -- location: Home/Away (indicates whether the match is home or away)
   location ENUM('Home','Away') DEFAULT 'Home',
